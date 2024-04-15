@@ -6,6 +6,7 @@ pipeline {
             image 'gradle:8.7.0'
             // image 'gradle:jdk17'            
             args '-u root'
+            args '-v $HOME/.gradle:/home/gradle/.gradle'
         }
     } 
 
@@ -50,7 +51,7 @@ pipeline {
                 }               
                 sh """
 
-                    ./gradlew :clients:assemble -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE} --debug
+                    ./gradlew :clients:assemble -Pversion=0.0.1-alpha4 -Psigning.password=12345679 --debug
                 """
                 sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
                 script {

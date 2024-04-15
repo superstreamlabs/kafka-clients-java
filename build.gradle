@@ -1449,7 +1449,7 @@ project(':clients') {
     implementation 'com.google.protobuf:protobuf-java-util:3.19.1'
     implementation 'com.google.protobuf:protobuf-java:3.19.1'
     // implementation 'ai.superstream:superstream-java:0.0.1-alpha5'
-    // implementation 'ai.superstream:superstream-java:0.0.1-alpha14'    
+    implementation 'ai.superstream:superstream-java:0.0.1-alpha14'    
 
     // libraries which should be added as runtime dependencies in generated pom.xml should be defined here:
     shadowed libs.zstd

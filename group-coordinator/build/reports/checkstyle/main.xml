@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="8.36.2">
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupPartitionMetadataKey.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupCurrentMemberAssignmentValue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/OffsetCommitKey.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupTargetAssignmentMemberValue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupTargetAssignmentMetadataValue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupPartitionMetadataValue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/GroupMetadataValue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/OffsetCommitValue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupCurrentMemberAssignmentKey.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupTargetAssignmentMemberKey.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupMemberMetadataKey.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupTargetAssignmentMetadataKey.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupMemberMetadataValue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupMetadataValue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/GroupMetadataKey.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/generated/java/org/apache/kafka/coordinator/group/generated/ConsumerGroupMetadataKey.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/GroupCoordinator.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/metrics/CoordinatorMetrics.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/metrics/CoordinatorMetricsShard.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/metrics/GroupCoordinatorRuntimeMetrics.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/metrics/GroupCoordinatorMetrics.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/metrics/CoordinatorRuntimeMetrics.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/metrics/GroupCoordinatorMetricsShard.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/Group.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/util/SystemTimerReaper.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/RecordHelpers.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/classic/ClassicGroupState.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/classic/ClassicGroupMember.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/classic/ClassicGroup.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorResult.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorEventProcessor.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorShardBuilderSupplier.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/PartitionWriter.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/EventAccumulator.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorLoader.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorShard.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorRuntime.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorPlayback.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/MultiThreadedEventProcessor.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorShardBuilder.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorTimer.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/CoordinatorEvent.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/runtime/SnapshottableCoordinator.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/OffsetMetadataManager.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/Utils.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/RecordSerde.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/GroupCoordinatorService.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/OffsetExpirationCondition.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/GroupMetadataManager.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/GroupCoordinatorShard.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/OffsetAndMetadata.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/OffsetExpirationConditionImpl.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/consumer/TopicMetadata.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/consumer/ClientAssignor.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/consumer/TargetAssignmentBuilder.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/consumer/SubscribedTopicMetadata.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/consumer/VersionedMetadata.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/consumer/Assignment.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/consumer/ConsumerGroup.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/consumer/CurrentAssignmentBuilder.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/consumer/ConsumerGroupMember.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/GroupCoordinatorConfig.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/Record.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/OptimizedUniformAssignmentBuilder.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/GeneralUniformAssignmentBuilder.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/AbstractUniformAssignmentBuilder.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/RangeAssignor.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/PartitionAssignorException.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/MemberAssignment.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/AssignmentMemberSpec.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/AssignmentSpec.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/GroupAssignment.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/SubscribedTopicDescriber.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/UniformAssignor.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/group-coordinator/src/main/java/org/apache/kafka/coordinator/group/assignor/PartitionAssignor.java">
+</file>
+</checkstyle>

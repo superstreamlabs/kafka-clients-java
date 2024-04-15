@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.KafkaRaftClientTest" tests="115" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:21:10" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="19.321">
+  <properties/>
+  <testcase name="testInitializeAsCandidateFromStateStore()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.873"/>
+  <testcase name="testEndQuorumStartsNewElectionImmediatelyIfFollowerUnattached()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.657"/>
+  <testcase name="testInvalidFetchRequest()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.429"/>
+  <testcase name="testVoteResponseIgnoredAfterBecomingFollower()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.11"/>
+  <testcase name="testRejectVotesFromSameEpochAfterResigningLeadership()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.046"/>
+  <testcase name="[1] correctOffset=false" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.132"/>
+  <testcase name="[2] correctOffset=true" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.125"/>
+  <testcase name="testPurgatoryFetchSatisfiedByWrite()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.206"/>
+  <testcase name="testFollowerReplication()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.008"/>
+  <testcase name="testHandleCommitCallbackFiresInVotedState()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.125"/>
+  <testcase name="testObserverQuorumDiscoveryFailure()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.009"/>
+  <testcase name="testHandleEndQuorumRequest()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.002"/>
+  <testcase name="testClusterAuthorizationFailedInBeginQuorumEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.113"/>
+  <testcase name="testPurgatoryFetchCompletedByFollowerTransition()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.236"/>
+  <testcase name="testLeaderImmediatelySendsDivergingEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.124"/>
+  <testcase name="testHandleLeaderChangeFiresAfterListenerReachesEpochStartOffsetOnEmptyLog()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.144"/>
+  <testcase name="testGracefulShutdownSingleMemberQuorum()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.019"/>
+  <testcase name="testAppendFailedWithRecordBatchTooLargeException()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.292"/>
+  <testcase name="testLeaderIgnoreVoteRequestOnSameEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.113"/>
+  <testcase name="testChannelWokenUpIfLingerTimeoutReachedWithoutAppend()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.155"/>
+  <testcase name="testInitializeAsFollowerNonEmptyLog()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.004"/>
+  <testcase name="testClusterAuthorizationFailedInVote()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.109"/>
+  <testcase name="testResignWillCompleteFetchPurgatory()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.136"/>
+  <testcase name="testEndQuorumEpochSentBasedOnFetchOffset()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.339"/>
+  <testcase name="testInvalidVoteRequest()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.021"/>
+  <testcase name="testEndQuorumIgnoredAsLeaderIfOlderEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.227"/>
+  <testcase name="testClusterAuthorizationFailedInEndQuorumEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.215"/>
+  <testcase name="testFetchResponseIgnoredAfterBecomingCandidate()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.007"/>
+  <testcase name="testAppendFailedWithFencedEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.11"/>
+  <testcase name="testInitializeAsFollowerEmptyLog()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.005"/>
+  <testcase name="testGrantVotesFromHigherEpochAfterResigningCandidacy()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.013"/>
+  <testcase name="testInitializeObserverNoPreviousState()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.006"/>
+  <testcase name="testInitializeAsResignedLeaderFromStateStore()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.128"/>
+  <testcase name="testVoteRequestTimeout()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.177"/>
+  <testcase name="testDescribeQuorum()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.332"/>
+  <testcase name="testObserverLeaderRediscoveryAfterBrokerNotAvailableError()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.124"/>
+  <testcase name="testCandidateIgnoreVoteRequestOnSameEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.001"/>
+  <testcase name="testHandleBeginQuorumEpochAfterUserInitiatedResign()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.154"/>
+  <testcase name="testVoterBecomeCandidateAfterFetchTimeout()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.129"/>
+  <testcase name="testLeaderGracefulShutdownTimeout()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.291"/>
+  <testcase name="testEndQuorumEpochRequestClusterIdValidation()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.107"/>
+  <testcase name="testElectionTimeoutAfterUserInitiatedResign()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.126"/>
+  <testcase name="testObserverFetchWithNoLocalId()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.002"/>
+  <testcase name="testAppendFailedWithNotLeaderException()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.005"/>
+  <testcase name="[1] version=0" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.154"/>
+  <testcase name="[2] version=1" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.123"/>
+  <testcase name="[3] version=2" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.111"/>
+  <testcase name="[4] version=3" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.12"/>
+  <testcase name="[5] version=4" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.107"/>
+  <testcase name="[6] version=5" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.137"/>
+  <testcase name="[7] version=6" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.113"/>
+  <testcase name="[8] version=7" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.127"/>
+  <testcase name="[9] version=8" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.119"/>
+  <testcase name="[10] version=9" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.11"/>
+  <testcase name="[11] version=10" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.112"/>
+  <testcase name="[12] version=11" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.118"/>
+  <testcase name="[13] version=12" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.107"/>
+  <testcase name="[14] version=13" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.13"/>
+  <testcase name="[15] version=14" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.11"/>
+  <testcase name="[16] version=15" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.133"/>
+  <testcase name="[17] version=16" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.106"/>
+  <testcase name="testLeaderShouldNotResignLeadershipIfOnlyOneVoters()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.027"/>
+  <testcase name="testEndQuorumIgnoredAsCandidateIfOlderEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.029"/>
+  <testcase name="testRetryElection()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.121"/>
+  <testcase name="testGrantVotesFromHigherEpochAfterResigningLeadership()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.003"/>
+  <testcase name="testHandleInvalidVoteRequestWithOlderEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.003"/>
+  <testcase name="testFollowerGracefulShutdown()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.006"/>
+  <testcase name="testLateRegisteredListenerCatchesUp()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.453"/>
+  <testcase name="testInitializeAsCandidateAndBecomeLeaderQuorumOfThree()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.216"/>
+  <testcase name="testAccumulatorClearedAfterBecomingUnattached()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="4.239"/>
+  <testcase name="testRejectVotesFromSameEpochAfterResigningCandidacy()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.052"/>
+  <testcase name="testAccumulatorClearedAfterBecomingFollower()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.334"/>
+  <testcase name="testClusterAuthorizationFailedInFetch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.037"/>
+  <testcase name="testInitializeSingleMemberQuorum()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.05"/>
+  <testcase name="testHandleVoteRequestAsFollowerWithVotedCandidate()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.025"/>
+  <testcase name="testLeaderAppendSingleMemberQuorum()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.025"/>
+  <testcase name="testHandleBeginQuorumResponse()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.002"/>
+  <testcase name="testAccumulatorClearedAfterBecomingVoted()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.212"/>
+  <testcase name="testMetrics()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.047"/>
+  <testcase name="testAppendFailedWithBufferAllocationException()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.206"/>
+  <testcase name="testListenerCommitCallbackAfterLeaderWrite()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.174"/>
+  <testcase name="testLeaderShouldResignLeadershipIfNotGetFetchRequestFromMajorityVoters()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.191"/>
+  <testcase name="testHandleCommitCallbackFiresInCandidateState()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.227"/>
+  <testcase name="testHandleLeaderChangeFiresAfterListenerReachesEpochStartOffset()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.294"/>
+  <testcase name="testHandleBeginQuorumRequest()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.011"/>
+  <testcase name="testEndQuorumEpochRetriesWhileResigned()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.009"/>
+  <testcase name="testGrantVotesWhenShuttingDown()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.128"/>
+  <testcase name="testChannelWokenUpIfLingerTimeoutReachedDuringAppend()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.265"/>
+  <testcase name="testLeaderGracefulShutdown()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.42"/>
+  <testcase name="testHandleInvalidVoteRequestAsObserver()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.004"/>
+  <testcase name="testResignInOlderEpochIgnored()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.122"/>
+  <testcase name="testInitializeAsLeaderFromStateStoreSingleMemberQuorum()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.062"/>
+  <testcase name="testVoteRequestClusterIdValidation()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.13"/>
+  <testcase name="testHandleVoteRequestAsFollowerWithElectedLeader()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.034"/>
+  <testcase name="testObserverSendDiscoveryFetchAfterFetchTimeout()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.007"/>
+  <testcase name="testEmptyRecordSetInFetchResponse()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.013"/>
+  <testcase name="testPurgatoryFetchTimeout()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.131"/>
+  <testcase name="testFetchResponseIgnoredAfterBecomingFollowerOfDifferentLeader()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.014"/>
+  <testcase name="testVoterOnlyRequestValidation()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.126"/>
+  <testcase name="testInitializeAsResignedAndBecomeCandidate()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.005"/>
+  <testcase name="testReregistrationChangesListenerContext()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.295"/>
+  <testcase name="testCannotResignIfObserver()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.011"/>
+  <testcase name="testObserverGracefulShutdown()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.018"/>
+  <testcase name="testInitializeAsCandidateAndBecomeLeader()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.256"/>
+  <testcase name="testDescribeQuorumNonLeader()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.008"/>
+  <testcase name="testHandleCommitCallbackFiresAfterFollowerHighWatermarkAdvances()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.01"/>
+  <testcase name="testCannotResignWithLargerEpochThanCurrentEpoch()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.137"/>
+  <testcase name="testFollowerLogReconciliation()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.061"/>
+  <testcase name="testFetchShouldBeTreatedAsLeaderAcknowledgement()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.141"/>
+  <testcase name="testFetchRequestClusterIdValidation()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.114"/>
+  <testcase name="testCannotResignIfNotLeader()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.006"/>
+  <testcase name="testHandleValidVoteRequestAsFollower()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.009"/>
+  <testcase name="testObserverLeaderRediscoveryAfterRequestTimeout()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.007"/>
+  <testcase name="testBeginQuorumEpochRequestClusterIdValidation()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.119"/>
+  <testcase name="testHandleEndQuorumRequestWithLowerPriorityToBecomeLeader()" classname="org.apache.kafka.raft.KafkaRaftClientTest" time="0.115"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

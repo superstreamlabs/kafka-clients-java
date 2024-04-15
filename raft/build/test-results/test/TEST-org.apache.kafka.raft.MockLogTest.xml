@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.MockLogTest" tests="45" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:20:31" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="3.165">
+  <properties/>
+  <testcase name="testValidateOffsetLessThanOldestSnapshotOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.938"/>
+  <testcase name="testTruncateBelowHighWatermark()" classname="org.apache.kafka.raft.MockLogTest" time="0.339"/>
+  <testcase name="testAppendAsFollower()" classname="org.apache.kafka.raft.MockLogTest" time="0.146"/>
+  <testcase name="testTopicId()" classname="org.apache.kafka.raft.MockLogTest" time="0.026"/>
+  <testcase name="testValidateValidEpochAndOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.005"/>
+  <testcase name="testCreateSnapshotMuchEalierEpoch()" classname="org.apache.kafka.raft.MockLogTest" time="0.048"/>
+  <testcase name="testValidateOffsetLessThanLEO()" classname="org.apache.kafka.raft.MockLogTest" time="0.0"/>
+  <testcase name="testEndOffsetForEpoch()" classname="org.apache.kafka.raft.MockLogTest" time="0.012"/>
+  <testcase name="testValidateEpochGreaterThanLastKnownEpoch()" classname="org.apache.kafka.raft.MockLogTest" time="0.002"/>
+  <testcase name="testTruncateWillRemoveOlderSnapshot()" classname="org.apache.kafka.raft.MockLogTest" time="0.002"/>
+  <testcase name="testEmptyAppendNotAllowed()" classname="org.apache.kafka.raft.MockLogTest" time="0.121"/>
+  <testcase name="testValidateEpochLessThanFirstEpochInLog()" classname="org.apache.kafka.raft.MockLogTest" time="0.006"/>
+  <testcase name="testValidateEpochLessThanOldestSnapshotEpoch()" classname="org.apache.kafka.raft.MockLogTest" time="0.001"/>
+  <testcase name="testFailToIncreaseLogStartPastHighWatermark()" classname="org.apache.kafka.raft.MockLogTest" time="0.004"/>
+  <testcase name="testReadOutOfRangeOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.014"/>
+  <testcase name="testCreateExistingSnapshot()" classname="org.apache.kafka.raft.MockLogTest" time="0.009"/>
+  <testcase name="testReadRecords()" classname="org.apache.kafka.raft.MockLogTest" time="0.003"/>
+  <testcase name="testValidateOffsetGreatThanEndOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.002"/>
+  <testcase name="testCreateSnapshot()" classname="org.apache.kafka.raft.MockLogTest" time="0.004"/>
+  <testcase name="testUpdateLogStartOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.003"/>
+  <testcase name="testValidateUnknownEpochLessThanLastKnownGreaterThanOldestSnapshot()" classname="org.apache.kafka.raft.MockLogTest" time="0.009"/>
+  <testcase name="testReadUpToLogEnd()" classname="org.apache.kafka.raft.MockLogTest" time="0.012"/>
+  <testcase name="testCreateSnapshotMuchLaterEpoch()" classname="org.apache.kafka.raft.MockLogTest" time="0.411"/>
+  <testcase name="testAppendControlRecord()" classname="org.apache.kafka.raft.MockLogTest" time="0.053"/>
+  <testcase name="testUnexpectedAppendOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.002"/>
+  <testcase name="testAssignEpochStartOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.003"/>
+  <testcase name="testValidateOffsetEqualToOldestSnapshotOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.0"/>
+  <testcase name="testCreateSnapshotBeforeLogStartOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.005"/>
+  <testcase name="testCreateSnapshotValidation()" classname="org.apache.kafka.raft.MockLogTest" time="0.001"/>
+  <testcase name="testUpdateHighWatermark()" classname="org.apache.kafka.raft.MockLogTest" time="0.0"/>
+  <testcase name="testMonotonicEpochStartOffset()" classname="org.apache.kafka.raft.MockLogTest" time="0.0"/>
+  <testcase name="testUnflushedRecordsLostAfterReopen()" classname="org.apache.kafka.raft.MockLogTest" time="0.009"/>
+  <testcase name="testCreateSnapshotWithMissingEpoch()" classname="org.apache.kafka.raft.MockLogTest" time="0.026"/>
+  <testcase name="testTruncateFullyToLatestSnapshot()" classname="org.apache.kafka.raft.MockLogTest" time="0.002"/>
+  <testcase name="testAppendAsLeader()" classname="org.apache.kafka.raft.MockLogTest" time="0.015"/>
+  <testcase name="testDecrementHighWatermark()" classname="org.apache.kafka.raft.MockLogTest" time="0.03"/>
+  <testcase name="testMetadataValidation()" classname="org.apache.kafka.raft.MockLogTest" time="0.008"/>
+  <testcase name="testDoesntTruncateFully()" classname="org.apache.kafka.raft.MockLogTest" time="0.015"/>
+  <testcase name="testUpdateLogStartOffsetWillRemoveOlderSnapshot()" classname="org.apache.kafka.raft.MockLogTest" time="0.018"/>
+  <testcase name="testTopicPartition()" classname="org.apache.kafka.raft.MockLogTest" time="0.001"/>
+  <testcase name="testReadUpToHighWatermark()" classname="org.apache.kafka.raft.MockLogTest" time="0.032"/>
+  <testcase name="testTruncateTo()" classname="org.apache.kafka.raft.MockLogTest" time="0.166"/>
+  <testcase name="testUpdateLogStartOffsetWithMissingSnapshot()" classname="org.apache.kafka.raft.MockLogTest" time="0.019"/>
+  <testcase name="testCreateSnapshotLaterThanHighWatermark()" classname="org.apache.kafka.raft.MockLogTest" time="0.019"/>
+  <testcase name="testReadMissingSnapshot()" classname="org.apache.kafka.raft.MockLogTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

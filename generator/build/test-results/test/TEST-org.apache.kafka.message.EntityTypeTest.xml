@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.message.EntityTypeTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2024-04-10T09:02:15" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.058">
+  <properties/>
+  <testcase name="testVerifyTypeMismatches()" classname="org.apache.kafka.message.EntityTypeTest" time="0.051"/>
+  <testcase name="testVerifyTypeMatches()" classname="org.apache.kafka.message.EntityTypeTest" time="0.001"/>
+  <testcase name="testUnknownEntityType()" classname="org.apache.kafka.message.EntityTypeTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

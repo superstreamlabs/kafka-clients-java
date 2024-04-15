@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.coordinator.group.OffsetAndMetadataTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:19:53" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.207">
+  <properties/>
+  <testcase name="testAttributes()" classname="org.apache.kafka.coordinator.group.OffsetAndMetadataTest" time="0.001"/>
+  <testcase name="testFromTransactionalRequest()" classname="org.apache.kafka.coordinator.group.OffsetAndMetadataTest" time="0.17"/>
+  <testcase name="testFromRequest()" classname="org.apache.kafka.coordinator.group.OffsetAndMetadataTest" time="0.005"/>
+  <testcase name="testFromRecord()" classname="org.apache.kafka.coordinator.group.OffsetAndMetadataTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

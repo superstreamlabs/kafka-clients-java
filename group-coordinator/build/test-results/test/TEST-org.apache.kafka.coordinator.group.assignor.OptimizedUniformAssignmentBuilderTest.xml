@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" tests="18" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:19:21" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="1.076">
+  <properties/>
+  <testcase name="testOneMemberNoTopicSubscription()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.23"/>
+  <testcase name="testValidityAndBalanceForLargeSampleSet()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.259"/>
+  <testcase name="testReassignmentWhenOneMemberAddedAfterInitialAssignmentWithTwoMembersTwoTopics()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.072"/>
+  <testcase name="testReassignmentWhenOneSubscriptionRemovedAfterInitialAssignmentWithTwoMembersTwoTopics()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.013"/>
+  <testcase name="testReassignmentWhenOneMemberRemovedAfterInitialAssignmentWithThreeMembersTwoTopics()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.011"/>
+  <testcase name="testReassignmentOnAddingPartitionsWithMemberAndPartitionRacks()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.255"/>
+  <testcase name="testReassignmentOnRackChangesWithMemberAndPartitionRacks()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.012"/>
+  <testcase name="testFirstAssignmentThreeMembersThreeTopicsWithMemberAndPartitionRacks2()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.025"/>
+  <testcase name="testOneMemberSubscribedToNonexistentTopic()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.013"/>
+  <testcase name="testFirstAssignmentTwoMembersTwoTopicsNoMemberRacks()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.005"/>
+  <testcase name="testReassignmentForTwoMembersTwoTopicsGivenUnbalancedPrevAssignment()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.01"/>
+  <testcase name="testFirstAssignmentTwoMembersTwoTopicsNoPartitionRacks()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.001"/>
+  <testcase name="testReassignmentWhenOneSubscriptionRemovedWithMemberAndPartitionRacks()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.001"/>
+  <testcase name="testReassignmentWhenPartitionsAreAddedForTwoMembersTwoTopics()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.007"/>
+  <testcase name="testFirstAssignmentNumMembersGreaterThanTotalNumPartitions()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.007"/>
+  <testcase name="testFirstAssignmentThreeMembersThreeTopicsWithSomeMemberAndPartitionRacks()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.015"/>
+  <testcase name="testFirstAssignmentThreeMembersThreeTopicsWithMemberAndPartitionRacks()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.016"/>
+  <testcase name="testReassignmentOnAddingMemberWithRackAndPartitionRacks()" classname="org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilderTest" time="0.036"/>
+  <system-out><![CDATA[[2024-04-09 14:19:21,357] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:21,371] DEBUG The subscription list is empty, returning an empty assignment (org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilder:143)
+[2024-04-09 14:19:21,606] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:21,869] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:21,916] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:21,918] DEBUG The topic T1-A4s3VTwiI5CTbEp6POw is no longer present in the subscribed topics list (org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilder:279)
+[2024-04-09 14:19:21,918] DEBUG The topic T1-A4s3VTwiI5CTbEp6POw is no longer present in the subscribed topics list (org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilder:279)
+[2024-04-09 14:19:21,931] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:21,943] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,198] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,217] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,261] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,267] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,280] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,289] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,291] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,292] DEBUG The topic T2-B4s3VTwiI5YHbPp6YUQ is no longer present in the subscribed topics list (org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilder:279)
+[2024-04-09 14:19:22,292] DEBUG The topic T2-B4s3VTwiI5YHbPp6YUQ is no longer present in the subscribed topics list (org.apache.kafka.coordinator.group.assignor.OptimizedUniformAssignmentBuilder:279)
+[2024-04-09 14:19:22,293] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,304] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,317] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,341] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+[2024-04-09 14:19:22,373] DEBUG Detected that all members are subscribed to the same set of topics, invoking the optimized assignment algorithm (org.apache.kafka.coordinator.group.assignor.UniformAssignor:77)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

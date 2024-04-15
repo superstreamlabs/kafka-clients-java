@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.internals.BatchBuilderTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:21:29" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="1.708">
+  <properties/>
+  <testcase name="[1] compressionType=none" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.008"/>
+  <testcase name="[2] compressionType=gzip" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.039"/>
+  <testcase name="[3] compressionType=snappy" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.694"/>
+  <testcase name="[4] compressionType=lz4" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.397"/>
+  <testcase name="[5] compressionType=zstd" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.46"/>
+  <testcase name="[1] batchSize=128" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.003"/>
+  <testcase name="[2] batchSize=157" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.006"/>
+  <testcase name="[3] batchSize=256" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.001"/>
+  <testcase name="[4] batchSize=433" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.001"/>
+  <testcase name="[5] batchSize=512" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.002"/>
+  <testcase name="[6] batchSize=777" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.003"/>
+  <testcase name="[7] batchSize=1024" classname="org.apache.kafka.raft.internals.BatchBuilderTest" time="0.009"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

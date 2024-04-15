@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorRuntimeMetricsTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:19:53" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.11">
+  <properties/>
+  <testcase name="testEventQueueSize()" classname="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorRuntimeMetricsTest" time="0.056"/>
+  <testcase name="testThreadIdleRatioSensor()" classname="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorRuntimeMetricsTest" time="0.003"/>
+  <testcase name="testPartitionLoadSensorMetrics()" classname="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorRuntimeMetricsTest" time="0.0"/>
+  <testcase name="testUpdateNumPartitionsMetrics()" classname="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorRuntimeMetricsTest" time="0.044"/>
+  <testcase name="testMetricNames()" classname="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorRuntimeMetricsTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

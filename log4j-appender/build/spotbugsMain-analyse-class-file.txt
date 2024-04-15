@@ -1,0 +1,1 @@
+/Users/shay23bra/memphisdev/superstream-kafka/log4j-appender/build/classes/java/main/org/apache/kafka/log4jappender/KafkaLog4jAppender.class

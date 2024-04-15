@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="8.36.2">
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/deferred/DeferredEvent.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/deferred/DeferredEventQueue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/admin/AdminUtils.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/admin/BrokerMetadata.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/metrics/KafkaYammerMetrics.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/metrics/FilteringJmxReporter.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/metrics/KafkaMetricsGroup.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/mutable/BoundedListTooLongException.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/mutable/BoundedList.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/immutable/ImmutableSet.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/immutable/ImmutableNavigableSet.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/immutable/ImmutableMap.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/immutable/pcollections/PCollectionsImmutableSet.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/immutable/pcollections/PCollectionsImmutableNavigableSet.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/immutable/pcollections/PCollectionsImmutableMap.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/record/BrokerCompressionType.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/RequestAndCompletionHandler.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/Json.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/Scheduler.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/timer/TimerTaskList.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/timer/TimerTaskEntry.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/timer/Timer.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/timer/TimerTask.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/timer/TimingWheel.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/timer/SystemTimer.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/CommandLineUtils.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/ThroughputThrottler.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/TranslatedValueMapView.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/ShutdownableThread.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/InterBrokerSendThread.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/json/JsonArray.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/json/JsonValue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/json/JsonObject.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/json/DecodeJson.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/TopicPartitionFilter.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/FutureUtils.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/PartitionFilter.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/KafkaScheduler.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/CommandDefaultOptions.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/Deadline.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/util/TopicFilter.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/config/ConfigSynonym.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/config/ServerTopicConfigSynonyms.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/network/KafkaAuthorizerServerInfo.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/network/EndpointReadyFutures.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/MetadataVersionValidator.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/TopicIdPartition.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/DirectoryEventHandler.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/serialization/AbstractApiMessageSerde.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/serialization/MetadataParseException.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/serialization/RecordSerde.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/serialization/BytesApiMessageSerde.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/OffsetAndEpoch.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/AdminCommandFailedException.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/ProducerIdsBlock.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/ApiMessageAndVersion.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/CheckpointFile.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/Features.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/AdminOperationException.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/common/MetadataVersion.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/fault/LoggingFaultHandler.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/fault/FaultHandlerException.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/fault/FaultHandler.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/server/fault/ProcessTerminatingFaultHandler.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/common/DirectoryId.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/queue/EventQueue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/queue/KafkaEventQueue.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/Revertable.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/TimelineHashMap.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/TimelineInteger.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/TimelineLong.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/SnapshotRegistry.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/BaseHashTable.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/TimelineObject.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/Snapshot.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/Delta.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/TimelineHashSet.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/timeline/SnapshottableHashTable.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/metadata/AssignmentsHelper.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/server-common/src/main/java/org/apache/kafka/metadata/FeatureLevelListener.java">
+</file>
+</checkstyle>

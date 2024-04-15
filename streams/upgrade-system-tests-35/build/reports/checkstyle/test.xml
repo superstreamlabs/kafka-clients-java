@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="8.36.2">
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/streams/upgrade-system-tests-35/src/test/java/org/apache/kafka/streams/tests/SmokeTestUtil.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/streams/upgrade-system-tests-35/src/test/java/org/apache/kafka/streams/tests/SmokeTestClient.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/streams/upgrade-system-tests-35/src/test/java/org/apache/kafka/streams/tests/SmokeTestDriver.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/streams/upgrade-system-tests-35/src/test/java/org/apache/kafka/streams/tests/StreamsUpgradeTest.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/streams/upgrade-system-tests-35/src/test/java/org/apache/kafka/streams/tests/StreamsSmokeTest.java">
+</file>
+</checkstyle>

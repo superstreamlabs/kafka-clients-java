@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.RaftEventSimulationTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:20:42" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="101.601">
+  <properties/>
+  <testcase name="canMakeProgressIfMajorityIsReachable" classname="org.apache.kafka.raft.RaftEventSimulationTest" time="48.521"/>
+  <testcase name="canElectNewLeaderAfterOldLeaderFailure" classname="org.apache.kafka.raft.RaftEventSimulationTest" time="28.211"/>
+  <testcase name="canElectNewLeaderAfterOldLeaderPartitionedAway" classname="org.apache.kafka.raft.RaftEventSimulationTest" time="10.98"/>
+  <testcase name="canMakeProgressAfterBackToBackLeaderFailures" classname="org.apache.kafka.raft.RaftEventSimulationTest" time="8.281"/>
+  <testcase name="canRecoverFromSingleNodeCommittedDataLoss" classname="org.apache.kafka.raft.RaftEventSimulationTest" time="3.311"/>
+  <testcase name="canRecoverAfterAllNodesKilled" classname="org.apache.kafka.raft.RaftEventSimulationTest" time="1.356"/>
+  <testcase name="canElectInitialLeader" classname="org.apache.kafka.raft.RaftEventSimulationTest" time="0.898"/>
+  <system-out><![CDATA[timestamp = 2024-04-09T14:21:31.452, [integration] RaftEventSimulationTest:canMakeProgressIfMajorityIsReachable = 
+                              |-------------------jqwik-------------------
+tries = 100                   | # of calls to property
+checks = 100                  | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_ONLY   | only try the previously failed sample
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 36         | # of all combined edge cases
+edge-cases#tried = 21         | # of edge cases tried in current run
+seed = -4233798711360889327   | random seed to reproduce generated values
+
+
+timestamp = 2024-04-09T14:21:59.688, [integration] RaftEventSimulationTest:canElectNewLeaderAfterOldLeaderFailure = 
+                              |-------------------jqwik-------------------
+tries = 100                   | # of calls to property
+checks = 100                  | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_ONLY   | only try the previously failed sample
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 108        | # of all combined edge cases
+edge-cases#tried = 17         | # of edge cases tried in current run
+seed = 2625169909355605206    | random seed to reproduce generated values
+
+
+timestamp = 2024-04-09T14:22:10.671, [integration] RaftEventSimulationTest:canElectNewLeaderAfterOldLeaderPartitionedAway = 
+                              |-------------------jqwik-------------------
+tries = 100                   | # of calls to property
+checks = 100                  | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_ONLY   | only try the previously failed sample
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 108        | # of all combined edge cases
+edge-cases#tried = 19         | # of edge cases tried in current run
+seed = -3609489761942137966   | random seed to reproduce generated values
+
+
+timestamp = 2024-04-09T14:22:18.973, [integration] RaftEventSimulationTest:canMakeProgressAfterBackToBackLeaderFailures = 
+                              |-------------------jqwik-------------------
+tries = 100                   | # of calls to property
+checks = 100                  | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_ONLY   | only try the previously failed sample
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 108        | # of all combined edge cases
+edge-cases#tried = 22         | # of edge cases tried in current run
+seed = 9182198022511049787    | random seed to reproduce generated values
+
+
+timestamp = 2024-04-09T14:22:22.290, [integration] RaftEventSimulationTest:canRecoverFromSingleNodeCommittedDataLoss = 
+                              |-------------------jqwik-------------------
+tries = 100                   | # of calls to property
+checks = 100                  | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_ONLY   | only try the previously failed sample
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 81         | # of all combined edge cases
+edge-cases#tried = 10         | # of edge cases tried in current run
+seed = 8322946550750853045    | random seed to reproduce generated values
+
+
+timestamp = 2024-04-09T14:22:23.645, [integration] RaftEventSimulationTest:canRecoverAfterAllNodesKilled = 
+                              |-------------------jqwik-------------------
+tries = 100                   | # of calls to property
+checks = 100                  | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_ONLY   | only try the previously failed sample
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 108        | # of all combined edge cases
+edge-cases#tried = 14         | # of edge cases tried in current run
+seed = 6655134033201337476    | random seed to reproduce generated values
+
+
+timestamp = 2024-04-09T14:22:24.553, [integration] RaftEventSimulationTest:canElectInitialLeader = 
+                              |-------------------jqwik-------------------
+tries = 100                   | # of calls to property
+checks = 100                  | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_ONLY   | only try the previously failed sample
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 108        | # of all combined edge cases
+edge-cases#tried = 13         | # of edge cases tried in current run
+seed = -2901631399515962170   | random seed to reproduce generated values
+
+
+]]></system-out>
+  <system-err><![CDATA[Apr 09, 2024 2:21:31 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+INFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+Apr 09, 2024 2:21:59 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+INFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+Apr 09, 2024 2:22:10 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+INFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+Apr 09, 2024 2:22:22 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+INFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+Apr 09, 2024 2:22:23 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+INFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+]]></system-err>
+</testsuite>

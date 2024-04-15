@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.message.MessageDataGeneratorTest" tests="15" skipped="0" failures="0" errors="0" timestamp="2024-04-10T09:02:17" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.55">
+  <properties/>
+  <testcase name="testInvalidTaggedVersionsNotASubetOfVersions()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.344"/>
+  <testcase name="testInvalidNullDefaultForPotentiallyNonNullableStruct()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.035"/>
+  <testcase name="testInvalidNullDefaultForPotentiallyNonNullableArray()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.003"/>
+  <testcase name="testInvalidFieldName()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.004"/>
+  <testcase name="testInvalidTaggedVersionsWithoutTag()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.003"/>
+  <testcase name="testInvalidFlexibleVersionsRange()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.082"/>
+  <testcase name="testInvalidNullDefaultForInt()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.008"/>
+  <testcase name="testNullDefaultsWithDeprecatedVersions()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.021"/>
+  <testcase name="testDuplicateTags()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.002"/>
+  <testcase name="testInvalidNullDefaultForNullableStruct()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.001"/>
+  <testcase name="testInvalidTaggedVersionsRange()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.001"/>
+  <testcase name="testNullDefaults()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.002"/>
+  <testcase name="testInvalidTagWithoutTaggedVersions()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.001"/>
+  <testcase name="testInvalidNegativeTag()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.002"/>
+  <testcase name="testInvalidSometimesNullableTaggedField()" classname="org.apache.kafka.message.MessageDataGeneratorTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.ResignedStateTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:20:00" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.723">
+  <properties/>
+  <testcase name="testNegativeScenarioAcknowledgeResignation()" classname="org.apache.kafka.raft.ResignedStateTest" time="0.33"/>
+  <testcase name="testResignedState()" classname="org.apache.kafka.raft.ResignedStateTest" time="0.001"/>
+  <testcase name="[1] isLogUpToDate=true" classname="org.apache.kafka.raft.ResignedStateTest" time="0.163"/>
+  <testcase name="[2] isLogUpToDate=false" classname="org.apache.kafka.raft.ResignedStateTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

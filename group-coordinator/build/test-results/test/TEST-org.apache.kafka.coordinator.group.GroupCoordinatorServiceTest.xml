@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" tests="83" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:19:53" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="12.645">
+  <properties/>
+  <testcase name="testListGroupsFailedWithNotCoordinatorException()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="8.099"/>
+  <testcase name="testHeartbeatCoordinatorNotAvailableException()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.319"/>
+  <testcase name="testConsumerGroupHeartbeatWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="testCommitTransactionalOffsets()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.172"/>
+  <testcase name="testListGroupsFailedImmediately()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.01"/>
+  <testcase name="testSyncGroupInvalidGroupId()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.035"/>
+  <testcase name="testDescribeGroupCoordinatorLoadInProgress()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="1.038"/>
+  <testcase name="testConsumerGroupDescribeCoordinatorNotActive()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.035"/>
+  <testcase name="testLeaveGroupThrowsUnknownMemberIdException()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.05"/>
+  <testcase name="testCompleteTransactionWhenNotCoordinatorServiceStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.169"/>
+  <testcase name="testListGroupsWithEmptyTopicPartitions()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.006"/>
+  <testcase name="[1] exception=org.apache.kafka.common.errors.UnknownTopicOrPartitionException, expectedErrorCode=15" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.042"/>
+  <testcase name="[2] exception=org.apache.kafka.common.errors.NotEnoughReplicasException, expectedErrorCode=15" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.006"/>
+  <testcase name="[3] exception=org.apache.kafka.common.errors.TimeoutException, expectedErrorCode=15" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.007"/>
+  <testcase name="[4] exception=org.apache.kafka.common.errors.NotLeaderOrFollowerException, expectedErrorCode=16" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="[5] exception=org.apache.kafka.common.errors.KafkaStorageException, expectedErrorCode=16" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.004"/>
+  <testcase name="[6] exception=org.apache.kafka.common.errors.RecordTooLargeException, expectedErrorCode=-1" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.121"/>
+  <testcase name="[7] exception=org.apache.kafka.common.errors.RecordBatchTooLargeException, expectedErrorCode=-1" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="[8] exception=org.apache.kafka.common.errors.InvalidFetchSizeException: , expectedErrorCode=-1" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.003"/>
+  <testcase name="[9] exception=org.apache.kafka.common.errors.InvalidRequestException: Invalid, expectedErrorCode=42" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.058"/>
+  <testcase name="testDescribeGroups()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.009"/>
+  <testcase name="testLeaveGroup()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.006"/>
+  <testcase name="testListGroups()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.012"/>
+  <testcase name="[1] requireStable=true" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.01"/>
+  <testcase name="[2] requireStable=false" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.01"/>
+  <testcase name="testDeleteOffsetsInvalidGroupId()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.009"/>
+  <testcase name="testConsumerGroupDescribe()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.008"/>
+  <testcase name="testHeartbeatCoordinatorException()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.003"/>
+  <testcase name="[1] exception=org.apache.kafka.common.errors.UnknownTopicOrPartitionException, expectedErrorCode=15, expectedErrorMessage=null" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.009"/>
+  <testcase name="[2] exception=org.apache.kafka.common.errors.NotEnoughReplicasException, expectedErrorCode=15, expectedErrorMessage=null" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.009"/>
+  <testcase name="[3] exception=org.apache.kafka.common.errors.TimeoutException, expectedErrorCode=15, expectedErrorMessage=null" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.006"/>
+  <testcase name="[4] exception=org.apache.kafka.common.errors.NotLeaderOrFollowerException, expectedErrorCode=16, expectedErrorMessage=null" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.051"/>
+  <testcase name="[5] exception=org.apache.kafka.common.errors.KafkaStorageException, expectedErrorCode=16, expectedErrorMessage=null" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.041"/>
+  <testcase name="[6] exception=org.apache.kafka.common.errors.RecordTooLargeException, expectedErrorCode=-1, expectedErrorMessage=null" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.003"/>
+  <testcase name="[7] exception=org.apache.kafka.common.errors.RecordBatchTooLargeException, expectedErrorCode=-1, expectedErrorMessage=null" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.014"/>
+  <testcase name="[8] exception=org.apache.kafka.common.errors.InvalidFetchSizeException: , expectedErrorCode=-1, expectedErrorMessage=null" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.006"/>
+  <testcase name="[9] exception=org.apache.kafka.common.errors.InvalidRequestException: Invalid, expectedErrorCode=42, expectedErrorMessage=Invalid" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="testDeleteGroups()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.018"/>
+  <testcase name="testHeartbeatWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.001"/>
+  <testcase name="testDescribeGroupsWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.001"/>
+  <testcase name="testDeleteOffsets()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.051"/>
+  <testcase name="testJoinGroup()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.013"/>
+  <testcase name="testCommitTransactionalOffsetsWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="testLeaveGroupWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.001"/>
+  <testcase name="testJoinGroupWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.001"/>
+  <testcase name="testOnResignationWithEmptyLeaderEpoch()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.02"/>
+  <testcase name="[1] requireStable=true" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.004"/>
+  <testcase name="[2] requireStable=false" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="testConsumerGroupDescribeInvalidGroupId()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.046"/>
+  <testcase name="testHeartbeat()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.004"/>
+  <testcase name="testConsumerGroupHeartbeat()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.016"/>
+  <testcase name="testListGroupsWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="testGroupMetadataTopicConfigs()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.008"/>
+  <testcase name="testSyncGroupWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.003"/>
+  <testcase name="testSyncGroup()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.008"/>
+  <testcase name="testDeleteGroupsWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.003"/>
+  <testcase name="testPartitionFor()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.002"/>
+  <testcase name="[1] requireStable=true" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.01"/>
+  <testcase name="[2] requireStable=false" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="testSyncGroupWithException()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.006"/>
+  <testcase name="testConsumerGroupDescribeCoordinatorLoadInProgress()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.006"/>
+  <testcase name="testDescribeGroupsInvalidGroupId()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.002"/>
+  <testcase name="testJoinGroupWithException()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.003"/>
+  <testcase name="[1] requireStable=true" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.002"/>
+  <testcase name="[2] requireStable=false" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.002"/>
+  <testcase name="[1] groupId=null" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.007"/>
+  <testcase name="[2] groupId=" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.125"/>
+  <testcase name="testCompleteTransaction()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.023"/>
+  <testcase name="testStartupShutdown()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.041"/>
+  <testcase name="testJoinGroupInvalidGroupId()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.01"/>
+  <testcase name="testCompleteTransactionWithUnexpectedPartition()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.015"/>
+  <testcase name="[1] exception=org.apache.kafka.common.errors.UnknownTopicOrPartitionException, expectedErrorCode=15" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.003"/>
+  <testcase name="[2] exception=org.apache.kafka.common.errors.NotEnoughReplicasException, expectedErrorCode=15" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="[3] exception=org.apache.kafka.common.errors.TimeoutException, expectedErrorCode=15" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.007"/>
+  <testcase name="[4] exception=org.apache.kafka.common.errors.NotLeaderOrFollowerException, expectedErrorCode=16" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.008"/>
+  <testcase name="[5] exception=org.apache.kafka.common.errors.KafkaStorageException, expectedErrorCode=16" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.009"/>
+  <testcase name="[6] exception=org.apache.kafka.common.errors.RecordTooLargeException, expectedErrorCode=-1" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.006"/>
+  <testcase name="[7] exception=org.apache.kafka.common.errors.RecordBatchTooLargeException, expectedErrorCode=-1" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.004"/>
+  <testcase name="[8] exception=org.apache.kafka.common.errors.InvalidFetchSizeException: , expectedErrorCode=-1" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.003"/>
+  <testcase name="[9] exception=org.apache.kafka.common.errors.InvalidRequestException: Invalid, expectedErrorCode=42" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.002"/>
+  <testcase name="testOnElection()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.004"/>
+  <testcase name="testOnResignation()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.005"/>
+  <testcase name="testDeleteOffsetsWhenNotStarted()" classname="org.apache.kafka.coordinator.group.GroupCoordinatorServiceTest" time="0.0"/>
+  <system-out><![CDATA[[2024-04-09 14:19:59,116] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:19:59,124] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:01,372] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:01,373] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:01,691] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:01,697] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:01,871] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:01,872] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:01,901] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:01,902] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:02,473] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:02,488] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:03,195] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:03,196] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:03,394] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:03,394] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,027] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,027] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,049] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,049] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,066] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,066] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,074] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,075] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,082] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,082] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,192] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,192] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,238] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,238] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,251] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,251] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,271] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,271] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,441] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,441] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,454] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,455] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,458] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,458] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,492] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,494] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,504] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,504] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,521] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,522] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,526] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,526] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,535] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,536] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,553] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,554] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,564] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,565] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,587] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,587] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,595] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,596] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,697] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,697] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,717] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,717] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,727] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,727] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,742] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,743] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,752] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,752] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,759] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,760] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,796] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,797] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,835] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,835] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:04,921] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:04,923] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,021] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,021] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,028] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,029] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,042] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,043] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,124] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,124] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,134] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,134] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,142] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,142] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,155] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,155] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,165] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,165] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,167] ERROR SyncGroup request SyncGroupRequestData(groupId='foo', generationId=0, memberId='', groupInstanceId=null, protocolType=null, protocolName=null, assignments=[]) hit an unexpected exception: null (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:408)
+[2024-04-09 14:20:05,173] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,173] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,178] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,178] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,180] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,180] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,181] ERROR JoinGroup request JoinGroupRequestData(groupId='foo', sessionTimeoutMs=0, rebalanceTimeoutMs=-1, memberId='', groupInstanceId=null, protocolType='', protocols=[], reason=null) hit an unexpected exception: null (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:364)
+[2024-04-09 14:20:05,207] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,207] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,258] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,291] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,381] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,381] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,487] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,491] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,491] INFO Shutting down. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1090)
+[2024-04-09 14:20:05,502] INFO Shutdown complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1094)
+[2024-04-09 14:20:05,540] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,541] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,546] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,556] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,574] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,575] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,580] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,582] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,590] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,591] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,599] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,599] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,610] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,611] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,622] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,624] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,637] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,638] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,642] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,643] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,652] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,653] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,658] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,659] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+[2024-04-09 14:20:05,664] INFO Starting up. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1074)
+[2024-04-09 14:20:05,664] INFO Startup complete. (org.apache.kafka.coordinator.group.runtime.CoordinatorLoader:1077)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

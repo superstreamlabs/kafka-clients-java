@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.internals.RecordsBatchReaderTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:20:22" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="18.156">
+  <properties/>
+  <testcase name="[1] compressionType=none" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="7.038"/>
+  <testcase name="[2] compressionType=gzip" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="1.11"/>
+  <testcase name="[3] compressionType=snappy" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="1.81"/>
+  <testcase name="[4] compressionType=lz4" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="1.234"/>
+  <testcase name="[5] compressionType=zstd" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="1.642"/>
+  <testcase name="testLeaderChangeControlBatch()" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="0.401"/>
+  <testcase name="[1] compressionType=none" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="0.887"/>
+  <testcase name="[2] compressionType=gzip" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="0.716"/>
+  <testcase name="[3] compressionType=snappy" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="0.672"/>
+  <testcase name="[4] compressionType=lz4" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="0.852"/>
+  <testcase name="[5] compressionType=zstd" classname="org.apache.kafka.raft.internals.RecordsBatchReaderTest" time="0.687"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,4 @@
+log4j: Parsing for [root] with value=[INFO, KAFKA].
+log4j: Level token is [INFO].
+log4j: Category root set to INFO
+log4j:ERROR Attempted to append to closed appender named [KAFKA].

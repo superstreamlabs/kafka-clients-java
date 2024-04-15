@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.internals.BatchAccumulatorTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:20:00" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="2.347">
+  <properties/>
+  <testcase name="[1] correctOffset=false" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.238"/>
+  <testcase name="[2] correctOffset=true" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.034"/>
+  <testcase name="testSingleBatchAccumulation()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.047"/>
+  <testcase name="testRecordsAreSplit()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.008"/>
+  <testcase name="testLingerBeginsOnFirstWrite()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.001"/>
+  <testcase name="testForceDrain()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.006"/>
+  <testcase name="testDrainDoesNotBlockWithConcurrentAppend()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="1.482"/>
+  <testcase name="testForceDrainBeforeAppendLeaderChangeMessage()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.081"/>
+  <testcase name="testLingerIgnoredIfAccumulatorEmpty()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.005"/>
+  <testcase name="testUnflushedBuffersReleasedByClose()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.033"/>
+  <testcase name="testCompletedBatchReleaseBuffer()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.003"/>
+  <testcase name="testMultipleBatchAccumulation()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.075"/>
+  <testcase name="testLeaderChangeMessageWritten()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.01"/>
+  <testcase name="testCloseWhenEmpty()" classname="org.apache.kafka.raft.internals.BatchAccumulatorTest" time="0.014"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

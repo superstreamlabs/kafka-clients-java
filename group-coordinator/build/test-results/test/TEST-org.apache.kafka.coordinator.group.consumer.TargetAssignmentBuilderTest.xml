@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:19:16" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="1.839">
+  <properties/>
+  <testcase name="testPartialAssignmentUpdate()" classname="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" time="1.293"/>
+  <testcase name="testCreateAssignmentMemberSpec()" classname="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" time="0.217"/>
+  <testcase name="testEmpty()" classname="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" time="0.006"/>
+  <testcase name="testAssignmentHasNotChanged()" classname="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" time="0.011"/>
+  <testcase name="testNewMember()" classname="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" time="0.001"/>
+  <testcase name="testUpdateMember()" classname="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" time="0.022"/>
+  <testcase name="testDeleteMember()" classname="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" time="0.013"/>
+  <testcase name="testStaticMemberReplace()" classname="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" time="0.005"/>
+  <testcase name="testAssignmentSwapped()" classname="org.apache.kafka.coordinator.group.consumer.TargetAssignmentBuilderTest" time="0.042"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

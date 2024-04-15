@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorMetricsShardTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:19:46" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="1.251">
+  <properties/>
+  <testcase name="testTimelineGaugeCounters()" classname="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorMetricsShardTest" time="1.16"/>
+  <testcase name="testConsumerGroupStateTransitionMetrics()" classname="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorMetricsShardTest" time="0.058"/>
+  <testcase name="testGenericGroupStateTransitionMetrics()" classname="org.apache.kafka.coordinator.group.metrics.GroupCoordinatorMetricsShardTest" time="0.025"/>
+  <system-out><![CDATA[[2024-04-09 14:19:47,888] DEBUG Creating in-memory snapshot 1000 (org.apache.kafka.timeline.SnapshotRegistry:203)
+[2024-04-09 14:19:47,913] DEBUG Creating in-memory snapshot 2000 (org.apache.kafka.timeline.SnapshotRegistry:203)
+[2024-04-09 14:19:47,957] DEBUG Creating in-memory snapshot 1000 (org.apache.kafka.timeline.SnapshotRegistry:203)
+[2024-04-09 14:19:47,969] DEBUG Creating in-memory snapshot 2000 (org.apache.kafka.timeline.SnapshotRegistry:203)
+[2024-04-09 14:19:47,971] DEBUG Creating in-memory snapshot 3000 (org.apache.kafka.timeline.SnapshotRegistry:203)
+[2024-04-09 14:19:47,971] DEBUG Creating in-memory snapshot 4000 (org.apache.kafka.timeline.SnapshotRegistry:203)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

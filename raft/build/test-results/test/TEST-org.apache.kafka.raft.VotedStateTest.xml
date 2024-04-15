@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.VotedStateTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:21:09" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.184">
+  <properties/>
+  <testcase name="[1] isLogUpToDate=true" classname="org.apache.kafka.raft.VotedStateTest" time="0.137"/>
+  <testcase name="[2] isLogUpToDate=false" classname="org.apache.kafka.raft.VotedStateTest" time="0.021"/>
+  <testcase name="testElectionTimeout()" classname="org.apache.kafka.raft.VotedStateTest" time="0.004"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

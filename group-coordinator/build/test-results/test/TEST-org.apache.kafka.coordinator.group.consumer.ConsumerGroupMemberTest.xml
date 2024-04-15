@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.coordinator.group.consumer.ConsumerGroupMemberTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:19:53" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.278">
+  <properties/>
+  <testcase name="testAsConsumerGroupDescribeWithTargetAssignmentNull()" classname="org.apache.kafka.coordinator.group.consumer.ConsumerGroupMemberTest" time="0.063"/>
+  <testcase name="testUpdateWithConsumerGroupMemberMetadataValue()" classname="org.apache.kafka.coordinator.group.consumer.ConsumerGroupMemberTest" time="0.126"/>
+  <testcase name="testNewMember()" classname="org.apache.kafka.coordinator.group.consumer.ConsumerGroupMemberTest" time="0.059"/>
+  <testcase name="testUpdateMember()" classname="org.apache.kafka.coordinator.group.consumer.ConsumerGroupMemberTest" time="0.001"/>
+  <testcase name="testAsConsumerGroupDescribeMember()" classname="org.apache.kafka.coordinator.group.consumer.ConsumerGroupMemberTest" time="0.018"/>
+  <testcase name="testEquals()" classname="org.apache.kafka.coordinator.group.consumer.ConsumerGroupMemberTest" time="0.001"/>
+  <testcase name="testUpdateWithConsumerGroupCurrentMemberAssignmentValue()" classname="org.apache.kafka.coordinator.group.consumer.ConsumerGroupMemberTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

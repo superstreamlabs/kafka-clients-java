@@ -1,0 +1,163 @@
+!§[2024-04-09 14:19:55,049] ERROR The leader sent a snapshot id with a valid end offset 100 but with an invalid epoch -1 (org.apache.kafka.raft.KafkaRaftClient:1146)
+!¢[2024-04-09 14:19:55,063] ERROR The leader sent a snapshot id with a valid epoch 1 but with an invalid end offset -1 (org.apache.kafka.raft.KafkaRaftClient:1153)
+QSï[2024-04-09 14:20:20,590] ERROR Request OutboundRequest(correlationId=0, data=VoteRequestData(clusterId='clusterId', topics=[TopicData(topicName='topic', partitions=[PartitionData(partitionIndex=0, candidateEpoch=5, candidateId=1, lastOffsetEpoch=4, lastOffset=329)])]), createdTimeMs=1712661620557, destinationId=2) failed due to unsupported version error (org.apache.kafka.raft.KafkaNetworkChannel:128)
+QSTorg.apache.kafka.common.errors.UnsupportedVersionException: Api VOTE with version 0
+QS¯[2024-04-09 14:20:20,629] ERROR Request OutboundRequest(correlationId=1, data=BeginQuorumEpochRequestData(clusterId='clusterId', topics=[TopicData(topicName='topic', partitions=[PartitionData(partitionIndex=0, leaderId=1, leaderEpoch=5)])]), createdTimeMs=1712661620557, destinationId=2) failed due to unsupported version error (org.apache.kafka.raft.KafkaNetworkChannel:128)
+QSborg.apache.kafka.common.errors.UnsupportedVersionException: Api BEGIN_QUORUM_EPOCH with version 0
+QSè[2024-04-09 14:20:20,630] ERROR Request OutboundRequest(correlationId=2, data=EndQuorumEpochRequestData(clusterId='clusterId', topics=[TopicData(topicName='topic', partitions=[PartitionData(partitionIndex=0, leaderId=5, leaderEpoch=1, preferredSuccessors=[2])])]), createdTimeMs=1712661620557, destinationId=2) failed due to unsupported version error (org.apache.kafka.raft.KafkaNetworkChannel:128)
+QS`org.apache.kafka.common.errors.UnsupportedVersionException: Api END_QUORUM_EPOCH with version 0
+QSè[2024-04-09 14:20:20,634] ERROR Request OutboundRequest(correlationId=3, data=FetchRequestData(clusterId=null, replicaId=-1, replicaState=ReplicaState(replicaId=1, replicaEpoch=-1), maxWaitMs=0, minBytes=0, maxBytes=2147483647, isolationLevel=0, sessionId=0, sessionEpoch=-1, topics=[FetchTopic(topic='topic', topicId=tlm3H9PyTr-TLlWZBaprsA, partitions=[FetchPartition(partition=0, currentLeaderEpoch=5, fetchOffset=333, lastFetchedEpoch=5, logStartOffset=-1, partitionMaxBytes=0)])], forgottenTopicsData=[], rackId=''), createdTimeMs=1712661620557, destinationId=2) failed due to unsupported version error (org.apache.kafka.raft.KafkaNetworkChannel:128)
+QSVorg.apache.kafka.common.errors.UnsupportedVersionException: Api FETCH with version 16
+QTê[2024-04-09 14:20:20,664] ERROR Request OutboundRequest(correlationId=0, data=VoteRequestData(clusterId='clusterId', topics=[TopicData(topicName='topic', partitions=[PartitionData(partitionIndex=0, candidateEpoch=5, candidateId=1, lastOffsetEpoch=4, lastOffset=329)])]), createdTimeMs=1712661620640, destinationId=2) failed due to authentication error (org.apache.kafka.raft.KafkaNetworkChannel:135)
+QTNorg.apache.kafka.common.errors.AuthenticationException: Authentication failed
+QTÛ[2024-04-09 14:20:20,665] ERROR Request OutboundRequest(correlationId=1, data=BeginQuorumEpochRequestData(clusterId='clusterId', topics=[TopicData(topicName='topic', partitions=[PartitionData(partitionIndex=0, leaderId=1, leaderEpoch=5)])]), createdTimeMs=1712661620640, destinationId=2) failed due to authentication error (org.apache.kafka.raft.KafkaNetworkChannel:135)
+QTNorg.apache.kafka.common.errors.AuthenticationException: Authentication failed
+QTä[2024-04-09 14:20:20,666] ERROR Request OutboundRequest(correlationId=2, data=EndQuorumEpochRequestData(clusterId='clusterId', topics=[TopicData(topicName='topic', partitions=[PartitionData(partitionIndex=0, leaderId=5, leaderEpoch=1, preferredSuccessors=[2])])]), createdTimeMs=1712661620640, destinationId=2) failed due to authentication error (org.apache.kafka.raft.KafkaNetworkChannel:135)
+QTNorg.apache.kafka.common.errors.AuthenticationException: Authentication failed
+QTä[2024-04-09 14:20:20,666] ERROR Request OutboundRequest(correlationId=3, data=FetchRequestData(clusterId=null, replicaId=-1, replicaState=ReplicaState(replicaId=1, replicaEpoch=-1), maxWaitMs=0, minBytes=0, maxBytes=2147483647, isolationLevel=0, sessionId=0, sessionEpoch=-1, topics=[FetchTopic(topic='topic', topicId=V18BPcwBQm24ACtGIhhdJA, partitions=[FetchPartition(partition=0, currentLeaderEpoch=5, fetchOffset=333, lastFetchedEpoch=5, logStartOffset=-1, partitionMaxBytes=0)])], forgottenTopicsData=[], rackId=''), createdTimeMs=1712661620640, destinationId=2) failed due to authentication error (org.apache.kafka.raft.KafkaNetworkChannel:135)
+QTNorg.apache.kafka.common.errors.AuthenticationException: Authentication failed
+QU∆api key VOTE, response VoteResponseData(errorCode=42, topics=[TopicData(topicName='topic', partitions=[PartitionData(partitionIndex=0, errorCode=0, leaderId=5, leaderEpoch=1, voteGranted=false)])])
+QU[api key BEGIN_QUORUM_EPOCH, response BeginQuorumEpochResponseData(errorCode=42, topics=[])
+QUWapi key END_QUORUM_EPOCH, response EndQuorumEpochResponseData(errorCode=42, topics=[])
+QUwapi key FETCH, response FetchResponseData(throttleTimeMs=0, errorCode=42, sessionId=0, responses=[], nodeEndpoints=[])
+HOLtimestamp = 2024-04-09T14:20:46.459, RecordsIteratorTest:testFileRecords = 
+HOS                              |-----------------------jqwik-----------------------
+HO7tries = 50                    | # of calls to property
+HO8checks = 50                   | # of not rejected calls
+HOBgeneration = RANDOMIZED       | parameters are randomly generated
+HOQafter-failure = SAMPLE_FIRST  | try previously failed sample, then previous seed
+HOBwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+HO8edge-cases#mode = MIXIN       | edge cases are mixed in
+HO=edge-cases#total = 18         | # of all combined edge cases
+HOEedge-cases#tried = 12         | # of edge cases tried in current run
+HOJseed = 9149203475124908502    | random seed to reproduce generated values
+HO
+HO
+»’Ê[2024-04-09 14:21:03,883] ERROR The latest computed high watermark 5 is smaller than the current value 10, which suggests that one of the voters has lost committed data. Full voter replication state: [ReplicaState(nodeId=0, endOffset=Optional[LogOffsetMetadata(offset=10, metadata=Optional.empty)], lastFetchTimestamp=-1, lastCaughtUpTimestamp=-1, hasAcknowledgedLeader=true), ReplicaState(nodeId=1, endOffset=Optional[LogOffsetMetadata(offset=5, metadata=Optional.empty)], lastFetchTimestamp=1712661663878, lastCaughtUpTimestamp=1712661663878, hasAcknowledgedLeader=true)] (org.apache.kafka.raft.LeaderState:245)
+H¿Ntimestamp = 2024-04-09T14:21:09.529, RecordsIteratorTest:testMemoryRecords = 
+H¿S                              |-----------------------jqwik-----------------------
+H¿7tries = 50                    | # of calls to property
+H¿8checks = 50                   | # of not rejected calls
+H¿Bgeneration = RANDOMIZED       | parameters are randomly generated
+H¿Qafter-failure = SAMPLE_FIRST  | try previously failed sample, then previous seed
+H¿Bwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+H¿8edge-cases#mode = MIXIN       | edge cases are mixed in
+H¿=edge-cases#total = 18         | # of all combined edge cases
+H¿Eedge-cases#tried = 10         | # of edge cases tried in current run
+H¿Jseed = -5393001426248610266   | random seed to reproduce generated values
+H¿
+H¿
+Õªstimestamp = 2024-04-09T14:21:31.452, [integration] RaftEventSimulationTest:canMakeProgressIfMajorityIsReachable = 
+ÕªK                              |-------------------jqwik-------------------
+Õª7tries = 100                   | # of calls to property
+Õª8checks = 100                  | # of not rejected calls
+ÕªBgeneration = RANDOMIZED       | parameters are randomly generated
+ÕªFafter-failure = SAMPLE_ONLY   | only try the previously failed sample
+ÕªBwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+Õª8edge-cases#mode = MIXIN       | edge cases are mixed in
+Õª=edge-cases#total = 36         | # of all combined edge cases
+ÕªEedge-cases#tried = 21         | # of edge cases tried in current run
+ÕªJseed = -4233798711360889327   | random seed to reproduce generated values
+Õª
+Õª
+ ÕŒzApr 09, 2024 2:21:31 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+ ÕŒWINFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+H´Ntimestamp = 2024-04-09T14:21:58.531, RecordsIteratorTest:testCrcValidation = 
+H´S                              |-----------------------jqwik-----------------------
+H´7tries = 50                    | # of calls to property
+H´8checks = 50                   | # of not rejected calls
+H´Bgeneration = RANDOMIZED       | parameters are randomly generated
+H´Qafter-failure = SAMPLE_FIRST  | try previously failed sample, then previous seed
+H´Bwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+H´8edge-cases#mode = MIXIN       | edge cases are mixed in
+H´=edge-cases#total = 18         | # of all combined edge cases
+H´Eedge-cases#tried = 13         | # of edge cases tried in current run
+H´Jseed = 527323498992002279     | random seed to reproduce generated values
+H´
+H´
+ÕŒutimestamp = 2024-04-09T14:21:59.688, [integration] RaftEventSimulationTest:canElectNewLeaderAfterOldLeaderFailure = 
+ÕŒK                              |-------------------jqwik-------------------
+ÕŒ7tries = 100                   | # of calls to property
+ÕŒ8checks = 100                  | # of not rejected calls
+ÕŒBgeneration = RANDOMIZED       | parameters are randomly generated
+ÕŒFafter-failure = SAMPLE_ONLY   | only try the previously failed sample
+ÕŒBwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+ÕŒ8edge-cases#mode = MIXIN       | edge cases are mixed in
+ÕŒ=edge-cases#total = 108        | # of all combined edge cases
+ÕŒEedge-cases#tried = 17         | # of edge cases tried in current run
+ÕŒJseed = 2625169909355605206    | random seed to reproduce generated values
+ÕŒ
+ÕŒ
+ ÕœzApr 09, 2024 2:21:59 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+ ÕœWINFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+Õœ}timestamp = 2024-04-09T14:22:10.671, [integration] RaftEventSimulationTest:canElectNewLeaderAfterOldLeaderPartitionedAway = 
+ÕœK                              |-------------------jqwik-------------------
+Õœ7tries = 100                   | # of calls to property
+Õœ8checks = 100                  | # of not rejected calls
+ÕœBgeneration = RANDOMIZED       | parameters are randomly generated
+ÕœFafter-failure = SAMPLE_ONLY   | only try the previously failed sample
+ÕœBwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+Õœ8edge-cases#mode = MIXIN       | edge cases are mixed in
+Õœ=edge-cases#total = 108        | # of all combined edge cases
+ÕœEedge-cases#tried = 19         | # of edge cases tried in current run
+ÕœJseed = -3609489761942137966   | random seed to reproduce generated values
+Õœ
+Õœ
+ Õ–zApr 09, 2024 2:22:10 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+ Õ–WINFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+Õ–{timestamp = 2024-04-09T14:22:18.973, [integration] RaftEventSimulationTest:canMakeProgressAfterBackToBackLeaderFailures = 
+Õ–K                              |-------------------jqwik-------------------
+Õ–7tries = 100                   | # of calls to property
+Õ–8checks = 100                  | # of not rejected calls
+Õ–Bgeneration = RANDOMIZED       | parameters are randomly generated
+Õ–Fafter-failure = SAMPLE_ONLY   | only try the previously failed sample
+Õ–Bwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+Õ–8edge-cases#mode = MIXIN       | edge cases are mixed in
+Õ–=edge-cases#total = 108        | # of all combined edge cases
+Õ–Eedge-cases#tried = 22         | # of edge cases tried in current run
+Õ–Jseed = 9182198022511049787    | random seed to reproduce generated values
+Õ–
+Õ–
+Õ—xtimestamp = 2024-04-09T14:22:22.290, [integration] RaftEventSimulationTest:canRecoverFromSingleNodeCommittedDataLoss = 
+Õ—K                              |-------------------jqwik-------------------
+Õ—7tries = 100                   | # of calls to property
+Õ—8checks = 100                  | # of not rejected calls
+Õ—Bgeneration = RANDOMIZED       | parameters are randomly generated
+Õ—Fafter-failure = SAMPLE_ONLY   | only try the previously failed sample
+Õ—Bwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+Õ—8edge-cases#mode = MIXIN       | edge cases are mixed in
+Õ—=edge-cases#total = 81         | # of all combined edge cases
+Õ—Eedge-cases#tried = 10         | # of edge cases tried in current run
+Õ—Jseed = 8322946550750853045    | random seed to reproduce generated values
+Õ—
+Õ—
+ Õ“zApr 09, 2024 2:22:22 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+ Õ“WINFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+Õ“ltimestamp = 2024-04-09T14:22:23.645, [integration] RaftEventSimulationTest:canRecoverAfterAllNodesKilled = 
+Õ“K                              |-------------------jqwik-------------------
+Õ“7tries = 100                   | # of calls to property
+Õ“8checks = 100                  | # of not rejected calls
+Õ“Bgeneration = RANDOMIZED       | parameters are randomly generated
+Õ“Fafter-failure = SAMPLE_ONLY   | only try the previously failed sample
+Õ“Bwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+Õ“8edge-cases#mode = MIXIN       | edge cases are mixed in
+Õ“=edge-cases#total = 108        | # of all combined edge cases
+Õ“Eedge-cases#tried = 14         | # of edge cases tried in current run
+Õ“Jseed = 6655134033201337476    | random seed to reproduce generated values
+Õ“
+Õ“
+ Õ”zApr 09, 2024 2:22:23 PM net.jqwik.engine.properties.RandomizedShrinkablesGenerator logEdgeCasesOutnumberTriesIfApplicable
+ Õ”WINFO: Edge case generation exceeds number of tries. Stopped after 108 generated cases.
+Õ”dtimestamp = 2024-04-09T14:22:24.553, [integration] RaftEventSimulationTest:canElectInitialLeader = 
+Õ”K                              |-------------------jqwik-------------------
+Õ”7tries = 100                   | # of calls to property
+Õ”8checks = 100                  | # of not rejected calls
+Õ”Bgeneration = RANDOMIZED       | parameters are randomly generated
+Õ”Fafter-failure = SAMPLE_ONLY   | only try the previously failed sample
+Õ”Bwhen-fixed-seed = ALLOW       | fixing the random seed is allowed
+Õ”8edge-cases#mode = MIXIN       | edge cases are mixed in
+Õ”=edge-cases#total = 108        | # of all combined edge cases
+Õ”Eedge-cases#tried = 13         | # of edge cases tried in current run
+Õ”Jseed = -2901631399515962170   | random seed to reproduce generated values
+Õ”
+Õ”

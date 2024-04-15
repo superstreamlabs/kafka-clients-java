@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.internals.TimeRatioTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:21:10" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.08">
+  <properties/>
+  <testcase name="testRatio()" classname="org.apache.kafka.raft.internals.TimeRatioTest" time="0.057"/>
+  <testcase name="testRatioMisalignedWindow()" classname="org.apache.kafka.raft.internals.TimeRatioTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.snapshot.FileRawSnapshotTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:21:06" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.929">
+  <properties/>
+  <testcase name="testBatchWriteReadSnapshot()" classname="org.apache.kafka.snapshot.FileRawSnapshotTest" time="0.539"/>
+  <testcase name="testCreateSnapshotWithSameId()" classname="org.apache.kafka.snapshot.FileRawSnapshotTest" time="0.037"/>
+  <testcase name="testPartialWriteReadSnapshot()" classname="org.apache.kafka.snapshot.FileRawSnapshotTest" time="0.113"/>
+  <testcase name="testBufferWriteReadSnapshot()" classname="org.apache.kafka.snapshot.FileRawSnapshotTest" time="0.038"/>
+  <testcase name="testAbortedSnapshot()" classname="org.apache.kafka.snapshot.FileRawSnapshotTest" time="0.035"/>
+  <testcase name="testAppendToFrozenSnapshot()" classname="org.apache.kafka.snapshot.FileRawSnapshotTest" time="0.01"/>
+  <testcase name="testWritingSnapshot()" classname="org.apache.kafka.snapshot.FileRawSnapshotTest" time="0.096"/>
+  <testcase name="testWriteReadSnapshot()" classname="org.apache.kafka.snapshot.FileRawSnapshotTest" time="0.025"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

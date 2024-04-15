@@ -1,0 +1,301 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+   <head>
+      <meta charset="UTF-8"/>
+      <title>SpotBugs Report</title>
+      <style type="text/css">
+		.tablerow0 {
+			background: #EEEEEE;
+		}
+
+		.tablerow1 {
+			background: white;
+		}
+
+		.detailrow0 {
+			background: #EEEEEE;
+		}
+
+		.detailrow1 {
+			background: white;
+		}
+
+		.tableheader {
+			background: #b9b9fe;
+			font-size: larger;
+		}
+
+		.tablerow0:hover, .tablerow1:hover {
+			background: #aaffaa;
+		}
+
+		.priority-1 {
+				color: red;
+				font-weight: bold;
+		}
+		.priority-2 {
+				color: orange;
+				font-weight: bold;
+		}
+		.priority-3 {
+				color: green;
+				font-weight: bold;
+		}
+		.priority-4 {
+				color: blue;
+				font-weight: bold;
+		}
+		</style>
+      <script type="text/javascript">
+			function toggleRow(elid) {
+				if (document.getElementById) {
+					element = document.getElementById(elid);
+					if (element) {
+						if (element.style.display == 'none') {
+							element.style.display = 'block';
+							//window.status = 'Toggle on!';
+						} else {
+							element.style.display = 'none';
+							//window.status = 'Toggle off!';
+						}
+					}
+				}
+			}
+		</script>
+   </head>
+   <body>
+      <h1>
+         <a href="https://spotbugs.github.io/">SpotBugs</a> Report</h1>
+      <h2>Project Information</h2>
+      <p>Project: 
+		storage (spotbugsMain)</p>
+      <p>SpotBugs version: 4.8.0</p>
+      <p>Code analyzed:</p>
+      <ul>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/storage/RemoteLogManagerConfig.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/storage/ClassLoaderAwareRemoteStorageManager.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemotePartitionDeleteMetadataRecordJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataSnapshotRecord$SegmentLeaderEpochEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataUpdateRecordJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemotePartitionDeleteMetadataRecordJsonConverter$TopicIdPartitionEntryJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataUpdateRecordJsonConverter$TopicIdPartitionEntryJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataUpdateRecord$TopicIdPartitionEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataSnapshotRecordJsonConverter$SegmentLeaderEpochEntryJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemotePartitionDeleteMetadataRecord.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataRecordJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataRecordJsonConverter$TopicIdPartitionEntryJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataUpdateRecord.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataSnapshotRecordJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataUpdateRecord$RemoteLogSegmentIdEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataRecord$SegmentLeaderEpochEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemotePartitionDeleteMetadataRecord$TopicIdPartitionEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataRecord.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataRecordJsonConverter$RemoteLogSegmentIdEntryJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataRecord$TopicIdPartitionEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataRecordJsonConverter$SegmentLeaderEpochEntryJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/MetadataRecordType.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataSnapshotRecord.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/MetadataJsonConverters.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataRecord$RemoteLogSegmentIdEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/generated/RemoteLogSegmentMetadataUpdateRecordJsonConverter$RemoteLogSegmentIdEntryJsonConverter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/ConsumerTask$StartAndEndOffsetHolder.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/ProducerManager.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemotePartitionMetadataStore.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/ProducerManager$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemoteLogMetadataSnapshotFile$Snapshot.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemoteLogMetadataCache$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemoteLogMetadataCache.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/TopicBasedRemoteLogMetadataManager.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemoteLogSegmentMetadataSnapshot.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/ConsumerTask.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/serialization/RemoteLogMetadataSerde$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/serialization/RemoteLogSegmentMetadataSnapshotTransform.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/serialization/RemotePartitionDeleteMetadataTransform.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/serialization/RemoteLogSegmentMetadataUpdateTransform.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/serialization/RemoteLogMetadataSerde$RemoteLogMetadataFormatter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/serialization/RemoteLogMetadataTransform.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/serialization/RemoteLogMetadataSerde.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/serialization/RemoteLogSegmentMetadataTransform.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemoteLogMetadataSnapshotFile.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/ConsumerManager.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/CommittedOffsetsFile$EntryFormatter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemoteLogLeaderEpochState.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemoteLogMetadataTopicPartitioner.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/TopicBasedRemoteLogMetadataManagerConfig.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/CommittedOffsetsFile.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/ClassLoaderAwareRemoteLogMetadataManager.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/CommittedOffsetsFile$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemotePartitionMetadataEventHandler.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/FileBasedRemoteLogMetadataCache.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/FileBasedRemoteLogMetadataCache$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/ConsumerTask$UserTopicIdPartition.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/server/log/remote/metadata/storage/RemoteLogLeaderEpochState$Action.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/PartitionMetadataReadBuffer.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/LeaderEpochCheckpointFile$Formatter.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/CleanShutdownFileHandler$Content.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/CheckpointFileWithFailureHandler.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/LeaderEpochCheckpointFile.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/InMemoryLeaderEpochCheckpoint.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/LeaderEpochCheckpoint.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/LeaderEpochCheckpointFile$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/PartitionMetadataFile.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/CleanShutdownFileHandler.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/checkpoint/PartitionMetadata.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/epoch/LeaderEpochFileCache.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteLogReadResult.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteIndexCache$Entry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/BatchMetadata.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/ProducerStateManagerConfig.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteStorageThreadPool$3.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LastRecord.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogValidator$ApiRecordError.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/EpochEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/TransactionIndex$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LazyIndex$IndexWrapper.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogConfig.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteStorageThreadPool$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/OffsetPosition.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/TxnMetadata.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/TransactionIndex.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/IndexEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogOffsetSnapshot.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/SnapshotFile.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteStorageThreadPool$RemoteStorageThreadFactory.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogValidator$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/CompletedTxn.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteIndexCache.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogDirFailureChannel.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/IndexOffsetOverflowException.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogSegment$2.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogAppendInfo.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/FetchDataInfo.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/TxnIndexSearchResult.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/AppendOrigin.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/FetchParams.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogStartOffsetIncrementReason.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LazyIndex$IndexType.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogConfig$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LazyIndex$IndexValue.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/FetchPartitionData.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/AbstractIndex.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteStorageThreadPool$2.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogValidator.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogValidator$MetricsRecorder.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogOffsetMetadata.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogSegments.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogSegment$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/AbortedTxn.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogReadInfo.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RecordValidationException.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/ThrottledReplicaListValidator.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/AbstractIndex$SearchResultType.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LazyIndex.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/SkimpyOffsetMap.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LazyIndex$IndexFile.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/CorruptIndexException.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/OffsetIndex.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/ProducerAppendInfo.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/VerificationStateEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogConfig$LogConfigDef.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/TimestampOffset.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/CorruptSnapshotException.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogOffsetsListener$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/ProducerStateManager.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/StorageAction.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/CleanerConfig.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogSegment.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogConfig$RemoteLogConfig.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/TimeIndex.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/OffsetMap.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LeaderHwChange.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteStorageFetchInfo.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RollParams.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/IndexSearchType.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteIndexCache$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LazyIndex$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/FetchIsolation.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/AbstractIndex$1.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/RemoteStorageThreadPool.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogValidator$ValidationResult.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogOffsetsListener.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/VerificationGuard.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LoadedLogOffsets.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/ProducerStateEntry.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogConfig$MessageFormatVersion.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/TransactionIndex$AbortedTxnWithPosition.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogFileUtils.class</li>
+         <li>/Users/shay23bra/memphisdev/superstream-kafka/storage/build/classes/java/main/org/apache/kafka/storage/internals/log/LogSegmentOffsetOverflowException.class</li>
+      </ul>
+      <p>
+         <br/>
+         <br/>
+      </p>
+      <h2>Metrics</h2>
+      <p>8438 lines of code analyzed,
+	in 153 classes, 
+	in 7 packages.</p>
+      <table width="500" cellpadding="5" cellspacing="2">
+         <tr class="tableheader">
+            <th align="left">Metric</th>
+            <th align="right">Total</th>
+            <th align="right">Density*</th>
+         </tr>
+         <tr class="tablerow0">
+            <td>High Priority Warnings</td>
+            <td align="right"/>
+            <td align="right">0.00</td>
+         </tr>
+         <tr class="tablerow1">
+            <td>Medium Priority Warnings</td>
+            <td align="right"/>
+            <td align="right">0.00</td>
+         </tr>
+         <tr class="$totalClass">
+            <td>
+               <b>Total Warnings</b>
+            </td>
+            <td align="right">
+               <b>0</b>
+            </td>
+            <td align="right">
+               <b>0.00</b>
+            </td>
+         </tr>
+      </table>
+      <p>
+         <i>(* Defects per Thousand lines of non-commenting source statements)</i>
+      </p>
+      <p>
+         <br/>
+         <br/>
+      </p>
+      <h2>Contents</h2>
+      <ul>
+         <li>
+            <a href="#Details">Details</a>
+         </li>
+      </ul>
+      <h1>Summary</h1>
+      <table width="500" cellpadding="5" cellspacing="2">
+         <tr class="tableheader">
+            <th align="left">Warning Type</th>
+            <th align="right">Number</th>
+         </tr>
+         <tr class="tablerow0">
+            <td>
+               <b>Total</b>
+            </td>
+            <td align="right">
+               <b>0</b>
+            </td>
+         </tr>
+      </table>
+      <h1>Warnings</h1>
+      <p>Click on a warning row to see full context information.</p>
+      <h1>
+         <a name="Details">Details</a>
+      </h1>
+   </body>
+</html>

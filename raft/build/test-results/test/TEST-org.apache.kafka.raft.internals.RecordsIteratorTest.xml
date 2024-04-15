@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="org.apache.kafka.raft.internals.RecordsIteratorTest" tests="10" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:20:03" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="115.374">
+  <properties/>
+  <testcase name="[1] type=LEADER_CHANGE" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="0.075"/>
+  <testcase name="[2] type=SNAPSHOT_HEADER" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="0.004"/>
+  <testcase name="[3] type=SNAPSHOT_FOOTER" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="0.004"/>
+  <testcase name="testControlRecordIteration()" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="0.013"/>
+  <testcase name="testControlRecordTypeValues()" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="0.001"/>
+  <testcase name="[1] records=FileRecords(size=0, file=/var/folders/65/4t5f66v12q7ftgbk05_cn1_c0000gn/T/kafka275224661114278601.tmp, start=0, end=2147483647)" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="1.078"/>
+  <testcase name="[2] records=MemoryRecords(size=0, buffer=java.nio.HeapByteBuffer[pos=0 lim=0 cap=0])" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="0.011"/>
+  <testcase name="testFileRecords" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="41.021"/>
+  <testcase name="testMemoryRecords" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="23.026"/>
+  <testcase name="testCrcValidation" classname="org.apache.kafka.raft.internals.RecordsIteratorTest" time="48.97"/>
+  <system-out><![CDATA[timestamp = 2024-04-09T14:20:46.459, RecordsIteratorTest:testFileRecords = 
+                              |-----------------------jqwik-----------------------
+tries = 50                    | # of calls to property
+checks = 50                   | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_FIRST  | try previously failed sample, then previous seed
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 18         | # of all combined edge cases
+edge-cases#tried = 12         | # of edge cases tried in current run
+seed = 9149203475124908502    | random seed to reproduce generated values
+
+
+timestamp = 2024-04-09T14:21:09.529, RecordsIteratorTest:testMemoryRecords = 
+                              |-----------------------jqwik-----------------------
+tries = 50                    | # of calls to property
+checks = 50                   | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_FIRST  | try previously failed sample, then previous seed
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 18         | # of all combined edge cases
+edge-cases#tried = 10         | # of edge cases tried in current run
+seed = -5393001426248610266   | random seed to reproduce generated values
+
+
+timestamp = 2024-04-09T14:21:58.531, RecordsIteratorTest:testCrcValidation = 
+                              |-----------------------jqwik-----------------------
+tries = 50                    | # of calls to property
+checks = 50                   | # of not rejected calls
+generation = RANDOMIZED       | parameters are randomly generated
+after-failure = SAMPLE_FIRST  | try previously failed sample, then previous seed
+when-fixed-seed = ALLOW       | fixing the random seed is allowed
+edge-cases#mode = MIXIN       | edge cases are mixed in
+edge-cases#total = 18         | # of all combined edge cases
+edge-cases#tried = 13         | # of edge cases tried in current run
+seed = 527323498992002279     | random seed to reproduce generated values
+
+
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

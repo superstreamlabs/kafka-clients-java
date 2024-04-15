@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<checkstyle version="8.36.2">
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/tools/tools-api/src/main/java/org/apache/kafka/tools/api/RecordReader.java">
+</file>
+<file name="/Users/shay23bra/memphisdev/superstream-kafka/tools/tools-api/src/main/java/org/apache/kafka/tools/api/package-info.java">
+</file>
+</checkstyle>

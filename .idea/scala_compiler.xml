@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="Gradle 1" modules="kafka.core.main,kafka.core.test">
+      <option name="postfixOps" value="true" />
+      <option name="implicitConversions" value="true" />
+      <option name="existentials" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xlog-reflective-calls" />
+        <parameter value="-Ybackend-parallelism" />
+        <parameter value="8" />
+        <parameter value="-Xlint:constant" />
+        <parameter value="-Xlint:delayedinit-select" />
+        <parameter value="-Xlint:doc-detached" />
+        <parameter value="-Xlint:missing-interpolator" />
+        <parameter value="-Xlint:nullary-unit" />
+        <parameter value="-Xlint:option-implicit" />
+        <parameter value="-Xlint:package-object-classes" />
+        <parameter value="-Xlint:poly-implicit-overload" />
+        <parameter value="-Xlint:private-shadow" />
+        <parameter value="-Xlint:stars-align" />
+        <parameter value="-Xlint:type-parameter-shadow" />
+        <parameter value="-Xlint:unused" />
+        <parameter value="-opt:l:inline" />
+        <parameter value="-opt-inline-from:org.apache.kafka.**" />
+        <parameter value="-opt-inline-from:kafka.**" />
+        <parameter value="-opt-warnings" />
+        <parameter value="-Xlint:strict-unsealed-patmat" />
+        <parameter value="-Xfatal-warnings" />
+        <parameter value="-release" />
+        <parameter value="8" />
+      </parameters>
+    </profile>
+    <profile name="Gradle 2" modules="kafka.streams.streams-scala.main,kafka.streams.streams-scala.test">
+      <option name="postfixOps" value="true" />
+      <option name="implicitConversions" value="true" />
+      <option name="existentials" value="true" />
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <option name="featureWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+        <parameter value="-Xlog-reflective-calls" />
+        <parameter value="-Ybackend-parallelism" />
+        <parameter value="8" />
+        <parameter value="-Xlint:constant" />
+        <parameter value="-Xlint:delayedinit-select" />
+        <parameter value="-Xlint:doc-detached" />
+        <parameter value="-Xlint:missing-interpolator" />
+        <parameter value="-Xlint:nullary-unit" />
+        <parameter value="-Xlint:option-implicit" />
+        <parameter value="-Xlint:package-object-classes" />
+        <parameter value="-Xlint:poly-implicit-overload" />
+        <parameter value="-Xlint:private-shadow" />
+        <parameter value="-Xlint:stars-align" />
+        <parameter value="-Xlint:type-parameter-shadow" />
+        <parameter value="-Xlint:unused" />
+        <parameter value="-opt:l:inline" />
+        <parameter value="-opt-inline-from:org.apache.kafka.**" />
+        <parameter value="-opt-warnings" />
+        <parameter value="-Xlint:strict-unsealed-patmat" />
+        <parameter value="-Xfatal-warnings" />
+        <parameter value="-release" />
+        <parameter value="8" />
+      </parameters>
+    </profile>
+  </component>
+</project>

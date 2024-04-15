@@ -4,6 +4,7 @@ pipeline {
         docker {
             label 'memphis-jenkins-big-fleet,'
             image 'gradle:8.7.0'
+            // image 'gradle:jdk17'            
             args '-u root'
         }
     } 

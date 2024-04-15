@@ -50,7 +50,7 @@ pipeline {
                 }               
                 sh """
 
-                    ./gradlew :clients:publish -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE}
+                    ./gradlew :clients:assemble -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE} --debug
                 """
                 sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
                 script {

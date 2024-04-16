@@ -1,12 +1,17 @@
 pipeline {
 
     agent {
+        // docker {
+        //     label 'memphis-jenkins-big-fleet,'
+        //     image 'gradle:8.6.0'
+        //     // image 'gradle:jdk17'            
+        //     args '-u root -v $HOME/.gradle:/home/gradle/.gradle' 
+        // }
         docker {
             label 'memphis-jenkins-big-fleet,'
-            image 'gradle:8.6.0'
-            // image 'gradle:jdk17'            
-            args '-u root -v $HOME/.gradle:/home/gradle/.gradle' 
-        }
+            image 'gradle:7.3.0'
+            args '-u root'
+        }        
     } 
 
     environment {
@@ -16,22 +21,15 @@ pipeline {
     }
 
     stages {
-        stage('Build and Deploy') {
+        stage('Alpha Release') {
+            // when {
+            //     branch '*-alpha'
+            // }            
             steps {
                 script {
-                    def branchName = env.BRANCH_NAME ?: ''
-                    // Check if the branch is 'latest'
-                    if (branchName == '3.7-superstream-pipeline') {
-                        // Read version from version-beta.conf
-                        def version = readFile('version-alpha.conf').trim()
-                        // Set the VERSION environment variable to the version from the file
-                        env.versionTag = version
-                        echo "Using version from version-alpha.conf: ${env.versionTag}"
-                    } else {
-                        def version = readFile('version.conf').trim()
-                        env.versionTag = version
-                        echo "Using version from version.conf: ${env.versionTag}"                        
-                    }
+                    def version = readFile('version-alpha.conf').trim()
+                    env.versionTag = version
+                    echo "Using version from version-alpha.conf: ${env.versionTag}"                        
                 }
 
                 withCredentials([file(credentialsId: 'gpg-key', variable: 'GPG_KEY')]) {
@@ -50,7 +48,7 @@ pipeline {
                 }               
                 sh """
 
-                    ./gradlew :clients:assemble -Pversion=0.0.1-alpha4 -Psigning.password=12345679 --debug
+                    ./gradlew :clients:publish -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE}
                 """
                 sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
                 script {
@@ -65,7 +63,7 @@ pipeline {
                     """
                 }                     
             }
-        }      
+        }     
     }
     post {
         always {

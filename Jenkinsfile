@@ -9,7 +9,7 @@ pipeline {
         // }
         docker {
             label 'memphis-jenkins-big-fleet,'
-            image 'gradle:7.3.0'
+            image 'gradle:8.6.0'
             args '-u root'
         }        
     } 

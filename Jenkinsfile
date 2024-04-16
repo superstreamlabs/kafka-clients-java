@@ -1,274 +1,74 @@
-/*
- *
- *  Licensed to the Apache Software Foundation (ASF) under one or more
- *  contributor license agreements.  See the NOTICE file distributed with
- *  this work for additional information regarding copyright ownership.
- *  The ASF licenses this file to You under the Apache License, Version 2.0
- *  (the "License"); you may not use this file except in compliance with
- *  the License.  You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS,
- *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
- *  limitations under the License.
- *
- */
-
-def doValidation() {
-  sh """
-    ./gradlew -PscalaVersion=$SCALA_VERSION clean compileJava compileScala compileTestJava compileTestScala \
-        spotlessScalaCheck checkstyleMain checkstyleTest spotbugsMain rat \
-        --profile --no-daemon --continue -PxmlSpotBugsReport=true
-  """
-}
-
-def isChangeRequest(env) {
-  env.CHANGE_ID != null && !env.CHANGE_ID.isEmpty()
-}
-
-def retryFlagsString(env) {
-    if (isChangeRequest(env)) " -PmaxTestRetries=1 -PmaxTestRetryFailures=5"
-    else ""
-}
-
-def doTest(env, target = "unitTest integrationTest") {
-  sh """./gradlew -PscalaVersion=$SCALA_VERSION ${target} \
-      --profile --no-daemon --continue -PtestLoggingEvents=started,passed,skipped,failed \
-      -PignoreFailures=true -PmaxParallelForks=2""" + retryFlagsString(env)
-  junit '**/build/test-results/**/TEST-*.xml'
-}
-
-def doStreamsArchetype() {
-  echo 'Verify that Kafka Streams archetype compiles'
-
-  sh '''
-    ./gradlew streams:publishToMavenLocal clients:publishToMavenLocal connect:json:publishToMavenLocal connect:api:publishToMavenLocal \
-         || { echo 'Could not publish kafka-streams.jar (and dependencies) locally to Maven'; exit 1; }
-  '''
-
-  VERSION = sh(script: 'grep "^version=" gradle.properties | cut -d= -f 2', returnStdout: true).trim()
-
-  dir('streams/quickstart') {
-    sh '''
-      mvn clean install -Dgpg.skip  \
-          || { echo 'Could not `mvn install` streams quickstart archetype'; exit 1; }
-    '''
-
-    dir('test-streams-archetype') {
-      // Note the double quotes for variable interpolation
-      sh """ 
-        echo "Y" | mvn archetype:generate \
-            -DarchetypeCatalog=local \
-            -DarchetypeGroupId=org.apache.kafka \
-            -DarchetypeArtifactId=streams-quickstart-java \
-            -DarchetypeVersion=${VERSION} \
-            -DgroupId=streams.examples \
-            -DartifactId=streams.examples \
-            -Dversion=0.1 \
-            -Dpackage=myapps \
-            || { echo 'Could not create new project using streams quickstart archetype'; exit 1; }
-      """
-
-      dir('streams.examples') {
-        sh '''
-          mvn compile \
-              || { echo 'Could not compile streams quickstart archetype project'; exit 1; }
-        '''
-      }
-    }
-  }
-}
-
-def tryStreamsArchetype() {
-  try {
-    doStreamsArchetype()
-  } catch(err) {
-    echo 'Failed to build Kafka Streams archetype, marking this build UNSTABLE'
-    currentBuild.result = 'UNSTABLE'
-  }
-}
-
-
 pipeline {
-  agent none
-  
-  options {
-    disableConcurrentBuilds()
-  }
-  
-  stages {
-    stage('Build') {
-      parallel {
 
-        stage('JDK 8 and Scala 2.12') {
-          agent { label 'ubuntu' }
-          tools {
-            jdk 'jdk_1.8_latest'
-            maven 'maven_3_latest'
-          }
-          options {
-            timeout(time: 8, unit: 'HOURS') 
-            timestamps()
-          }
-          environment {
-            SCALA_VERSION=2.12
-          }
-          steps {
-            doValidation()
-            doTest(env)
-            tryStreamsArchetype()
-          }
+    agent {
+        docker {
+            label 'memphis-jenkins-big-fleet,'
+            image 'gradle:7.3.0'
+            args '-u root'
         }
+    } 
 
-        stage('JDK 11 and Scala 2.13') {
-          agent { label 'ubuntu' }
-          tools {
-            jdk 'jdk_11_latest'
-          }
-          options {
-            timeout(time: 8, unit: 'HOURS') 
-            timestamps()
-          }
-          environment {
-            SCALA_VERSION=2.13
-          }
-          steps {
-            doValidation()
-            doTest(env)
-            echo 'Skipping Kafka Streams archetype test for Java 11'
-          }
-        }
+    environment {
+            HOME           = '/tmp'
+            TOKEN          = credentials('maven-central-token')
+            GPG_PASSPHRASE = credentials('gpg-key-passphrase')
+    }
 
-        stage('JDK 17 and Scala 2.13') {
-          agent { label 'ubuntu' }
-          tools {
-            jdk 'jdk_17_latest'
-          }
-          options {
-            timeout(time: 8, unit: 'HOURS') 
-            timestamps()
-          }
-          environment {
-            SCALA_VERSION=2.13
-          }
-          steps {
-            doValidation()
-            doTest(env)
-            echo 'Skipping Kafka Streams archetype test for Java 17'
-          }
-        }
+    stages {
+        stage('Build and Deploy') {
+            steps {
+                script {
+                    def branchName = env.BRANCH_NAME ?: ''
+                    // Check if the branch is 'latest'
+                    if (branchName == '3.7-superstream-pipeline') {
+                        // Read version from version-beta.conf
+                        def version = readFile('version-alpha.conf').trim()
+                        // Set the VERSION environment variable to the version from the file
+                        env.versionTag = version
+                        echo "Using version from version-alpha.conf: ${env.versionTag}"
+                    } else {
+                        def version = readFile('version-alpha.conf').trim()
+                        env.versionTag = version
+                        echo "Using version from version.conf: ${env.versionTag}"                        
+                    }
+                }
 
-        stage('ARM') {
-          agent { label 'arm4' }
-          options {
-            timeout(time: 2, unit: 'HOURS') 
-            timestamps()
-          }
-          environment {
-            SCALA_VERSION=2.12
-          }
-          steps {
-            doValidation()
-            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-              doTest(env, 'unitTest')
+                withCredentials([file(credentialsId: 'gpg-key', variable: 'GPG_KEY')]) {
+                    sh """
+                        apt update
+                        apt install -y gnupg
+                    """
+                    sh """
+                        echo '${env.GPG_PASSPHRASE}' | gpg --batch --yes --passphrase-fd 0 --import $GPG_KEY
+                        echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
+                        echo RELOADAGENT | gpg-connect-agent
+                        echo "D64C041FB68170463BE78AD7C4E3F1A8A5F0A659:6:" | gpg --import-ownertrust 
+                        gpg --batch --pinentry-mode loopback --passphrase '${env.GPG_PASSPHRASE}' --export-secret-keys --export-secret-keys -o clients/secring.gpg
+
+                    """
+                }               
+                sh """
+
+                    ./gradlew :clients:publish -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE}
+                """
+                sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
+                script {
+                    sh """
+                        cd /tmp/kafka-clients
+                        tar czvf ai.tar.gz ai
+                        curl --request POST \\
+                             --verbose \\
+                             --header 'Authorization: Bearer ${env.TOKEN}' \\
+                             --form bundle=@ai.tar.gz \\
+                             https://central.sonatype.com/api/v1/publisher/upload
+                    """
+                }                     
             }
-            echo 'Skipping Kafka Streams archetype test for ARM build'
-          }
-        }
-        
-        // To avoid excessive Jenkins resource usage, we only run the stages
-        // above at the PR stage. The ones below are executed after changes
-        // are pushed to trunk and/or release branches. We achieve this via
-        // the `when` clause.
-        
-        stage('JDK 8 and Scala 2.13') {
-          when {
-            not { changeRequest() }
-            beforeAgent true
-          }
-          agent { label 'ubuntu' }
-          tools {
-            jdk 'jdk_1.8_latest'
-            maven 'maven_3_latest'
-          }
-          options {
-            timeout(time: 8, unit: 'HOURS') 
-            timestamps()
-          }
-          environment {
-            SCALA_VERSION=2.13
-          }
-          steps {
-            doValidation()
-            doTest(env)
-            tryStreamsArchetype()
-          }
-        }
-
-        stage('JDK 11 and Scala 2.12') {
-          when {
-            not { changeRequest() }
-            beforeAgent true
-          }
-          agent { label 'ubuntu' }
-          tools {
-            jdk 'jdk_11_latest'
-          }
-          options {
-            timeout(time: 8, unit: 'HOURS') 
-            timestamps()
-          }
-          environment {
-            SCALA_VERSION=2.12
-          }
-          steps {
-            doValidation()
-            doTest(env)
-            echo 'Skipping Kafka Streams archetype test for Java 11'
-          }
-        }
-
-        stage('JDK 17 and Scala 2.12') {
-          when {
-            not { changeRequest() }
-            beforeAgent true
-          }
-          agent { label 'ubuntu' }
-          tools {
-            jdk 'jdk_17_latest'
-          }
-          options {
-            timeout(time: 8, unit: 'HOURS') 
-            timestamps()
-          }
-          environment {
-            SCALA_VERSION=2.12
-          }
-          steps {
-            doValidation()
-            doTest(env)
-            echo 'Skipping Kafka Streams archetype test for Java 17'
-          }
-        }
-      }
+        }      
     }
-  }
-  
-  post {
-    always {
-      node('ubuntu') {
-        script {
-          if (!isChangeRequest(env)) {
-            step([$class: 'Mailer',
-                 notifyEveryUnstableBuild: true,
-                 recipients: "dev@kafka.apache.org",
-                 sendToIndividuals: false])
-          }
+    post {
+        always {
+            cleanWs()
         }
-      }
-    }
-  }
+    }    
 }

@@ -1,18 +1,21 @@
 # Superstream-Kafka
 
-## Configuration for SuperStream SDK
-To leverage the full capabilities of the SuperStream SDK, it is essential to set the following environment variables before initializing the SDK. Without these variables, the SDK will function as a standard Kafka SDK.
+## Configuration for Superstream SDK
+To leverage the full capabilities of the Superstream SDK, it is essential to set the following environment variables before initializing the SDK. Without these variables, the SDK will function as a standard Kafka SDK.
 
 ### SUPERSTREAM_LEARNING_FACTOR 
 This variable adjusts the learning algorithms used within the SDK to optimize data streaming performance.
 
 ### SUPERSTREAM_HOST 
-Specify the host URL of the SuperStream service to connect to the appropriate SuperStream environment.
+Specify the host URL of the SuperStream service to connect to the appropriate Superstream environment.
 
 ### SUPERSTREAM_TOKEN
-This authentication token is required to securely access the SuperStream services.
+This authentication token is required to securely access the Superstream services.
 
-#### Ensure that these environment variables are properly configured in your system to fully utilize the enhanced features offered by SuperStream SDK.
+### SUPERSTREAM_REDUCTION_ENABLED
+Set this variable to enable data reduction features.
+
+#### Ensure that these environment variables are properly configured in your system to fully utilize the enhanced features offered by Superstream SDK.
 
 Apache Kafka
 =================

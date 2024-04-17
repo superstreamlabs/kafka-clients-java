@@ -70,15 +70,16 @@ public class Superstream {
     private Subscription updatesSubscription;
     private String host;
     private String token;
-    private String type;
-    public Boolean reductionEnabled = false;
+    public String type;
+    public Boolean reductionEnabled;
 
-    public Superstream(String token, String host, Integer learningFactor, String type, Map<String, ?> configs) {
+    public Superstream(String token, String host, Integer learningFactor, String type, Map<String, ?> configs, Boolean enableReduction) {
         this.learningFactor = learningFactor;
         this.token = token;
         this.host = host;
         this.configs = configs;
         this.type = type;
+        this.reductionEnabled = enableReduction;
     }
 
     public void init() {
@@ -318,7 +319,7 @@ public class Superstream {
                     String schemaID = (String) payload.get("schema_id");
                     ProducerSchemaID = schemaID;
                     break;
-
+                    
                 case "ToggleReduction":
                     Boolean enableReduction = (Boolean) payload.get("enable_reduction");
                     if (enableReduction) {
@@ -419,12 +420,12 @@ public class Superstream {
         mapIfPresent(javaConfig, ConsumerConfig.RETRY_BACKOFF_MS_CONFIG, superstreamConfig, "consumer_retry_backoff"); 
         mapIfPresent(javaConfig, ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, superstreamConfig, "consumer_max_wait_time"); 
         mapIfPresent(javaConfig, ConsumerConfig.MAX_POLL_RECORDS_CONFIG, superstreamConfig, "consumer_max_processing_time"); 
-        mapIfPresent(javaConfig, ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, superstreamConfig, "consumer_offset_auto_commit_enable");
+        // mapIfPresent(javaConfig, ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, superstreamConfig, "consumer_offset_auto_commit_enable"); // TODO: handle boolean vars
         mapIfPresent(javaConfig, ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, superstreamConfig, "consumer_offset_auto_commit_interval");
         mapIfPresent(javaConfig, ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG , superstreamConfig, "consumer_group_session_timeout");
         mapIfPresent(javaConfig, ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG , superstreamConfig, "consumer_group_heart_beat_interval");
         mapIfPresent(javaConfig, ConsumerConfig.RETRY_BACKOFF_MS_CONFIG , superstreamConfig, "consumer_group_rebalance_retry_back_off");
-        mapIfPresent(javaConfig, ConsumerConfig.AUTO_OFFSET_RESET_CONFIG , superstreamConfig, "consumer_group_rebalance_reset_invalid_offsets");
+        // mapIfPresent(javaConfig, ConsumerConfig.AUTO_OFFSET_RESET_CONFIG , superstreamConfig, "consumer_group_rebalance_reset_invalid_offsets"); // TODO: handle boolean vars
         mapIfPresent(javaConfig, ConsumerConfig.GROUP_ID_CONFIG , superstreamConfig, "consumer_group_id");
         // Common configurations
         mapIfPresent(javaConfig, ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, superstreamConfig, "servers"); 
@@ -467,6 +468,13 @@ public class Superstream {
             configs.put(Consts.superstreamLearningFactorKey, learningFactor);
         } else {
             configs.put(Consts.superstreamLearningFactorKey, Consts.superstreamDefaultLearningFactor);
+        }
+        if (envVars.containsKey("SUPERSTREAM_REDUCTION_ENABLED")) {
+            String reductionEnabledString = envVars.get("SUPERSTREAM_REDUCTION_ENABLED");
+            Boolean reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
+            configs.put(Consts.superstreamReductionEnabledKey, reductionEnabled);
+        } else {
+            configs.put(Consts.superstreamReductionEnabledKey, false);
         }
         return configs;
     }

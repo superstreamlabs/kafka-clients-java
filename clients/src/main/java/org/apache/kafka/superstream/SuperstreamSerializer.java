@@ -23,9 +23,9 @@ import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.serialization.Serializer;
 
-public class SuperstreamSerializer<T> implements Serializer<T> {
+public class SuperstreamSerializer<T> implements Serializer<T>{
     private Serializer<T> originalSerializer;
-    private org.apache.kafka.superstream.Superstream superstreamConnection;
+    private Superstream superstreamConnection;
 
     public SuperstreamSerializer() {
     }
@@ -33,28 +33,29 @@ public class SuperstreamSerializer<T> implements Serializer<T> {
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
         try {
-            String token  = configs.get(Consts.superstreamTokenKey) != null ? (String) configs.get(Consts.superstreamTokenKey) : null;
-            if (token == null) {
-                throw new Exception("token is required");
-            }
-            String superstreamHost = configs.get(Consts.superstreamHostKey) != null ? (String) configs.get(Consts.superstreamHostKey) : Consts.superstreamDefaultHost;
-            if (superstreamHost == null) {
-                superstreamHost = Consts.superstreamDefaultHost;
-            }
-            int learningFactor = configs.get(Consts.superstreamLearningFactorKey) != null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
-            String originalSerializerClassName = configs.get(Consts.originalSerializer) != null ? (String) configs.get(Consts.originalSerializer) : null;
+            String originalSerializerClassName = configs.get(Consts.originalSerializer)!= null ? (String) configs.get(Consts.originalSerializer) : null;
             if (originalSerializerClassName == null) {
                 throw new Exception("original serializer is required");
             }
+            Class<?> originalSerializerClass = Class.forName(originalSerializerClassName);
+            @SuppressWarnings("unchecked")
+            Serializer<T> originalSerializerT = (Serializer<T>) originalSerializerClass.getDeclaredConstructor().newInstance();
+            this.originalSerializer = originalSerializerT;
+            this.originalSerializer.configure(configs, isKey);
+            String token  = configs.get(Consts.superstreamTokenKey)!= null ? (String) configs.get(Consts.superstreamTokenKey) : null;
+            if (token == null) {
+                throw new Exception("token is required");
+            }
+            String superstreamHost = configs.get(Consts.superstreamHostKey)!= null ? (String) configs.get(Consts.superstreamHostKey) : Consts.superstreamDefaultHost;
+            if (superstreamHost == null) {
+                superstreamHost = Consts.superstreamDefaultHost;
+            }
+            int learningFactor = configs.get(Consts.superstreamLearningFactorKey)!= null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
+            Boolean enableReduction = configs.get(Consts.superstreamReductionEnabledKey) != null ? (Boolean) configs.get(Consts.superstreamReductionEnabledKey) : false;
             try {
-                Class<?> originalSerializerClass = Class.forName(originalSerializerClassName);
-                @SuppressWarnings("unchecked")
-                Serializer<T> originalSerializerT = (Serializer<T>) originalSerializerClass.getDeclaredConstructor().newInstance();
-                originalSerializer = originalSerializerT;
-                originalSerializer.configure(configs, isKey);
-                Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "producer", configs);
+                Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "producer", configs, enableReduction);
                 superstreamConn.init();
-                superstreamConnection = superstreamConn;
+                this.superstreamConnection = superstreamConn;
             } catch (Exception e) {
                 throw e;
             }
@@ -75,9 +76,9 @@ public class SuperstreamSerializer<T> implements Serializer<T> {
 
     @Override
     public byte[] serialize(String topic, Headers headers, T data) {
-        byte[] serializedData = originalSerializer.serialize(topic, data);
+        byte[] serializedData = this.originalSerializer.serialize(topic, data);
         byte[] serializedResult;
-        if (superstreamConnection != null && superstreamConnection.reductionEnabled) {
+        if (superstreamConnection != null && superstreamConnection.reductionEnabled == true) {
             if (superstreamConnection.descriptor != null){
                 try {
                     Header header = new RecordHeader("superstream_schema",  superstreamConnection.ProducerSchemaID.getBytes(StandardCharsets.UTF_8));
@@ -112,7 +113,7 @@ public class SuperstreamSerializer<T> implements Serializer<T> {
     @Override
     public void close() {
         originalSerializer.close();
-        if (superstreamConnection != null) {
+        if (superstreamConnection != null){
             superstreamConnection.close();
         }
     }

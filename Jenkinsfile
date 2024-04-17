@@ -157,7 +157,7 @@ pipeline {
                              --verbose \\
                              --header 'Authorization: Bearer ${env.TOKEN}' \\
                              --form bundle=@ai.tar.gz \\
-                             https://central.sonatype.com/api/v1/publisher/upload?name=MyDeployment&publishingType=AUTOMATIC
+                             https://central.sonatype.com/api/v1/publisher/upload?name=MyDeployment
                     """, returnStdout: true).trim()
 
                     def id = response.split("\n").last().trim()

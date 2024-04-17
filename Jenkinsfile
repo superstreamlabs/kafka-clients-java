@@ -62,31 +62,21 @@ pipeline {
 
                     def id = response.split("\n").last().trim()
                     echo "Extracted ID: ${id}"
-                    env.ID = id
+def output = sh(script: """
+                        curl --request POST \\
+                             --verbose \\
+                             --header 'Authorization: Bearer ${env.TOKEN}' \\
+                             'https://central.sonatype.com/api/v1/publisher/status?id=${id}'
+                    """, returnStdout: true).trim()
 
-                    def status = 'PENDING'
-                    while (status == 'PENDING') {
-                        // Execute curl and capture the output
-                        def output = sh(script: """
-                            curl --verbose \\
-                                 --header 'Authorization: Bearer ${env.TOKEN}' \\
-                                 'https://central.sonatype.com/api/v1/publisher/status?id=${env.ID}'
-                        """, returnStdout: true).trim()
+                    // Print the output for debugging
+                    echo "Curl Output: ${output}"
 
-                        // Print the output for debugging
-                        echo "Curl Output: ${output}"
-
-                        // Check the output for specific statuses
-                        if (output.contains('PENDING')) {
-                            // Sleep for 5 seconds before retrying
-                            sleep time: 5, unit: 'SECONDS'
-                        } else if (output.contains('FAILED')) {
-                            // If output contains 'FAILED', exit the script with an error
-                            echo "Build status check failed."
-                            error "Exiting due to failure status detected."
-                        } else {
-                            echo 'Deployment was successfully'
-                        }
+                    // Check the output for 'Fail'
+                    if (output.contains('Fail')) {
+                        error "Deployment failed. Exiting with error."
+                    } else {
+                        echo "Deployment is successful."
                     }
                 }                  
             }

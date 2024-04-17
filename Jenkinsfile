@@ -132,16 +132,41 @@ pipeline {
                 """
                 sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
                 script {
-                    sh """
-                        cd /tmp/kafka-clients
-                        tar czvf ai.tar.gz ai
-                        curl --request POST \\
-                             --verbose \\
-                             --header 'Authorization: Bearer ${env.TOKEN}' \\
-                             --form bundle=@ai.tar.gz \\
-                             https://central.sonatype.com/api/v1/publisher/upload
-                    """
-                }                     
+                    // Navigate to the directory and compress the files
+                    dir('/tmp/kafka-clients') {
+                        sh 'tar czvf ai.tar.gz ai'
+
+                        // Execute curl and capture the output
+                        def response = sh(script: """
+                            curl --request POST \\
+                                 --verbose \\
+                                 --header 'Authorization: Bearer ${env.TOKEN}' \\
+                                 --form bundle=@ai.tar.gz \\
+                                 https://central.sonatype.com/api/v1/publisher/upload
+                        """, returnStdout: true).trim()
+
+                        // Log the response for debugging
+                        echo "Response: ${response}"
+
+                        // Extract the ID from the response
+                        // This example assumes the ID is in the last line of the response
+                        def id = response.split("\n").last().trim()
+                        echo "Extracted ID: ${id}"
+
+                        // // Use the extracted ID in a subsequent curl command
+                        // // Add additional steps as needed
+                        // def nextResponse = sh(script: """
+                        //     curl --request POST \\
+                        //          --verbose \\
+                        //          --header 'Authorization: Bearer ${env.TOKEN}' \\
+                        //          --data '{"id": "${id}"}' \\
+                        //          https://central.sonatype.com/api/v1/publisher/next-step
+                        // """, returnStdout: true).trim()
+
+                        // // Log the next step response for debugging
+                        // echo "Next step response: ${nextResponse}"
+                    }
+                }                    
             }
         }                      
     }

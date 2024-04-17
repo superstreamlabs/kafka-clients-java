@@ -60,8 +60,8 @@ pipeline {
                              https://central.sonatype.com/api/v1/publisher/upload
                     """, returnStdout: true).trim()
 
-                    // Log the response
-                    echo "Curl Response: ${response}"
+                    def id = response.split("\n").last().trim()
+                    echo "Extracted ID: ${id}"
                 }                  
             }
         }

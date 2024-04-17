@@ -75,7 +75,7 @@ pipeline {
 
                     // Check the output for 'Fail'
                     if (output.contains('Fail')) {
-                        error "Deployment failed. Exiting with error."
+                        error "Deployment FAILED. Exiting with error."
                     } else {
                         echo "Deployment is successful."
                     }

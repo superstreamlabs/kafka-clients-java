@@ -62,6 +62,13 @@ pipeline {
 
                     def id = response.split("\n").last().trim()
                     echo "Extracted ID: ${id}"
+
+                sh """ curl --request POST \
+                    --verbose \
+                    --header 'Authorization: Bearer ${env.TOKEN}' \
+                    'https://central.sonatype.com/api/v1/publisher/status?id=${id}' \
+                    | jq
+                """
                 }                  
             }
         }

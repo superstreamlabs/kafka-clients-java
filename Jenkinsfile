@@ -80,7 +80,7 @@ pipeline {
                     //     // // Log the next step response for debugging
                     //     // echo "Next step response: ${nextResponse}"
                     // }
-                    dir('/tmp/kafka-clients') {
+                    dir('/tmp') {
                         // Check current working directory and list files
                         echo "Checking current directory and contents..."
                         sh 'pwd'

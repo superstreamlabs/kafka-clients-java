@@ -4,7 +4,7 @@ pipeline {
         docker {
             label 'memphis-jenkins-big-fleet,'
             image 'gradle:7.3.0'
-            args '-u root -v /tmp/kafka-clients:/tmp/kafka-clients'
+            args '-u root -v /tmp:/tmp'
         }
     } 
 

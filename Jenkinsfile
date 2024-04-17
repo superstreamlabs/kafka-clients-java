@@ -66,8 +66,7 @@ pipeline {
                 sh """ curl --request POST \
                     --verbose \
                     --header 'Authorization: Bearer ${env.TOKEN}' \
-                    'https://central.sonatype.com/api/v1/publisher/status?id=${id}' \
-                    | jq
+                    'https://central.sonatype.com/api/v1/publisher/status?id=${id}' 
                 """
                 }                  
             }

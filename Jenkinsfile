@@ -74,7 +74,7 @@ pipeline {
                     echo "Curl Output: ${output}"
 
                     // Check the output for 'Fail'
-                    if (output.contains('Fail')) {
+                    if (output.contains('FAILED')) {
                         error "Deployment FAILED. Exiting with error."
                     } else {
                         echo "Deployment is successful."

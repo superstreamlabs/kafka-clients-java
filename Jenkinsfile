@@ -62,6 +62,7 @@ pipeline {
 
                     def id = response.split("\n").last().trim()
                     echo "Extracted ID: ${id}"
+                    env.ID = id
 
                     def status = 'PENDING'
                     while (status == 'PENDING') {

@@ -4,7 +4,7 @@ pipeline {
         docker {
             label 'memphis-jenkins-big-fleet,'
             image 'gradle:7.3.0'
-            args '-u root -v /tmp:/tmp'
+            args '-u root'
         }
     } 
 
@@ -46,55 +46,23 @@ pipeline {
                 """
                 sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
                 script {
-                    // Navigate to the directory and compress the files
-                    // dir('/tmp/kafka-clients') {
-                    //     sh 'tar czvf ai.tar.gz ai'
+                    // Execute multiple shell commands within a single sh block
+                    def response = sh(script: """
 
-                    //     // Execute curl and capture the output
-                    //     def response = sh(script: """
-                    //         curl --request POST \\
-                    //              --verbose \\
-                    //              --header 'Authorization: Bearer ${env.TOKEN}' \\
-                    //              --form bundle=@ai.tar.gz \\
-                    //              https://central.sonatype.com/api/v1/publisher/upload
-                    //     """, returnStdout: true).trim()
+                        cd /tmp/kafka-clients
 
-                    //     // Log the response for debugging
-                    //     echo "Response: ${response}"
+                        tar czvf ai.tar.gz ai
 
-                    //     // Extract the ID from the response
-                    //     // This example assumes the ID is in the last line of the response
-                    //     def id = response.split("\n").last().trim()
-                    //     echo "Extracted ID: ${id}"
+                        curl --request POST \\
+                             --verbose \\
+                             --header 'Authorization: Bearer ${env.TOKEN}' \\
+                             --form bundle=@ai.tar.gz \\
+                             https://central.sonatype.com/api/v1/publisher/upload
+                    """, returnStdout: true).trim()
 
-                    //     // // Use the extracted ID in a subsequent curl command
-                    //     // // Add additional steps as needed
-                    //     // def nextResponse = sh(script: """
-                    //     //     curl --request POST \\
-                    //     //          --verbose \\
-                    //     //          --header 'Authorization: Bearer ${env.TOKEN}' \\
-                    //     //          --data '{"id": "${id}"}' \\
-                    //     //          https://central.sonatype.com/api/v1/publisher/next-step
-                    //     // """, returnStdout: true).trim()
-
-                    //     // // Log the next step response for debugging
-                    //     // echo "Next step response: ${nextResponse}"
-                    // }
-                    dir('/tmp') {
-                        // Check current working directory and list files
-                        echo "Checking current directory and contents..."
-                        sh 'pwd'
-                        sh 'ls -lah'
-
-                        // Run tar command with verbose output
-                        echo "Running tar command..."
-                        sh 'tar czvf ai.tar.gz ai'
-
-                        echo "tar command completed."
-
-                        // Further actions...
-                    }                    
-                }                   
+                    // Log the response
+                    echo "Curl Response: ${response}"
+                }                  
             }
         }
         stage('Beta Release') {

@@ -62,12 +62,13 @@ pipeline {
 
                     def id = response.split("\n").last().trim()
                     echo "Extracted ID: ${id}"
-def output = sh(script: """
+                    sh "sleep 10"
+                    def output = sh(script: """
                         curl --request POST \\
                              --verbose \\
                              --header 'Authorization: Bearer ${env.TOKEN}' \\
                              'https://central.sonatype.com/api/v1/publisher/status?id=${id}'
-                    """, returnStdout: true).trim()
+                        """, returnStdout: true).trim()
 
                     // Print the output for debugging
                     echo "Curl Output: ${output}"

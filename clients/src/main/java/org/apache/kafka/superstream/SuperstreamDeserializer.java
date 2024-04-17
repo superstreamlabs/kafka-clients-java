@@ -36,6 +36,15 @@ public class SuperstreamDeserializer<T> implements Deserializer<T>{
     @Override
     public void configure(Map<String, ?> configs, boolean isKey) {
         try {
+            String originalDeserializerClassName = configs.get(Consts.originalDeserializer) != null ? (String) configs.get(Consts.originalDeserializer) : null;
+            if (originalDeserializerClassName == null) {
+                throw new Exception("original deserializer is required");
+            }
+            Class<?> originalDeserializerClass = Class.forName(originalDeserializerClassName);
+            @SuppressWarnings("unchecked")
+            Deserializer<T> originalDeserializerT = (Deserializer<T>) originalDeserializerClass.getDeclaredConstructor().newInstance();
+            this.originalDeserializer = originalDeserializerT;
+            this.originalDeserializer.configure(configs, isKey);
             String token  = configs.get(Consts.superstreamTokenKey) != null ? (String) configs.get(Consts.superstreamTokenKey) : null;
             if (token == null) {
                 throw new Exception("token is required");
@@ -45,18 +54,10 @@ public class SuperstreamDeserializer<T> implements Deserializer<T>{
                 superstreamHost = Consts.superstreamDefaultHost;
             }
             int learningFactor = configs.get(Consts.superstreamLearningFactorKey) != null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
-            String originalDeserializerClassName = configs.get(Consts.originalDeserializer)!= null ? (String) configs.get(Consts.originalDeserializer) : null;
-            if (originalDeserializerClassName == null) {
-                throw new Exception("original deserializer is required");
-            }
-            Class<?> originalDeserializerClass = Class.forName(originalDeserializerClassName);
-            @SuppressWarnings("unchecked")
-            Deserializer<T> originalDeserializerT = (Deserializer<T>) originalDeserializerClass.getDeclaredConstructor().newInstance();
-            originalDeserializer = originalDeserializerT;
-            originalDeserializer.configure(configs, isKey);
-            Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "consumer", configs);
+            Boolean enableReduction = configs.get(Consts.superstreamReductionEnabledKey) != null ? (Boolean) configs.get(Consts.superstreamReductionEnabledKey) : false;
+            Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "consumer", configs, enableReduction);
             superstreamConn.init();
-            superstreamConnection = superstreamConn;
+            this.superstreamConnection = superstreamConn;
         } catch (Exception e) {
             String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
             if (superstreamConnection != null) {
@@ -107,7 +108,7 @@ public class SuperstreamDeserializer<T> implements Deserializer<T>{
             superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(data.length);
             superstreamConnection.clientCounters.incrementTotalMessagesFailedConsume();
         }
-        T deserializedData = originalDeserializer.deserialize(topic, dataToDesrialize);
+        T deserializedData = this.originalDeserializer.deserialize(topic, dataToDesrialize);
         return deserializedData;
     }
 

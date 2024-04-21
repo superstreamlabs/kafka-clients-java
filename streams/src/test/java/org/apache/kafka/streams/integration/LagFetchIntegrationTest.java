@@ -47,6 +47,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TestName;
+import org.junit.rules.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +57,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -76,7 +76,8 @@ import static org.junit.Assert.assertTrue;
 
 @Category({IntegrationTest.class})
 public class LagFetchIntegrationTest {
-
+    @Rule
+    public Timeout globalTimeout = Timeout.seconds(600);
     public static final EmbeddedKafkaCluster CLUSTER = new EmbeddedKafkaCluster(1);
 
     @BeforeClass
@@ -288,7 +289,7 @@ public class LagFetchIntegrationTest {
                 "Should see empty lag map before streams is started.");
 
             // Get the instance to fully catch up and reach RUNNING state
-            startApplicationAndWaitUntilRunning(Collections.singletonList(streams), Duration.ofSeconds(60));
+            startApplicationAndWaitUntilRunning(streams);
             IntegrationTestUtils.waitUntilMinValuesRecordsReceived(
                 consumerConfiguration,
                 outputTopicName,

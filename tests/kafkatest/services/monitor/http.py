@@ -94,13 +94,14 @@ class HttpMetricsCollector(object):
         super(HttpMetricsCollector, self).start_node(node)
 
     def stop(self):
-        super(HttpMetricsCollector, self).stop()
-
-        if self._http_metrics_thread:
-            self.logger.debug("Shutting down metrics httpd")
-            self._httpd.shutdown()
-            self._http_metrics_thread.join()
-            self.logger.debug("Finished shutting down metrics httpd")
+        try:
+            super(HttpMetricsCollector, self).stop()
+        finally:
+            if self._http_metrics_thread:
+                self.logger.debug("Shutting down metrics httpd")
+                self._httpd.shutdown()
+                self._http_metrics_thread.join()
+                self.logger.debug("Finished shutting down metrics httpd")
 
     def stop_node(self, node):
         super(HttpMetricsCollector, self).stop_node(node)
@@ -188,7 +189,7 @@ class _ReverseForwarder(object):
     def stop(self):
         self._stopping = True
         self._accept_thread.join(30)
-        if self._accept_thread.isAlive():
+        if self._accept_thread.is_alive():
             raise RuntimeError("Failed to stop reverse forwarder on %s", self._node)
         self._transport.cancel_port_forward('', self._remote_port)
 

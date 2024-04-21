@@ -22,7 +22,7 @@ import org.apache.kafka.clients.consumer.ConsumerPartitionAssignor.Subscription
 import org.apache.kafka.clients.consumer.internals.ConsumerProtocol
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.protocol.Errors
-import org.apache.kafka.common.utils.Time
+import org.apache.kafka.common.utils.{MockTime, Time}
 import org.junit.jupiter.api.Assertions._
 import org.junit.jupiter.api.{BeforeEach, Test}
 
@@ -40,7 +40,7 @@ class GroupMetadataTest {
   private val rebalanceTimeoutMs = 60000
   private val sessionTimeoutMs = 10000
 
-  private var group: GroupMetadata = null
+  private var group: GroupMetadata = _
 
   @BeforeEach
   def setUp(): Unit = {
@@ -257,6 +257,48 @@ class GroupMetadataTest {
     assertTrue(group.supportsProtocols(protocolType, Set("roundrobin", "foo")))
     assertFalse(group.supportsProtocols("invalid_type", Set("roundrobin", "foo")))
     assertFalse(group.supportsProtocols(protocolType, Set("range", "foo")))
+  }
+
+  @Test
+  def testOffsetRemovalDuringTransitionFromEmptyToNonEmpty(): Unit = {
+    val topic = "foo"
+    val partition = new TopicPartition(topic, 0)
+    val time = new MockTime()
+    group = new GroupMetadata("groupId", Empty, time)
+
+    // Rebalance once in order to commit offsets
+    val member = new MemberMetadata(memberId, None, clientId, clientHost, rebalanceTimeoutMs,
+      sessionTimeoutMs, protocolType, List(("range", ConsumerProtocol.serializeSubscription(new Subscription(List("foo").asJava)).array())))
+    group.transitionTo(PreparingRebalance)
+    group.add(member)
+    group.initNextGeneration()
+    assertEquals(Some(Set("foo")), group.getSubscribedTopics)
+
+    val offset = offsetAndMetadata(offset = 37, timestamp = time.milliseconds())
+    val commitRecordOffset = 3
+
+    group.prepareOffsetCommit(Map(partition -> offset))
+    assertTrue(group.hasOffsets)
+    assertEquals(None, group.offset(partition))
+    group.onOffsetCommitAppend(partition, CommitRecordMetadataAndOffset(Some(commitRecordOffset), offset))
+
+    val offsetRetentionMs = 50000L
+    time.sleep(offsetRetentionMs + 1)
+
+    // Rebalance again so that the group becomes empty
+    group.transitionTo(PreparingRebalance)
+    group.remove(memberId)
+    group.initNextGeneration()
+
+    // The group is empty, but we should not expire the offset because the state was just changed
+    assertEquals(Empty, group.currentState)
+    assertEquals(Map.empty, group.removeExpiredOffsets(time.milliseconds(), offsetRetentionMs))
+
+    // Start a new rebalance to add the member back. The offset should not be expired
+    // while the rebalance is in progress.
+    group.transitionTo(PreparingRebalance)
+    group.add(member)
+    assertEquals(Map.empty, group.removeExpiredOffsets(time.milliseconds(), offsetRetentionMs))
   }
 
   @Test
@@ -516,6 +558,21 @@ class GroupMetadataTest {
   }
 
   @Test
+  def testUpdateMember(): Unit = {
+    val member = new MemberMetadata(memberId, None, clientId, clientHost, rebalanceTimeoutMs, sessionTimeoutMs,
+      protocolType, List(("range", Array.empty[Byte]), ("roundrobin", Array.empty[Byte])))
+    group.add(member)
+
+    val newRebalanceTimeout = 120000
+    val newSessionTimeout = 20000
+    group.updateMember(member, List(("roundrobin", Array[Byte]())), newRebalanceTimeout, newSessionTimeout, null)
+
+    assertEquals(group.rebalanceTimeoutMs, newRebalanceTimeout)
+    assertEquals(member.sessionTimeoutMs, newSessionTimeout)
+  }
+
+
+  @Test
   def testReplaceGroupInstanceWithNonExistingMember(): Unit = {
     val newMemberId = "newMemberId"
     assertThrows(classOf[IllegalArgumentException], () => group.replaceStaticMember(groupInstanceId, memberId, newMemberId))
@@ -564,6 +621,30 @@ class GroupMetadataTest {
   }
 
   @Test
+  def testInvokeJoinCallbackFails(): Unit = {
+    val member = new MemberMetadata(memberId, None, clientId, clientHost, rebalanceTimeoutMs, sessionTimeoutMs,
+      protocolType, List(("range", Array.empty[Byte]), ("roundrobin", Array.empty[Byte])))
+
+    var shouldFail = true
+    var result: Option[JoinGroupResult] = None
+    def joinCallback(joinGroupResult: JoinGroupResult): Unit = {
+      if (shouldFail) {
+        shouldFail = false
+        throw new Exception("Something went wrong!")
+      } else {
+        result = Some(joinGroupResult)
+      }
+    }
+
+    group.add(member, joinCallback)
+
+    group.maybeInvokeJoinCallback(member, JoinGroupResult(member.memberId, Errors.NONE))
+
+    assertEquals(Errors.UNKNOWN_SERVER_ERROR, result.get.error)
+    assertFalse(member.isAwaitingJoin)
+  }
+
+  @Test
   def testNotInvokeJoinCallback(): Unit = {
     val member = new MemberMetadata(memberId, None, clientId, clientHost, rebalanceTimeoutMs, sessionTimeoutMs,
       protocolType, List(("range", Array.empty[Byte]), ("roundrobin", Array.empty[Byte])))
@@ -572,6 +653,31 @@ class GroupMetadataTest {
     assertFalse(member.isAwaitingJoin)
     group.maybeInvokeJoinCallback(member, JoinGroupResult(member.memberId, Errors.NONE))
     assertFalse(member.isAwaitingJoin)
+  }
+
+  @Test
+  def testInvokeSyncCallbackFails(): Unit = {
+    val member = new MemberMetadata(memberId, None, clientId, clientHost, rebalanceTimeoutMs, sessionTimeoutMs,
+      protocolType, List(("range", Array.empty[Byte]), ("roundrobin", Array.empty[Byte])))
+
+    var shouldFail = true
+    var result: Option[SyncGroupResult] = None
+    def syncCallback(syncGroupResult: SyncGroupResult): Unit = {
+      if (shouldFail) {
+        shouldFail = false
+        throw new Exception("Something went wrong!")
+      } else {
+        result = Some(syncGroupResult)
+      }
+    }
+
+    group.add(member)
+    member.awaitingSyncCallback = syncCallback
+
+    val invoked = group.maybeInvokeSyncCallback(member, SyncGroupResult(Errors.NONE))
+    assertTrue(invoked)
+    assertEquals(Errors.UNKNOWN_SERVER_ERROR, result.get.error)
+    assertFalse(member.isAwaitingSync)
   }
 
   @Test
@@ -718,8 +824,8 @@ class GroupMetadataTest {
     assertTrue(group.is(targetState))
   }
 
-  private def offsetAndMetadata(offset: Long): OffsetAndMetadata = {
-    OffsetAndMetadata(offset, "", Time.SYSTEM.milliseconds())
+  private def offsetAndMetadata(offset: Long, timestamp: Long = Time.SYSTEM.milliseconds()): OffsetAndMetadata = {
+    OffsetAndMetadata(offset, "", timestamp)
   }
 
 }

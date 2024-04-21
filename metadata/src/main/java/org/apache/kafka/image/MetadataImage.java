@@ -17,12 +17,11 @@
 
 package org.apache.kafka.image;
 
+import org.apache.kafka.image.writer.ImageWriter;
+import org.apache.kafka.image.writer.ImageWriterOptions;
 import org.apache.kafka.raft.OffsetAndEpoch;
-import org.apache.kafka.server.common.ApiMessageAndVersion;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 
 /**
@@ -32,14 +31,16 @@ import java.util.function.Consumer;
  */
 public final class MetadataImage {
     public final static MetadataImage EMPTY = new MetadataImage(
-        new OffsetAndEpoch(0, 0),
+        MetadataProvenance.EMPTY,
         FeaturesImage.EMPTY,
         ClusterImage.EMPTY,
         TopicsImage.EMPTY,
         ConfigurationsImage.EMPTY,
-        ClientQuotasImage.EMPTY);
+        ClientQuotasImage.EMPTY,
+        ProducerIdsImage.EMPTY,
+        AclsImage.EMPTY);
 
-    private final OffsetAndEpoch highestOffsetAndEpoch;
+    private final MetadataProvenance provenance;
 
     private final FeaturesImage features;
 
@@ -51,20 +52,28 @@ public final class MetadataImage {
 
     private final ClientQuotasImage clientQuotas;
 
+    private final ProducerIdsImage producerIds;
+
+    private final AclsImage acls;
+
     public MetadataImage(
-        OffsetAndEpoch highestOffsetAndEpoch,
+        MetadataProvenance provenance,
         FeaturesImage features,
         ClusterImage cluster,
         TopicsImage topics,
         ConfigurationsImage configs,
-        ClientQuotasImage clientQuotas
+        ClientQuotasImage clientQuotas,
+        ProducerIdsImage producerIds,
+        AclsImage acls
     ) {
-        this.highestOffsetAndEpoch = highestOffsetAndEpoch;
+        this.provenance = provenance;
         this.features = features;
         this.cluster = cluster;
         this.topics = topics;
         this.configs = configs;
         this.clientQuotas = clientQuotas;
+        this.producerIds = producerIds;
+        this.acls = acls;
     }
 
     public boolean isEmpty() {
@@ -72,11 +81,21 @@ public final class MetadataImage {
             cluster.isEmpty() &&
             topics.isEmpty() &&
             configs.isEmpty() &&
-            clientQuotas.isEmpty();
+            clientQuotas.isEmpty() &&
+            producerIds.isEmpty() &&
+            acls.isEmpty();
+    }
+
+    public MetadataProvenance provenance() {
+        return provenance;
     }
 
     public OffsetAndEpoch highestOffsetAndEpoch() {
-        return highestOffsetAndEpoch;
+        return new OffsetAndEpoch(provenance.lastContainedOffset(), provenance.lastContainedEpoch());
+    }
+
+    public long offset() {
+        return provenance.lastContainedOffset();
     }
 
     public FeaturesImage features() {
@@ -99,39 +118,65 @@ public final class MetadataImage {
         return clientQuotas;
     }
 
-    public void write(Consumer<List<ApiMessageAndVersion>> out) {
-        features.write(out);
-        cluster.write(out);
-        topics.write(out);
-        configs.write(out);
-        clientQuotas.write(out);
+    public ProducerIdsImage producerIds() {
+        return producerIds;
+    }
+
+    public AclsImage acls() {
+        return acls;
+    }
+
+    public void write(ImageWriter writer, ImageWriterOptions options) {
+        // Features should be written out first so we can include the metadata.version at the beginning of the
+        // snapshot
+        features.write(writer, options);
+        cluster.write(writer, options);
+        topics.write(writer, options);
+        configs.write(writer, options);
+        clientQuotas.write(writer, options);
+        producerIds.write(writer, options);
+        acls.write(writer, options);
+        writer.close(true);
     }
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof MetadataImage)) return false;
+        if (o == null || !o.getClass().equals(this.getClass())) return false;
         MetadataImage other = (MetadataImage) o;
-        return highestOffsetAndEpoch.equals(other.highestOffsetAndEpoch) &&
+        return provenance.equals(other.provenance) &&
             features.equals(other.features) &&
             cluster.equals(other.cluster) &&
             topics.equals(other.topics) &&
             configs.equals(other.configs) &&
-            clientQuotas.equals(other.clientQuotas);
+            clientQuotas.equals(other.clientQuotas) &&
+            producerIds.equals(other.producerIds) &&
+            acls.equals(other.acls);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(highestOffsetAndEpoch, features, cluster, topics, configs, clientQuotas);
+        return Objects.hash(
+            provenance,
+            features,
+            cluster,
+            topics,
+            configs,
+            clientQuotas,
+            producerIds,
+            acls);
     }
 
     @Override
     public String toString() {
-        return "MetadataImage(highestOffsetAndEpoch=" + highestOffsetAndEpoch +
+        return "MetadataImage(" +
+            "provenance=" + provenance +
             ", features=" + features +
             ", cluster=" + cluster +
             ", topics=" + topics +
             ", configs=" + configs +
             ", clientQuotas=" + clientQuotas +
+            ", producerIdsImage=" + producerIds +
+            ", acls=" + acls +
             ")";
     }
 }

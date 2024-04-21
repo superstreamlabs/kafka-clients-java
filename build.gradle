@@ -308,8 +308,9 @@ subprojects {
 
             artifactId = archivesBaseName
             pom {
-              name = 'Apache Kafka'
-              url = 'https://kafka.apache.org'
+              name = 'Superstream Kafka'
+              description = 'Superstream Kafka Clients'
+              url = 'https://superstream.ai'
               licenses {
                 license {
                   name = 'The Apache License, Version 2.0'
@@ -317,6 +318,18 @@ subprojects {
                   distribution = 'repo'
                 }
               }
+              developers {
+                    developer {
+                        id = 'teammemphis'
+                        name = 'Team Memphis'
+                        email = 'team@memphis.dev'
+                    }
+                }
+              scm {
+                    connection = 'scm:git:git://github.com:memphisdev/superstream-kafka.git'
+                    developerConnection = 'scm:git:ssh://github.com:memphisdev/superstream-kafka.git'
+                    url = 'https://superstream.ai'
+                }
             }
           }
         }

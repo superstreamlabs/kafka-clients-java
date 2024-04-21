@@ -1190,7 +1190,7 @@ public class ProcessorStateManagerTest {
         public void onCommit() throws IOException {
             StoreQueryUtils.checkpointPosition(checkpointFile, position);
         }
-    };
+    }
 
 
 

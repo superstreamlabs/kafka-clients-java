@@ -36,6 +36,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -48,7 +49,11 @@ import org.apache.kafka.common.message.RequestHeaderData;
 import org.apache.kafka.common.metadata.BrokerRegistrationChangeRecord;
 import org.apache.kafka.common.metadata.ConfigRecord;
 import org.apache.kafka.common.metadata.UnfenceBrokerRecord;
+import org.apache.kafka.common.metadata.ZkMigrationStateRecord;
+import org.apache.kafka.common.requests.AlterPartitionRequest;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
+import org.apache.kafka.common.utils.LogContext;
+import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.common.config.ConfigResource;
 import org.apache.kafka.common.errors.TimeoutException;
@@ -83,23 +88,28 @@ import org.apache.kafka.common.metadata.TopicRecord;
 import org.apache.kafka.common.protocol.Errors;
 import org.apache.kafka.common.requests.ApiError;
 import org.apache.kafka.controller.QuorumController.ConfigResourceExistenceChecker;
+import org.apache.kafka.controller.metrics.QuorumControllerMetrics;
 import org.apache.kafka.metadata.BrokerHeartbeatReply;
 import org.apache.kafka.metadata.BrokerRegistrationFencingChange;
 import org.apache.kafka.metadata.BrokerRegistrationReply;
 import org.apache.kafka.metadata.FinalizedControllerFeatures;
 import org.apache.kafka.metadata.PartitionRegistration;
+import org.apache.kafka.metadata.RecordTestUtils;
 import org.apache.kafka.metadata.authorizer.StandardAuthorizer;
 import org.apache.kafka.metadata.bootstrap.BootstrapMetadata;
+import org.apache.kafka.metadata.migration.ZkMigrationState;
 import org.apache.kafka.metadata.util.BatchFileWriter;
 import org.apache.kafka.metalog.LocalLogManager;
 import org.apache.kafka.metalog.LocalLogManagerTestEnv;
 import org.apache.kafka.raft.OffsetAndEpoch;
 import org.apache.kafka.server.common.ApiMessageAndVersion;
 import org.apache.kafka.server.common.MetadataVersion;
+import org.apache.kafka.server.fault.FaultHandlerException;
 import org.apache.kafka.snapshot.FileRawSnapshotReader;
 import org.apache.kafka.snapshot.RawSnapshotReader;
 import org.apache.kafka.snapshot.Snapshots;
 import org.apache.kafka.test.TestUtils;
+import org.apache.kafka.timeline.SnapshotRegistry;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -114,6 +124,7 @@ import static org.apache.kafka.controller.ConfigurationControlManagerTest.BROKER
 import static org.apache.kafka.controller.ConfigurationControlManagerTest.SCHEMA;
 import static org.apache.kafka.controller.ConfigurationControlManagerTest.entry;
 import static org.apache.kafka.controller.ControllerRequestContextUtil.ANONYMOUS_CONTEXT;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -128,6 +139,20 @@ public class QuorumControllerTest {
 
     static final BootstrapMetadata SIMPLE_BOOTSTRAP = BootstrapMetadata.
             fromVersion(MetadataVersion.IBP_3_3_IV3, "test-provided bootstrap");
+
+    static class MockControllerMetrics extends QuorumControllerMetrics {
+        final AtomicBoolean closed = new AtomicBoolean(false);
+
+        MockControllerMetrics() {
+            super(Optional.empty(), Time.SYSTEM);
+        }
+
+        @Override
+        public void close() {
+            super.close();
+            closed.set(true);
+        }
+    }
 
     /**
      * Test creating a new QuorumController and closing it.
@@ -145,7 +170,7 @@ public class QuorumControllerTest {
                 build()
         ) {
         }
-        assertTrue(metrics.isClosed(), "metrics were not closed");
+        assertTrue(metrics.closed.get(), "metrics were not closed");
     }
 
     /**
@@ -160,11 +185,11 @@ public class QuorumControllerTest {
                 setControllerBuilderInitializer(controllerBuilder -> {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
-                build();
+                build()
         ) {
             controlEnv.activeController().registerBroker(ANONYMOUS_CONTEXT,
                 new BrokerRegistrationRequestData().
-                setFeatures(brokerFeatures(MetadataVersion.IBP_3_0_IV1, MetadataVersion.IBP_3_4_IV0)).
+                setFeatures(brokerFeatures(MetadataVersion.IBP_3_0_IV1, MetadataVersion.IBP_3_5_IV2)).
                 setBrokerId(0).
                 setClusterId(logEnv.clusterId())).get();
             testConfigurationOperations(controlEnv.activeController());
@@ -201,11 +226,11 @@ public class QuorumControllerTest {
                 setControllerBuilderInitializer(controllerBuilder -> {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
-                build();
+                build()
         ) {
             controlEnv.activeController().registerBroker(ANONYMOUS_CONTEXT,
                 new BrokerRegistrationRequestData().
-                    setFeatures(brokerFeatures(MetadataVersion.IBP_3_0_IV1, MetadataVersion.IBP_3_4_IV0)).
+                    setFeatures(brokerFeatures(MetadataVersion.IBP_3_0_IV1, MetadataVersion.IBP_3_5_IV2)).
                     setBrokerId(0).
                     setClusterId(logEnv.clusterId())).get();
             testDelayedConfigurationOperations(logEnv, controlEnv.activeController());
@@ -225,7 +250,7 @@ public class QuorumControllerTest {
             new ResultOrError<>(Collections.emptyMap())),
             controller.describeConfigs(ANONYMOUS_CONTEXT, Collections.singletonMap(
                 BROKER0, Collections.emptyList())).get());
-        logEnv.logManagers().forEach(m -> m.setMaxReadOffset(3L));
+        logEnv.logManagers().forEach(m -> m.setMaxReadOffset(4L));
         assertEquals(Collections.singletonMap(BROKER0, ApiError.NONE), future1.get());
     }
 
@@ -247,7 +272,7 @@ public class QuorumControllerTest {
                 }).
                 setSessionTimeoutMillis(OptionalLong.of(sessionTimeoutMillis)).
                 setBootstrapMetadata(SIMPLE_BOOTSTRAP).
-                build();
+                build()
         ) {
             ListenerCollection listeners = new ListenerCollection();
             listeners.add(new Listener().setName("PLAINTEXT").setHost("localhost").setPort(9092));
@@ -314,8 +339,7 @@ public class QuorumControllerTest {
             int[] expectedIsr = {1};
             int[] isrFoo = active.replicationControl().getPartition(topicIdFoo, 0).isr;
 
-            assertTrue(Arrays.equals(isrFoo, expectedIsr),
-                "The ISR for topic foo was " + Arrays.toString(isrFoo) +
+            assertArrayEquals(isrFoo, expectedIsr, "The ISR for topic foo was " + Arrays.toString(isrFoo) +
                     ". It is expected to be " + Arrays.toString(expectedIsr));
 
             int fooLeader = active.replicationControl().getPartition(topicIdFoo, 0).leader;
@@ -326,7 +350,6 @@ public class QuorumControllerTest {
         }
     }
 
-    @Test
     public void testBalancePartitionLeaders() throws Throwable {
         List<Integer> allBrokers = Arrays.asList(1, 2, 3);
         List<Integer> brokersToKeepUnfenced = Arrays.asList(1, 2);
@@ -346,7 +369,7 @@ public class QuorumControllerTest {
                 setSessionTimeoutMillis(OptionalLong.of(sessionTimeoutMillis)).
                 setLeaderImbalanceCheckIntervalNs(OptionalLong.of(leaderImbalanceCheckIntervalNs)).
                 setBootstrapMetadata(SIMPLE_BOOTSTRAP).
-                build();
+                build()
         ) {
             ListenerCollection listeners = new ListenerCollection();
             listeners.add(new Listener().setName("PLAINTEXT").setHost("localhost").setPort(9092));
@@ -438,7 +461,7 @@ public class QuorumControllerTest {
                 .setPartitionIndex(imbalancedPartitionId)
                 .setLeaderEpoch(partitionRegistration.leaderEpoch)
                 .setPartitionEpoch(partitionRegistration.partitionEpoch)
-                .setNewIsr(Arrays.asList(1, 2, 3));
+                .setNewIsrWithEpochs(AlterPartitionRequest.newIsrToSimpleNewIsrWithBrokerEpochs(Arrays.asList(1, 2, 3)));
 
             AlterPartitionRequestData.TopicData topicData = new AlterPartitionRequestData.TopicData()
                 .setTopicName("foo");
@@ -449,7 +472,8 @@ public class QuorumControllerTest {
                 .setBrokerEpoch(brokerEpochs.get(partitionRegistration.leader));
             alterPartitionRequest.topics().add(topicData);
 
-            active.alterPartition(ANONYMOUS_CONTEXT, alterPartitionRequest).get();
+            active.alterPartition(ANONYMOUS_CONTEXT, new AlterPartitionRequest
+                .Builder(alterPartitionRequest, false).build((short) 0).data()).get();
 
             // Check that partitions are balanced
             AtomicLong lastHeartbeat = new AtomicLong(active.time().milliseconds());
@@ -479,7 +503,7 @@ public class QuorumControllerTest {
                     controllerBuilder.setConfigSchema(SCHEMA);
                     controllerBuilder.setMaxIdleIntervalNs(OptionalLong.of(maxIdleIntervalNs));
                 }).
-                build();
+                build()
         ) {
             ListenerCollection listeners = new ListenerCollection();
             listeners.add(new Listener().setName("PLAINTEXT").setHost("localhost").setPort(9092));
@@ -524,7 +548,7 @@ public class QuorumControllerTest {
                 setControllerBuilderInitializer(controllerBuilder -> {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
-                build();
+                build()
         ) {
             ListenerCollection listeners = new ListenerCollection();
             listeners.add(new Listener().setName("PLAINTEXT").
@@ -536,9 +560,9 @@ public class QuorumControllerTest {
                     setBrokerId(0).
                     setClusterId(active.clusterId()).
                     setIncarnationId(Uuid.fromString("kxAT73dKQsitIedpiPtwBA")).
-                    setFeatures(brokerFeatures(MetadataVersion.IBP_3_0_IV1, MetadataVersion.IBP_3_4_IV0)).
+                    setFeatures(brokerFeatures(MetadataVersion.IBP_3_0_IV1, MetadataVersion.IBP_3_5_IV2)).
                     setListeners(listeners));
-            assertEquals(2L, reply.get().epoch());
+            assertEquals(3L, reply.get().epoch());
             CreateTopicsRequestData createTopicsRequestData =
                 new CreateTopicsRequestData().setTopics(
                     new CreatableTopicCollection(Collections.singleton(
@@ -554,7 +578,7 @@ public class QuorumControllerTest {
                         get().topics().find("foo").errorMessage());
             assertEquals(new BrokerHeartbeatReply(true, false, false, false),
                 active.processBrokerHeartbeat(ANONYMOUS_CONTEXT, new BrokerHeartbeatRequestData().
-                        setWantFence(false).setBrokerEpoch(2L).setBrokerId(0).
+                        setWantFence(false).setBrokerEpoch(3L).setBrokerId(0).
                         setCurrentMetadataOffset(100000L)).get());
             assertEquals(Errors.NONE.code(), active.createTopics(ANONYMOUS_CONTEXT,
                 createTopicsRequestData, Collections.singleton("foo")).
@@ -621,7 +645,7 @@ public class QuorumControllerTest {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
                 setBootstrapMetadata(SIMPLE_BOOTSTRAP).
-                build();
+                build()
         ) {
             QuorumController active = controlEnv.activeController();
             for (int i = 0; i < numBrokers; i++) {
@@ -748,7 +772,7 @@ public class QuorumControllerTest {
                 setControllerBuilderInitializer(controllerBuilder -> {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
-                build();
+                build()
         ) {
             QuorumController controller = controlEnv.activeController();
             CountDownLatch countDownLatch = controller.pause();
@@ -812,7 +836,7 @@ public class QuorumControllerTest {
                 setControllerBuilderInitializer(controllerBuilder -> {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
-                build();
+                build()
         ) {
             QuorumController controller = controlEnv.activeController();
             CountDownLatch countDownLatch = controller.pause();
@@ -844,7 +868,6 @@ public class QuorumControllerTest {
     }
 
     @Disabled // TODO: need to fix leader election in LocalLog.
-    @Test
     public void testMissingInMemorySnapshot() throws Exception {
         int numBrokers = 3;
         int numPartitions = 3;
@@ -857,7 +880,7 @@ public class QuorumControllerTest {
                 setControllerBuilderInitializer(controllerBuilder -> {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
-                build();
+                build()
         ) {
             QuorumController controller = controlEnv.activeController();
 
@@ -894,7 +917,7 @@ public class QuorumControllerTest {
                         .setPartitionIndex(partitionIndex)
                         .setLeaderEpoch(partitionRegistration.leaderEpoch)
                         .setPartitionEpoch(partitionRegistration.partitionEpoch)
-                        .setNewIsr(Arrays.asList(0, 1));
+                        .setNewIsrWithEpochs(AlterPartitionRequest.newIsrToSimpleNewIsrWithBrokerEpochs(Arrays.asList(0, 1)));
                 })
                 .collect(Collectors.toList());
 
@@ -912,7 +935,8 @@ public class QuorumControllerTest {
 
             int oldClaimEpoch = controller.curClaimEpoch();
             assertThrows(ExecutionException.class,
-                () -> controller.alterPartition(ANONYMOUS_CONTEXT, alterPartitionRequest).get());
+                () -> controller.alterPartition(ANONYMOUS_CONTEXT, new AlterPartitionRequest
+                    .Builder(alterPartitionRequest, false).build((short) 0).data()).get());
 
             // Wait for the controller to become active again
             assertSame(controller, controlEnv.activeController());
@@ -957,7 +981,7 @@ public class QuorumControllerTest {
                     .setBrokerId(brokerId)
                     .setRack(null)
                     .setClusterId(controller.clusterId())
-                    .setFeatures(brokerFeatures(MetadataVersion.IBP_3_0_IV1, MetadataVersion.IBP_3_4_IV0))
+                    .setFeatures(brokerFeatures(MetadataVersion.IBP_3_0_IV1, MetadataVersion.IBP_3_5_IV2))
                     .setIncarnationId(Uuid.fromString("kxAT73dKQsitIedpiPtwB" + brokerId))
                     .setListeners(
                         new ListenerCollection(
@@ -1014,7 +1038,7 @@ public class QuorumControllerTest {
                 setControllerBuilderInitializer(controllerBuilder -> {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
-                build();
+                build()
         ) {
             QuorumController active = controlEnv.activeController();
             registerBrokers(active, 5);
@@ -1095,7 +1119,7 @@ public class QuorumControllerTest {
             LocalLogManagerTestEnv logEnv = new LocalLogManagerTestEnv.Builder(3).
                 build();
             QuorumControllerTestEnv controlEnv = new QuorumControllerTestEnv.Builder(logEnv).
-                build();
+                build()
         ) {
             QuorumController active = controlEnv.activeController();
             CompletableFuture<Void> future = active.appendWriteEvent("errorEvent",
@@ -1227,7 +1251,7 @@ public class QuorumControllerTest {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
                 setBootstrapMetadata(COMPLEX_BOOTSTRAP).
-                build();
+                build()
         ) {
             QuorumController active = controlEnv.activeController();
             TestUtils.waitForCondition(() ->
@@ -1250,7 +1274,7 @@ public class QuorumControllerTest {
                     controllerBuilder.setConfigSchema(SCHEMA);
                 }).
                 setBootstrapMetadata(COMPLEX_BOOTSTRAP).
-                build();
+                build()
         ) {
             QuorumController active = controlEnv.activeController();
 
@@ -1319,5 +1343,182 @@ public class QuorumControllerTest {
                         ControllerResult.atomicOf(Arrays.asList(rec(0), rec(1), rec(2), rec(3), rec(4)), null),
                         2,
                         appender)).getMessage());
+    }
+
+    @Test
+    public void testBootstrapZkMigrationRecord() throws Exception {
+        assertEquals(ZkMigrationState.PRE_MIGRATION,
+            checkBootstrapZkMigrationRecord(MetadataVersion.IBP_3_4_IV0, true));
+
+        assertEquals(ZkMigrationState.NONE,
+            checkBootstrapZkMigrationRecord(MetadataVersion.IBP_3_4_IV0, false));
+
+        assertEquals(ZkMigrationState.NONE,
+            checkBootstrapZkMigrationRecord(MetadataVersion.IBP_3_3_IV0, false));
+
+        assertEquals(
+            "The bootstrap metadata.version 3.3-IV0 does not support ZK migrations. Cannot continue with ZK migrations enabled.",
+            assertThrows(FaultHandlerException.class, () ->
+                checkBootstrapZkMigrationRecord(MetadataVersion.IBP_3_3_IV0, true)).getCause().getMessage()
+        );
+    }
+
+    public ZkMigrationState checkBootstrapZkMigrationRecord(
+        MetadataVersion metadataVersion,
+        boolean migrationEnabled
+    ) throws Exception {
+        try (
+            LocalLogManagerTestEnv logEnv = new LocalLogManagerTestEnv.Builder(1).build();
+            QuorumControllerTestEnv controlEnv = new QuorumControllerTestEnv.Builder(logEnv).
+                setControllerBuilderInitializer(controllerBuilder -> {
+                    controllerBuilder.setZkMigrationEnabled(migrationEnabled);
+                }).
+                setBootstrapMetadata(BootstrapMetadata.fromVersion(metadataVersion, "test")).
+                build();
+        ) {
+            QuorumController active = controlEnv.activeController();
+            return active.appendReadEvent("read migration state", OptionalLong.empty(),
+                () -> active.featureControl().zkMigrationState()).get(30, TimeUnit.SECONDS);
+        }
+    }
+
+    @Test
+    public void testUpgradeMigrationStateFrom34() throws Exception {
+        try (LocalLogManagerTestEnv logEnv = new LocalLogManagerTestEnv.Builder(1).build()) {
+            // In 3.4, we only wrote a PRE_MIGRATION to the log. In that software version, we defined this
+            // as enum value 1. In 3.5+ software, this enum value is redefined as MIGRATION
+            BootstrapMetadata bootstrapMetadata = BootstrapMetadata.fromVersion(MetadataVersion.IBP_3_4_IV0, "test");
+            List<ApiMessageAndVersion> initialRecords = new ArrayList<>(bootstrapMetadata.records());
+            initialRecords.add(ZkMigrationState.of((byte) 1).toRecord());
+            logEnv.appendInitialRecords(initialRecords);
+            try (
+                QuorumControllerTestEnv controlEnv = new QuorumControllerTestEnv.Builder(logEnv).
+                    setControllerBuilderInitializer(controllerBuilder -> {
+                        controllerBuilder.setZkMigrationEnabled(true);
+                    }).
+                    setBootstrapMetadata(bootstrapMetadata).
+                    build();
+            ) {
+                QuorumController active = controlEnv.activeController();
+                assertEquals(active.featureControl().zkMigrationState(), ZkMigrationState.MIGRATION);
+                assertFalse(active.featureControl().inPreMigrationMode());
+            }
+        }
+    }
+
+    FeatureControlManager getActivationRecords(
+            MetadataVersion metadataVersion,
+            Optional<ZkMigrationState> stateInLog,
+            boolean zkMigrationEnabled
+    ) {
+        SnapshotRegistry snapshotRegistry = new SnapshotRegistry(new LogContext());
+        FeatureControlManager featureControlManager = new FeatureControlManager.Builder()
+                .setSnapshotRegistry(snapshotRegistry)
+                .setMetadataVersion(metadataVersion)
+                .build();
+
+        stateInLog.ifPresent(zkMigrationState ->
+            featureControlManager.replay((ZkMigrationStateRecord) zkMigrationState.toRecord().message()));
+
+        List<ApiMessageAndVersion> records = QuorumController.generateActivationRecords(
+            log,
+            !stateInLog.isPresent(),
+            zkMigrationEnabled,
+            BootstrapMetadata.fromVersion(metadataVersion, "test"),
+            featureControlManager);
+        RecordTestUtils.replayAll(featureControlManager, records);
+        return featureControlManager;
+    }
+
+    @Test
+    public void testActivationRecords33() {
+        FeatureControlManager featureControl;
+
+        assertEquals(
+            "The bootstrap metadata.version 3.3-IV0 does not support ZK migrations. Cannot continue with ZK migrations enabled.",
+            assertThrows(RuntimeException.class, () -> getActivationRecords(MetadataVersion.IBP_3_3_IV0, Optional.empty(), true)).getMessage()
+        );
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_3_IV0, Optional.empty(), false);
+        assertEquals(MetadataVersion.IBP_3_3_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.NONE, featureControl.zkMigrationState());
+
+        assertEquals(
+            "Should not have ZK migrations enabled on a cluster running metadata.version 3.3-IV0",
+            assertThrows(RuntimeException.class, () -> getActivationRecords(MetadataVersion.IBP_3_3_IV0, Optional.of(ZkMigrationState.NONE), true)).getMessage()
+        );
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_3_IV0, Optional.of(ZkMigrationState.NONE), false);
+        assertEquals(MetadataVersion.IBP_3_3_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.NONE, featureControl.zkMigrationState());
+    }
+
+    @Test
+    public void testActivationRecords34() {
+        FeatureControlManager featureControl;
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.empty(), true);
+        assertEquals(MetadataVersion.IBP_3_4_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.PRE_MIGRATION, featureControl.zkMigrationState());
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.empty(), false);
+        assertEquals(MetadataVersion.IBP_3_4_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.NONE, featureControl.zkMigrationState());
+
+        assertEquals(
+            "Should not have ZK migrations enabled on a cluster that was created in KRaft mode.",
+            assertThrows(RuntimeException.class, () -> getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.of(ZkMigrationState.NONE), true)).getMessage()
+        );
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.of(ZkMigrationState.NONE), false);
+        assertEquals(MetadataVersion.IBP_3_4_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.NONE, featureControl.zkMigrationState());
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.of(ZkMigrationState.PRE_MIGRATION), true);
+        assertEquals(MetadataVersion.IBP_3_4_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.PRE_MIGRATION, featureControl.zkMigrationState());
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.of(ZkMigrationState.MIGRATION), true);
+        assertEquals(MetadataVersion.IBP_3_4_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.MIGRATION, featureControl.zkMigrationState());
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.of(ZkMigrationState.MIGRATION), false);
+        assertEquals(MetadataVersion.IBP_3_4_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.POST_MIGRATION, featureControl.zkMigrationState());
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.of(ZkMigrationState.POST_MIGRATION), true);
+        assertEquals(MetadataVersion.IBP_3_4_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.POST_MIGRATION, featureControl.zkMigrationState());
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.of(ZkMigrationState.POST_MIGRATION), false);
+        assertEquals(MetadataVersion.IBP_3_4_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.POST_MIGRATION, featureControl.zkMigrationState());
+    }
+
+    @Test
+    public void testActivationRecordsNonEmptyLog() {
+        FeatureControlManager featureControl;
+
+        featureControl = getActivationRecords(MetadataVersion.IBP_3_4_IV0, Optional.empty(), true);
+        assertEquals(MetadataVersion.IBP_3_4_IV0, featureControl.metadataVersion());
+        assertEquals(ZkMigrationState.PRE_MIGRATION, featureControl.zkMigrationState());    }
+
+    @Test
+    public void testMigrationsEnabledForOldBootstrapMetadataVersion() throws Exception {
+        try (
+            LocalLogManagerTestEnv logEnv = new LocalLogManagerTestEnv.Builder(1).build();
+        ) {
+            QuorumControllerTestEnv.Builder controlEnvBuilder = new QuorumControllerTestEnv.Builder(logEnv).
+                    setControllerBuilderInitializer(controllerBuilder -> {
+                        controllerBuilder.setZkMigrationEnabled(true);
+                    }).
+                    setBootstrapMetadata(BootstrapMetadata.fromVersion(MetadataVersion.IBP_3_3_IV0, "test"));
+
+            QuorumControllerTestEnv controlEnv = controlEnvBuilder.build();
+            QuorumController active = controlEnv.activeController();
+            assertEquals(ZkMigrationState.NONE, active.appendReadEvent("read migration state", OptionalLong.empty(),
+                () -> active.featureControl().zkMigrationState()).get(30, TimeUnit.SECONDS));
+            assertThrows(FaultHandlerException.class, controlEnv::close);
+        }
     }
 }

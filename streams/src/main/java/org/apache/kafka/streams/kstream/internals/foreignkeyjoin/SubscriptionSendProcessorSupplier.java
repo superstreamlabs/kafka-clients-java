@@ -51,6 +51,7 @@ public class SubscriptionSendProcessorSupplier<K, KO, V> implements ProcessorSup
     private final boolean leftJoin;
     private Serializer<KO> foreignKeySerializer;
     private Serializer<V> valueSerializer;
+    private boolean useVersionedSemantics;
 
     public SubscriptionSendProcessorSupplier(final Function<V, KO> foreignKeyExtractor,
                                              final Supplier<String> foreignKeySerdeTopicSupplier,
@@ -69,6 +70,15 @@ public class SubscriptionSendProcessorSupplier<K, KO, V> implements ProcessorSup
     @Override
     public Processor<K, Change<V>, KO, SubscriptionWrapper<K>> get() {
         return new UnbindChangeProcessor();
+    }
+
+    public void setUseVersionedSemantics(final boolean useVersionedSemantics) {
+        this.useVersionedSemantics = useVersionedSemantics;
+    }
+
+    // VisibleForTesting
+    public boolean isUseVersionedSemantics() {
+        return useVersionedSemantics;
     }
 
     private class UnbindChangeProcessor extends ContextualProcessor<K, Change<V>, KO, SubscriptionWrapper<K>> {
@@ -99,6 +109,13 @@ public class SubscriptionSendProcessorSupplier<K, KO, V> implements ProcessorSup
 
         @Override
         public void process(final Record<K, Change<V>> record) {
+            // drop out-of-order records from versioned tables (cf. KIP-914)
+            if (useVersionedSemantics && !record.value().isLatest) {
+                LOG.info("Skipping out-of-order record from versioned table while performing table-table join.");
+                droppedRecordsSensor.record();
+                return;
+            }
+
             final long[] currentHash = record.value().newValue == null ?
                 null :
                 Murmur3.hash128(valueSerializer.serialize(valueSerdeTopic, record.value().newValue));
@@ -107,37 +124,13 @@ public class SubscriptionSendProcessorSupplier<K, KO, V> implements ProcessorSup
             if (record.value().oldValue != null) {
                 final KO oldForeignKey = foreignKeyExtractor.apply(record.value().oldValue);
                 if (oldForeignKey == null) {
-                    if (context().recordMetadata().isPresent()) {
-                        final RecordMetadata recordMetadata = context().recordMetadata().get();
-                        LOG.warn(
-                            "Skipping record due to null foreign key. "
-                                + "topic=[{}] partition=[{}] offset=[{}]",
-                            recordMetadata.topic(), recordMetadata.partition(), recordMetadata.offset()
-                        );
-                    } else {
-                        LOG.warn(
-                            "Skipping record due to null foreign key. Topic, partition, and offset not known."
-                        );
-                    }
-                    droppedRecordsSensor.record();
+                    logSkippedRecordDueToNullForeignKey();
                     return;
                 }
                 if (record.value().newValue != null) {
                     final KO newForeignKey = foreignKeyExtractor.apply(record.value().newValue);
                     if (newForeignKey == null) {
-                        if (context().recordMetadata().isPresent()) {
-                            final RecordMetadata recordMetadata = context().recordMetadata().get();
-                            LOG.warn(
-                                "Skipping record due to null foreign key. "
-                                    + "topic=[{}] partition=[{}] offset=[{}]",
-                                recordMetadata.topic(), recordMetadata.partition(), recordMetadata.offset()
-                            );
-                        } else {
-                            LOG.warn(
-                                "Skipping record due to null foreign key. Topic, partition, and offset not known."
-                            );
-                        }
-                        droppedRecordsSensor.record();
+                        logSkippedRecordDueToNullForeignKey();
                         return;
                     }
 
@@ -193,19 +186,7 @@ public class SubscriptionSendProcessorSupplier<K, KO, V> implements ProcessorSup
                 }
                 final KO newForeignKey = foreignKeyExtractor.apply(record.value().newValue);
                 if (newForeignKey == null) {
-                    if (context().recordMetadata().isPresent()) {
-                        final RecordMetadata recordMetadata = context().recordMetadata().get();
-                        LOG.warn(
-                            "Skipping record due to null foreign key. "
-                                + "topic=[{}] partition=[{}] offset=[{}]",
-                            recordMetadata.topic(), recordMetadata.partition(), recordMetadata.offset()
-                        );
-                    } else {
-                        LOG.warn(
-                            "Skipping record due to null foreign key. Topic, partition, and offset not known."
-                        );
-                    }
-                    droppedRecordsSensor.record();
+                    logSkippedRecordDueToNullForeignKey();
                 } else {
                     context().forward(
                         record.withKey(newForeignKey)
@@ -216,6 +197,22 @@ public class SubscriptionSendProcessorSupplier<K, KO, V> implements ProcessorSup
                                 partition)));
                 }
             }
+        }
+
+        private void logSkippedRecordDueToNullForeignKey() {
+            if (context().recordMetadata().isPresent()) {
+                final RecordMetadata recordMetadata = context().recordMetadata().get();
+                LOG.warn(
+                    "Skipping record due to null foreign key. "
+                        + "topic=[{}] partition=[{}] offset=[{}]",
+                    recordMetadata.topic(), recordMetadata.partition(), recordMetadata.offset()
+                );
+            } else {
+                LOG.warn(
+                    "Skipping record due to null foreign key. Topic, partition, and offset not known."
+                );
+            }
+            droppedRecordsSensor.record();
         }
     }
 }

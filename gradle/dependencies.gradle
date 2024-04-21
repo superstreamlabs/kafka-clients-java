@@ -53,16 +53,18 @@ if ( !versions.scala.contains('-') ) {
   versions["baseScala"] = versions.scala
 }
 
+// When adding, removing or updating dependencies, please also update the LICENSE-binary file accordingly.
+// See https://issues.apache.org/jira/browse/KAFKA-12622 for steps to verify the LICENSE-binary file is correct.
 versions += [
   activation: "1.1.1",
   apacheda: "1.0.2",
   apacheds: "2.0.0-M24",
   argparse4j: "0.7.0",
-  bcpkix: "1.73",
+  bcpkix: "1.75",
   checkstyle: "8.36.2",
   commonsCli: "1.4",
   dropwizardMetrics: "4.1.12.1",
-  gradle: "7.6",
+  gradle: "8.0.2",
   grgit: "4.1.1",
   httpclient: "4.5.14",
   easymock: "4.3",
@@ -83,7 +85,7 @@ versions += [
   jopt: "5.0.4",
   jose4j: "0.9.3",
   junit: "5.9.3",
-  jqwik: "1.7.2",
+  jqwik: "1.7.4",
   kafka_0100: "0.10.0.1",
   kafka_0101: "0.10.1.1",
   kafka_0102: "0.10.2.2",
@@ -104,10 +106,10 @@ versions += [
   kafka_32: "3.2.3",
   kafka_33: "3.3.1",
   lz4: "1.8.0",
-  mavenArtifact: "3.8.4",
+  mavenArtifact: "3.8.8",
   metrics: "2.2.0",
-  mockito: "4.6.1",
-  netty: "4.1.92.Final",
+  mockito: "4.9.0",
+  netty: "4.1.94.Final",
   powermock: "2.0.9",
   reflections: "0.9.12",
   reload4j: "1.2.25",
@@ -120,13 +122,14 @@ versions += [
   scalaJava8Compat : "1.0.2",
   scoverage: "1.9.3",
   slf4j: "1.7.36",
-  snappy: "1.1.8.4",
+  snappy: "1.1.10.1",
   spotbugs: "4.7.3",
-  swaggerAnnotations: "2.2.0",
-  swaggerJaxrs2: "2.2.0",
-  zinc: "1.7.2",
+  // New version of Swagger 2.2.14 requires minimum JDK 11.
+  swaggerAnnotations: "2.2.8",
+  swaggerJaxrs2: "2.2.8",
+  zinc: "1.8.0",
   zookeeper: "3.6.4",
-  zstd: "1.5.2-1"
+  zstd: "1.5.5-1"
 ]
 libs += [
   activation: "javax.activation:activation:$versions.activation",

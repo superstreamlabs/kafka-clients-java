@@ -65,9 +65,9 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>, AutoCloseable {
     public static class Builder {
         private int nodeId = -1;
+        private String threadNamePrefix = "";
         private Time time = Time.SYSTEM;
         private LogContext logContext = null;
-        private String threadNamePrefix = "";
         private FaultHandler faultHandler = (m, e) -> new FaultHandlerException(m, e);
         private MetadataLoaderMetrics metrics = new MetadataLoaderMetrics() {
             private volatile long lastAppliedOffset = -1L;
@@ -98,13 +98,13 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
             return this;
         }
 
-        public Builder setTime(Time time) {
-            this.time = time;
+        public Builder setThreadNamePrefix(String threadNamePrefix) {
+            this.threadNamePrefix = threadNamePrefix;
             return this;
         }
 
-        public Builder setThreadNamePrefix(String threadNamePrefix) {
-            this.threadNamePrefix = threadNamePrefix;
+        public Builder setTime(Time time) {
+            this.time = time;
             return this;
         }
 
@@ -125,7 +125,7 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
 
         public MetadataLoader build() {
             if (logContext == null) {
-                logContext = new LogContext("[MetadataLoader " + nodeId + "] ");
+                logContext = new LogContext("[MetadataLoader id=" + nodeId + "] ");
             }
             if (highWaterMarkAccessor == null) {
                 throw new RuntimeException("You must set the high water mark accessor.");
@@ -133,6 +133,7 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
             return new MetadataLoader(
                 time,
                 logContext,
+                nodeId,
                 threadNamePrefix,
                 faultHandler,
                 metrics,
@@ -201,6 +202,7 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
     private MetadataLoader(
         Time time,
         LogContext logContext,
+        int nodeId,
         String threadNamePrefix,
         FaultHandler faultHandler,
         MetadataLoaderMetrics metrics,
@@ -214,7 +216,9 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
         this.uninitializedPublishers = new LinkedHashMap<>();
         this.publishers = new LinkedHashMap<>();
         this.image = MetadataImage.EMPTY;
-        this.eventQueue = new KafkaEventQueue(Time.SYSTEM, logContext, threadNamePrefix);
+        this.eventQueue = new KafkaEventQueue(Time.SYSTEM, logContext,
+                threadNamePrefix + "metadata-loader-",
+                new ShutdownEvent());
     }
 
     private boolean stillNeedToCatchUp(String where, long offset) {
@@ -264,7 +268,7 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
             return;
         }
         if (stillNeedToCatchUp("initializeNewPublishers", image.highestOffsetAndEpoch().offset())) {
-        // Reschedule the initialization for later.
+            // Reschedule the initialization for later.
             log.debug("InitializeNewPublishers: unable to initialize new publisher(s) {} " +
                             "because we are still catching up with quorum metadata. Rescheduling.",
                     uninitializedPublisherNames());
@@ -294,7 +298,8 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
             try {
                 log.info("InitializeNewPublishers: initializing {} with a snapshot at offset {}",
                         publisher.name(), image.highestOffsetAndEpoch().offset());
-                publisher.publishSnapshot(delta, image, manifest);
+                publisher.onMetadataUpdate(delta, image, manifest);
+                publisher.onControllerChange(currentLeaderAndEpoch);
                 publishers.put(publisher.name(), publisher);
             } catch (Throwable e) {
                 faultHandler.handleFault("Unhandled error initializing " + publisher.name() +
@@ -317,7 +322,7 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
                 LogDeltaManifest manifest = loadLogDelta(delta, reader);
                 if (log.isDebugEnabled()) {
                     log.debug("handleCommit: Generated a metadata delta between {} and {} from {} batch(es) " +
-                                    "in {} us.", image.offset(), manifest.provenance().lastContainedOffset(),
+                            "in {} us.", image.offset(), manifest.provenance().lastContainedOffset(),
                             manifest.numBatches(), NANOSECONDS.toMicros(manifest.elapsedNs()));
                 }
                 try {
@@ -336,7 +341,7 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
                 }
                 for (MetadataPublisher publisher : publishers.values()) {
                     try {
-                        publisher.publishLogDelta(delta, image, manifest);
+                        publisher.onMetadataUpdate(delta, image, manifest);
                     } catch (Throwable e) {
                         faultHandler.handleFault("Unhandled error publishing the new metadata " +
                             "image ending at " + manifest.provenance().lastContainedOffset() +
@@ -433,7 +438,7 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
                 log.info("handleSnapshot: publishing new snapshot image with provenance {}.", image.provenance());
                 for (MetadataPublisher publisher : publishers.values()) {
                     try {
-                        publisher.publishSnapshot(delta, image, manifest);
+                        publisher.onMetadataUpdate(delta, image, manifest);
                     } catch (Throwable e) {
                         faultHandler.handleFault("Unhandled error publishing the new metadata " +
                                 "image from snapshot at offset " + reader.lastContainedLogOffset() +
@@ -493,6 +498,15 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
     public void handleLeaderChange(LeaderAndEpoch leaderAndEpoch) {
         eventQueue.append(() -> {
             currentLeaderAndEpoch = leaderAndEpoch;
+            for (MetadataPublisher publisher : publishers.values()) {
+                try {
+                    publisher.onControllerChange(currentLeaderAndEpoch);
+                } catch (Throwable e) {
+                    faultHandler.handleFault("Unhandled error publishing the new leader " +
+                        "change to " + currentLeaderAndEpoch + " with publisher " +
+                        publisher.name(), e);
+                }
+            }
         });
     }
 
@@ -582,9 +596,14 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
 
     @Override
     public void beginShutdown() {
-        eventQueue.beginShutdown("beginShutdown", () -> {
+        eventQueue.beginShutdown("beginShutdown");
+    }
+
+    class ShutdownEvent implements EventQueue.Event {
+        @Override
+        public void run() throws Exception {
             for (Iterator<MetadataPublisher> iter = uninitializedPublishers.values().iterator();
-                    iter.hasNext(); ) {
+                 iter.hasNext(); ) {
                 closePublisher(iter.next());
                 iter.remove();
             }
@@ -593,7 +612,7 @@ public class MetadataLoader implements RaftClient.Listener<ApiMessageAndVersion>
                 closePublisher(iter.next());
                 iter.remove();
             }
-        });
+        }
     }
 
     Time time() {

@@ -352,6 +352,11 @@ public class ForeignTableJoinProcessorSupplierTest {
             public void init(final ProcessorContext context) {
 
             }
+
+            @Override
+            public boolean isVersioned() {
+                return false;
+            }
         };
         return new KTableValueGetterSupplier<String, String>() {
             @Override

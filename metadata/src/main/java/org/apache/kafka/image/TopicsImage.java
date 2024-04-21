@@ -17,18 +17,16 @@
 
 package org.apache.kafka.image;
 
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.Uuid;
+import org.apache.kafka.image.node.TopicsImageByNameNode;
 import org.apache.kafka.image.writer.ImageWriter;
 import org.apache.kafka.image.writer.ImageWriterOptions;
 import org.apache.kafka.metadata.PartitionRegistration;
 import org.apache.kafka.server.util.TranslatedValueMapView;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 
 /**
@@ -112,20 +110,8 @@ public final class TopicsImage {
         return new TranslatedValueMapView<>(topicsById, image -> image.name());
     }
 
-    public Map<TopicPartition, PartitionRegistration> partitions() {
-        Map<TopicPartition, PartitionRegistration> partitions = new HashMap<>();
-        topicsById.values().forEach(topic -> {
-            topic.partitions().forEach((key, value) -> partitions.put(new TopicPartition(topic.name(), key), value));
-        });
-        return partitions;
-    }
-
     @Override
     public String toString() {
-        return "TopicsImage(topicsById=" + topicsById.entrySet().stream().
-            map(e -> e.getKey() + ":" + e.getValue()).collect(Collectors.joining(", ")) +
-            ", topicsByName=" + topicsByName.entrySet().stream().
-            map(e -> e.getKey() + ":" + e.getValue()).collect(Collectors.joining(", ")) +
-            ")";
+        return new TopicsImageByNameNode(this).stringify();
     }
 }

@@ -43,6 +43,7 @@ public class ForeignTableJoinProcessorSupplier<K, KO, VO> implements
     private static final Logger LOG = LoggerFactory.getLogger(ForeignTableJoinProcessorSupplier.class);
     private final StoreBuilder<TimestampedKeyValueStore<Bytes, SubscriptionWrapper<K>>> storeBuilder;
     private final CombinedKeySchema<KO, K> keySchema;
+    private boolean useVersionedSemantics = false;
 
     public ForeignTableJoinProcessorSupplier(
         final StoreBuilder<TimestampedKeyValueStore<Bytes, SubscriptionWrapper<K>>> storeBuilder,
@@ -57,10 +58,18 @@ public class ForeignTableJoinProcessorSupplier<K, KO, VO> implements
         return new KTableKTableJoinProcessor();
     }
 
+    public void setUseVersionedSemantics(final boolean useVersionedSemantics) {
+        this.useVersionedSemantics = useVersionedSemantics;
+    }
+
+    // VisibleForTesting
+    public boolean isUseVersionedSemantics() {
+        return useVersionedSemantics;
+    }
 
     private final class KTableKTableJoinProcessor extends ContextualProcessor<KO, Change<VO>, K, SubscriptionResponseWrapper<VO>> {
         private Sensor droppedRecordsSensor;
-        private TimestampedKeyValueStore<Bytes, SubscriptionWrapper<K>> store;
+        private TimestampedKeyValueStore<Bytes, SubscriptionWrapper<K>> subscriptionStore;
 
         @Override
         public void init(final ProcessorContext<K, SubscriptionResponseWrapper<VO>> context) {
@@ -71,7 +80,7 @@ public class ForeignTableJoinProcessorSupplier<K, KO, VO> implements
                 internalProcessorContext.taskId().toString(),
                 internalProcessorContext.metrics()
             );
-            store = internalProcessorContext.getStateStore(storeBuilder);
+            subscriptionStore = internalProcessorContext.getStateStore(storeBuilder);
         }
 
         @Override
@@ -95,11 +104,18 @@ public class ForeignTableJoinProcessorSupplier<K, KO, VO> implements
                 return;
             }
 
+            // drop out-of-order records from versioned tables (cf. KIP-914)
+            if (useVersionedSemantics && !record.value().isLatest) {
+                LOG.info("Skipping out-of-order record from versioned table while performing table-table join.");
+                droppedRecordsSensor.record();
+                return;
+            }
+
             final Bytes prefixBytes = keySchema.prefixBytes(record.key());
 
             //Perform the prefixScan and propagate the results
             try (final KeyValueIterator<Bytes, ValueAndTimestamp<SubscriptionWrapper<K>>> prefixScanResults =
-                     store.range(prefixBytes, Bytes.increment(prefixBytes))) {
+                     subscriptionStore.range(prefixBytes, Bytes.increment(prefixBytes))) {
 
                 while (prefixScanResults.hasNext()) {
                     final KeyValue<Bytes, ValueAndTimestamp<SubscriptionWrapper<K>>> next = prefixScanResults.next();

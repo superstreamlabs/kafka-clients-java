@@ -21,33 +21,33 @@ import java.net.InetAddress
 import java.util
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
-import java.util.concurrent.{CompletableFuture, TimeUnit, TimeoutException}
-
+import java.util.concurrent.{CompletableFuture, ExecutionException, TimeUnit, TimeoutException}
 import kafka.cluster.Broker.ServerInfo
-import kafka.coordinator.group.GroupCoordinator
+import kafka.coordinator.group.{GroupCoordinator, GroupCoordinatorAdapter}
 import kafka.coordinator.transaction.{ProducerIdManager, TransactionCoordinator}
 import kafka.log.LogManager
-import kafka.metrics.KafkaYammerMetrics
-import kafka.network.SocketServer
-import kafka.raft.RaftManager
+import kafka.network.{DataPlaneAcceptor, SocketServer}
+import kafka.raft.KafkaRaftManager
 import kafka.security.CredentialProvider
 import kafka.server.KafkaRaftServer.ControllerRole
-import kafka.server.metadata.{BrokerMetadataListener, BrokerMetadataPublisher, BrokerMetadataSnapshotter, ClientQuotaMetadataManager, KRaftMetadataCache, SnapshotWriterBuilder}
+import kafka.server.metadata.{BrokerMetadataListener, BrokerMetadataPublisher, BrokerMetadataSnapshotter, ClientQuotaMetadataManager, DynamicConfigPublisher, KRaftMetadataCache, SnapshotWriterBuilder}
 import kafka.utils.{CoreUtils, KafkaScheduler}
+import org.apache.kafka.common.feature.SupportedVersionRange
 import org.apache.kafka.common.message.ApiMessageType.ListenerType
 import org.apache.kafka.common.message.BrokerRegistrationRequestData.{Listener, ListenerCollection}
-import org.apache.kafka.common.metrics.Metrics
 import org.apache.kafka.common.network.ListenerName
 import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.apache.kafka.common.security.scram.internals.ScramMechanism
 import org.apache.kafka.common.security.token.delegation.internals.DelegationTokenCache
-import org.apache.kafka.common.utils.{AppInfoParser, LogContext, Time, Utils}
+import org.apache.kafka.common.utils.{LogContext, Time, Utils}
 import org.apache.kafka.common.{ClusterResource, Endpoint}
+import org.apache.kafka.metadata.authorizer.ClusterMetadataAuthorizer
 import org.apache.kafka.metadata.{BrokerState, VersionRange}
-import org.apache.kafka.raft.RaftConfig.AddressSpec
+import org.apache.kafka.raft
 import org.apache.kafka.raft.{RaftClient, RaftConfig}
 import org.apache.kafka.server.authorizer.Authorizer
 import org.apache.kafka.server.common.ApiMessageAndVersion
+import org.apache.kafka.server.metrics.KafkaYammerMetrics
 import org.apache.kafka.snapshot.SnapshotWriter
 
 import scala.collection.{Map, Seq}
@@ -59,13 +59,9 @@ class BrokerSnapshotWriterBuilder(raftClient: RaftClient[ApiMessageAndVersion])
     extends SnapshotWriterBuilder {
   override def build(committedOffset: Long,
                      committedEpoch: Int,
-                     lastContainedLogTime: Long): SnapshotWriter[ApiMessageAndVersion] = {
-    raftClient.createSnapshot(committedOffset, committedEpoch, lastContainedLogTime).
-        asScala.getOrElse(
-      throw new RuntimeException("A snapshot already exists with " +
-        s"committedOffset=${committedOffset}, committedEpoch=${committedEpoch}, " +
-        s"lastContainedLogTime=${lastContainedLogTime}")
-    )
+                     lastContainedLogTime: Long): Option[SnapshotWriter[ApiMessageAndVersion]] = {
+    val snapshotId = new raft.OffsetAndEpoch(committedOffset + 1, committedEpoch)
+    raftClient.createSnapshot(snapshotId, lastContainedLogTime).asScala
   }
 }
 
@@ -73,18 +69,19 @@ class BrokerSnapshotWriterBuilder(raftClient: RaftClient[ApiMessageAndVersion])
  * A Kafka broker that runs in KRaft (Kafka Raft) mode.
  */
 class BrokerServer(
-  val config: KafkaConfig,
-  val metaProps: MetaProperties,
-  val raftManager: RaftManager[ApiMessageAndVersion],
-  val time: Time,
-  val metrics: Metrics,
-  val threadNamePrefix: Option[String],
+  val sharedServer: SharedServer,
   val initialOfflineDirs: Seq[String],
-  val controllerQuorumVotersFuture: CompletableFuture[util.Map[Integer, AddressSpec]],
-  val supportedFeatures: util.Map[String, VersionRange]
 ) extends KafkaBroker {
+  val threadNamePrefix = sharedServer.threadNamePrefix
+  val config = sharedServer.brokerConfig
+  val time = sharedServer.time
+  def metrics = sharedServer.metrics
 
-  override def brokerState: BrokerState = lifecycleManager.state
+  // Get raftManager from SharedServer. It will be initialized during startup.
+  def raftManager: KafkaRaftManager[ApiMessageAndVersion] = sharedServer.raftManager
+
+  override def brokerState: BrokerState = Option(lifecycleManager).
+    flatMap(m => Some(m.state)).getOrElse(BrokerState.NOT_RUNNING)
 
   import kafka.server.Server._
 
@@ -92,7 +89,7 @@ class BrokerServer(
 
   this.logIdent = logContext.logPrefix
 
-  @volatile private var lifecycleManager: BrokerLifecycleManager = null
+  @volatile var lifecycleManager: BrokerLifecycleManager = _
 
   private val isShuttingDown = new AtomicBoolean(false)
 
@@ -100,60 +97,58 @@ class BrokerServer(
   val awaitShutdownCond = lock.newCondition()
   var status: ProcessStatus = SHUTDOWN
 
-  @volatile var dataPlaneRequestProcessor: KafkaApis = null
-  var controlPlaneRequestProcessor: KafkaApis = null
+  @volatile var dataPlaneRequestProcessor: KafkaApis = _
+  var controlPlaneRequestProcessor: KafkaApis = _
 
   var authorizer: Option[Authorizer] = None
-  @volatile var socketServer: SocketServer = null
-  var dataPlaneRequestHandlerPool: KafkaRequestHandlerPool = null
+  @volatile var socketServer: SocketServer = _
+  var dataPlaneRequestHandlerPool: KafkaRequestHandlerPool = _
 
-  var logDirFailureChannel: LogDirFailureChannel = null
-  var logManager: LogManager = null
+  var logDirFailureChannel: LogDirFailureChannel = _
+  var logManager: LogManager = _
 
-  var tokenManager: DelegationTokenManager = null
+  var tokenManager: DelegationTokenManager = _
 
-  var dynamicConfigHandlers: Map[String, ConfigHandler] = null
+  var dynamicConfigHandlers: Map[String, ConfigHandler] = _
 
-  @volatile private[this] var _replicaManager: ReplicaManager = null
+  @volatile private[this] var _replicaManager: ReplicaManager = _
 
-  var credentialProvider: CredentialProvider = null
-  var tokenCache: DelegationTokenCache = null
+  var credentialProvider: CredentialProvider = _
+  var tokenCache: DelegationTokenCache = _
 
-  @volatile var groupCoordinator: GroupCoordinator = null
+  @volatile var groupCoordinator: GroupCoordinator = _
 
-  var transactionCoordinator: TransactionCoordinator = null
+  var transactionCoordinator: TransactionCoordinator = _
 
-  var clientToControllerChannelManager: BrokerToControllerChannelManager = null
+  var clientToControllerChannelManager: BrokerToControllerChannelManager = _
 
-  var forwardingManager: ForwardingManager = null
+  var forwardingManager: ForwardingManager = _
 
-  var alterIsrManager: AlterIsrManager = null
+  var alterPartitionManager: AlterPartitionManager = _
 
-  var autoTopicCreationManager: AutoTopicCreationManager = null
+  var autoTopicCreationManager: AutoTopicCreationManager = _
 
-  var kafkaScheduler: KafkaScheduler = null
+  var kafkaScheduler: KafkaScheduler = _
 
-  @volatile var metadataCache: KRaftMetadataCache = null
+  @volatile var metadataCache: KRaftMetadataCache = _
 
-  var quotaManagers: QuotaFactory.QuotaManagers = null
+  var quotaManagers: QuotaFactory.QuotaManagers = _
 
-  var clientQuotaMetadataManager: ClientQuotaMetadataManager = null
+  var clientQuotaMetadataManager: ClientQuotaMetadataManager = _
 
-  @volatile var brokerTopicStats: BrokerTopicStats = null
+  @volatile var brokerTopicStats: BrokerTopicStats = _
 
-  val brokerFeatures: BrokerFeatures = BrokerFeatures.createDefault()
-
-  val featureCache: FinalizedFeatureCache = new FinalizedFeatureCache(brokerFeatures)
-
-  val clusterId: String = metaProps.clusterId
+  val clusterId: String = sharedServer.metaProps.clusterId
 
   var metadataSnapshotter: Option[BrokerMetadataSnapshotter] = None
 
-  var metadataListener: BrokerMetadataListener = null
+  var metadataListener: BrokerMetadataListener = _
 
-  var metadataPublisher: BrokerMetadataPublisher = null
+  var metadataPublisher: BrokerMetadataPublisher = _
 
-  def kafkaYammerMetrics: kafka.metrics.KafkaYammerMetrics = KafkaYammerMetrics.INSTANCE
+  val brokerFeatures: BrokerFeatures = BrokerFeatures.createDefault()
+
+  def kafkaYammerMetrics: KafkaYammerMetrics = KafkaYammerMetrics.INSTANCE
 
   private def maybeChangeStatus(from: ProcessStatus, to: ProcessStatus): Boolean = {
     lock.lock()
@@ -179,11 +174,16 @@ class BrokerServer(
   override def startup(): Unit = {
     if (!maybeChangeStatus(SHUTDOWN, STARTING)) return
     try {
+      sharedServer.startForBroker()
+
       info("Starting broker")
 
       config.dynamicConfig.initialize(zkClientOpt = None)
 
-      lifecycleManager = new BrokerLifecycleManager(config, time, threadNamePrefix)
+      lifecycleManager = new BrokerLifecycleManager(config,
+        time,
+        threadNamePrefix,
+        isZkBroker = false)
 
       /* start scheduler */
       kafkaScheduler = new KafkaScheduler(config.backgroundThreads)
@@ -208,7 +208,7 @@ class BrokerServer(
       tokenCache = new DelegationTokenCache(ScramMechanism.mechanismNames)
       credentialProvider = new CredentialProvider(ScramMechanism.mechanismNames, tokenCache)
 
-      val controllerNodes = RaftConfig.voterConnectionsToNodes(controllerQuorumVotersFuture.get()).asScala
+      val controllerNodes = RaftConfig.voterConnectionsToNodes(sharedServer.controllerQuorumVotersFuture.get()).asScala
       val controllerNodeProvider = RaftControllerNodeProvider(raftManager, config, controllerNodes)
 
       clientToControllerChannelManager = BrokerToControllerChannelManager(
@@ -223,39 +223,33 @@ class BrokerServer(
       clientToControllerChannelManager.start()
       forwardingManager = new ForwardingManagerImpl(clientToControllerChannelManager)
 
+
       val apiVersionManager = ApiVersionManager(
         ListenerType.BROKER,
         config,
         Some(forwardingManager),
         brokerFeatures,
-        featureCache
+        metadataCache
       )
 
       // Create and start the socket server acceptor threads so that the bound port is known.
       // Delay starting processors until the end of the initialization sequence to ensure
       // that credentials have been loaded before processing authentications.
       socketServer = new SocketServer(config, metrics, time, credentialProvider, apiVersionManager)
-      socketServer.startup(startProcessingRequests = false)
 
       clientQuotaMetadataManager = new ClientQuotaMetadataManager(quotaManagers, socketServer.connectionQuotas)
 
-      val alterIsrChannelManager = BrokerToControllerChannelManager(
-        controllerNodeProvider,
-        time,
-        metrics,
+      alterPartitionManager = AlterPartitionManager(
         config,
-        channelName = "alterIsr",
-        threadNamePrefix,
-        retryTimeoutMs = Long.MaxValue
-      )
-      alterIsrManager = new DefaultAlterIsrManager(
-        controllerChannelManager = alterIsrChannelManager,
+        metadataCache,
         scheduler = kafkaScheduler,
+        controllerNodeProvider,
         time = time,
-        brokerId = config.nodeId,
+        metrics,
+        threadNamePrefix,
         brokerEpochSupplier = () => lifecycleManager.brokerEpoch
       )
-      alterIsrManager.start()
+      alterPartitionManager.start()
 
       this._replicaManager = new ReplicaManager(
         config = config,
@@ -266,7 +260,7 @@ class BrokerServer(
         quotaManagers = quotaManagers,
         metadataCache = metadataCache,
         logDirFailureChannel = logDirFailureChannel,
-        alterIsrManager = alterIsrManager,
+        alterPartitionManager = alterPartitionManager,
         brokerTopicStats = brokerTopicStats,
         isShuttingDown = isShuttingDown,
         zkClient = None,
@@ -317,11 +311,14 @@ class BrokerServer(
         ))
       }
 
-      metadataListener = new BrokerMetadataListener(config.nodeId,
-                                                    time,
-                                                    threadNamePrefix,
-                                                    config.metadataSnapshotMaxNewRecordBytes,
-                                                    metadataSnapshotter)
+      metadataListener = new BrokerMetadataListener(
+        config.nodeId,
+        time,
+        threadNamePrefix,
+        config.metadataSnapshotMaxNewRecordBytes,
+        metadataSnapshotter,
+        sharedServer.brokerMetrics,
+        sharedServer.metadataLoaderFaultHandler)
 
       val networkListeners = new ListenerCollection()
       config.effectiveAdvertisedListeners.foreach { ep =>
@@ -331,10 +328,28 @@ class BrokerServer(
           setPort(if (ep.port == 0) socketServer.boundPort(ep.listenerName) else ep.port).
           setSecurityProtocol(ep.securityProtocol.id))
       }
-      lifecycleManager.start(() => metadataListener.highestMetadataOffset,
-        BrokerToControllerChannelManager(controllerNodeProvider, time, metrics, config,
-          "heartbeat", threadNamePrefix, config.brokerSessionTimeoutMs.toLong),
-        metaProps.clusterId, networkListeners, supportedFeatures)
+
+      val featuresRemapped = brokerFeatures.supportedFeatures.features().asScala.map {
+        case (k: String, v: SupportedVersionRange) =>
+          k -> VersionRange.of(v.min, v.max)
+      }.asJava
+
+      val brokerLifecycleChannelManager = BrokerToControllerChannelManager(
+        controllerNodeProvider,
+        time,
+        metrics,
+        config,
+        "heartbeat",
+        threadNamePrefix,
+        config.brokerSessionTimeoutMs / 2 // KAFKA-14392
+      )
+      lifecycleManager.start(
+        () => metadataListener.highestMetadataOffset,
+        brokerLifecycleChannelManager,
+        sharedServer.metaProps.clusterId,
+        networkListeners,
+        featuresRemapped
+      )
 
       // Register a listener with the Raft layer to receive metadata event notifications
       raftManager.register(metadataListener)
@@ -356,10 +371,13 @@ class BrokerServer(
           endpoints.asScala.map(ep => ep.listenerName().orElse("(none)")).mkString(", "))
       }
       val authorizerInfo = ServerInfo(new ClusterResource(clusterId),
-        config.nodeId, endpoints, interBrokerListener)
+        config.nodeId,
+        endpoints,
+        interBrokerListener,
+        config.earlyStartListeners.map(_.value()).asJava)
 
-      /* Get the authorizer and initialize it if one is specified.*/
-      authorizer = config.authorizer
+      // Create and initialize an authorizer if one is configured.
+      authorizer = config.createNewAuthorizer()
       authorizer.foreach(_.configure(config.originals))
       val authorizerFutures: Map[Endpoint, CompletableFuture[Void]] = authorizer match {
         case Some(authZ) =>
@@ -383,6 +401,7 @@ class BrokerServer(
         metadataSupport = raftSupport,
         replicaManager = replicaManager,
         groupCoordinator = groupCoordinator,
+        newGroupCoordinator = new GroupCoordinatorAdapter(groupCoordinator),
         txnCoordinator = transactionCoordinator,
         autoTopicCreationManager = autoTopicCreationManager,
         brokerId = config.nodeId,
@@ -401,32 +420,68 @@ class BrokerServer(
 
       dataPlaneRequestHandlerPool = new KafkaRequestHandlerPool(config.nodeId,
         socketServer.dataPlaneRequestChannel, dataPlaneRequestProcessor, time,
-        config.numIoThreads, s"${SocketServer.DataPlaneMetricPrefix}RequestHandlerAvgIdlePercent",
-        SocketServer.DataPlaneThreadPrefix)
+        config.numIoThreads, s"${DataPlaneAcceptor.MetricPrefix}RequestHandlerAvgIdlePercent",
+        DataPlaneAcceptor.ThreadPrefix)
 
-      // Block until we've caught up with the latest metadata from the controller quorum.
-      lifecycleManager.initialCatchUpFuture.get()
+      info("Waiting for broker metadata to catch up.")
+      try {
+        lifecycleManager.initialCatchUpFuture.get()
+      } catch {
+        case t: Throwable => throw new RuntimeException("Received a fatal error while " +
+          "waiting for the broker to catch up with the current cluster metadata.", t)
+      }
 
       // Apply the metadata log changes that we've accumulated.
-      metadataPublisher = new BrokerMetadataPublisher(config, metadataCache,
-        logManager, replicaManager, groupCoordinator, transactionCoordinator,
-        clientQuotaMetadataManager, featureCache, dynamicConfigHandlers.toMap)
+      metadataPublisher = new BrokerMetadataPublisher(config,
+        metadataCache,
+        logManager,
+        replicaManager,
+        groupCoordinator,
+        transactionCoordinator,
+        clientQuotaMetadataManager,
+        new DynamicConfigPublisher(
+          config,
+          sharedServer.metadataPublishingFaultHandler,
+          dynamicConfigHandlers.toMap,
+        "broker"),
+        authorizer,
+        sharedServer.initialBrokerMetadataLoadFaultHandler,
+        sharedServer.metadataPublishingFaultHandler)
 
       // Tell the metadata listener to start publishing its output, and wait for the first
       // publish operation to complete. This first operation will initialize logManager,
       // replicaManager, groupCoordinator, and txnCoordinator. The log manager may perform
       // a potentially lengthy recovery-from-unclean-shutdown operation here, if required.
-      metadataListener.startPublishing(metadataPublisher).get()
+      try {
+        metadataListener.startPublishing(metadataPublisher).get()
+      } catch {
+        case t: Throwable => throw new RuntimeException("Received a fatal error while " +
+          "waiting for the broker to catch up with the current cluster metadata.", t)
+      }
 
       // Log static broker configurations.
       new KafkaConfig(config.originals(), true)
 
-      // Enable inbound TCP connections.
-      socketServer.startProcessingRequests(authorizerFutures)
+      // Enable inbound TCP connections. Each endpoint will be started only once its matching
+      // authorizer future is completed.
+      socketServer.enableRequestProcessing(authorizerFutures)
+
+      // If we are using a ClusterMetadataAuthorizer which stores its ACLs in the metadata log,
+      // notify it that the loading process is complete.
+      authorizer match {
+        case Some(clusterMetadataAuthorizer: ClusterMetadataAuthorizer) =>
+          clusterMetadataAuthorizer.completeInitialLoad()
+        case _ => // nothing to do
+      }
 
       // We're now ready to unfence the broker. This also allows this broker to transition
       // from RECOVERY state to RUNNING state, once the controller unfences the broker.
-      lifecycleManager.setReadyToUnfence()
+      try {
+        lifecycleManager.setReadyToUnfence().get()
+      } catch {
+        case t: Throwable => throw new RuntimeException("Received a fatal error while " +
+          "waiting for the broker to be unfenced.", t)
+      }
 
       maybeChangeStatus(STARTING, STARTED)
     } catch {
@@ -434,7 +489,7 @@ class BrokerServer(
         maybeChangeStatus(STARTING, STARTED)
         fatal("Fatal error during broker startup. Prepare to shutdown", e)
         shutdown()
-        throw e
+        throw if (e.isInstanceOf[ExecutionException]) e.getCause else e
     }
   }
 
@@ -444,11 +499,9 @@ class BrokerServer(
       info("shutting down")
 
       if (config.controlledShutdownEnable) {
-        // Shut down the broker metadata listener, so that we don't get added to any
-        // more ISRs.
-        if (metadataListener !=  null) {
-          metadataListener.beginShutdown()
-        }
+        if (replicaManager != null)
+          replicaManager.beginControlledShutdown()
+
         lifecycleManager.beginControlledShutdown()
         try {
           lifecycleManager.controlledShutdownFuture.get(5L, TimeUnit.MINUTES)
@@ -459,6 +512,10 @@ class BrokerServer(
             error("Got unexpected exception waiting for controlled shutdown future", e)
         }
       }
+
+      if (metadataListener != null)
+        metadataListener.beginShutdown()
+
       lifecycleManager.beginShutdown()
 
       // Stop socket server to stop accepting any more connections and requests.
@@ -473,7 +530,7 @@ class BrokerServer(
       if (controlPlaneRequestProcessor != null)
         CoreUtils.swallow(controlPlaneRequestProcessor.close(), this)
       CoreUtils.swallow(authorizer.foreach(_.close()), this)
-      if (metadataListener !=  null) {
+      if (metadataListener != null) {
         CoreUtils.swallow(metadataListener.close(), this)
       }
       metadataSnapshotter.foreach(snapshotter => CoreUtils.swallow(snapshotter.close(), this))
@@ -502,8 +559,8 @@ class BrokerServer(
       if (replicaManager != null)
         CoreUtils.swallow(replicaManager.shutdown(), this)
 
-      if (alterIsrManager != null)
-        CoreUtils.swallow(alterIsrManager.shutdown(), this)
+      if (alterPartitionManager != null)
+        CoreUtils.swallow(alterPartitionManager.shutdown(), this)
 
       if (clientToControllerChannelManager != null)
         CoreUtils.swallow(clientToControllerChannelManager.shutdown(), this)
@@ -516,19 +573,14 @@ class BrokerServer(
 
       if (socketServer != null)
         CoreUtils.swallow(socketServer.shutdown(), this)
-      if (metrics != null)
-        CoreUtils.swallow(metrics.close(), this)
       if (brokerTopicStats != null)
         CoreUtils.swallow(brokerTopicStats.close(), this)
-
-      // Clear all reconfigurable instances stored in DynamicBrokerConfig
-      config.dynamicConfig.clear()
 
       isShuttingDown.set(false)
 
       CoreUtils.swallow(lifecycleManager.close(), this)
-
-      CoreUtils.swallow(AppInfoParser.unregisterAppInfo(MetricsPrefix, config.nodeId.toString, metrics), this)
+      CoreUtils.swallow(config.dynamicConfig.clear(), this)
+      sharedServer.stopForBroker()
       info("shut down completed")
     } catch {
       case e: Throwable =>

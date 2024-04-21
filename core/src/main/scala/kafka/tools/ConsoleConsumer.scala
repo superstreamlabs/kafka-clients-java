@@ -33,6 +33,7 @@ import org.apache.kafka.common.errors.{AuthenticationException, TimeoutException
 import org.apache.kafka.common.record.TimestampType
 import org.apache.kafka.common.requests.ListOffsetsRequest
 import org.apache.kafka.common.serialization.{ByteArrayDeserializer, Deserializer}
+import org.apache.kafka.common.utils.Time
 import org.apache.kafka.common.utils.Utils
 
 import scala.jdk.CollectionConverters._
@@ -61,7 +62,7 @@ object ConsoleConsumer extends Logging {
   }
 
   def run(conf: ConsumerConfig): Unit = {
-    val timeoutMs = if (conf.timeoutMs >= 0) conf.timeoutMs else Long.MaxValue
+    val timeoutMs = if (conf.timeoutMs >= 0) conf.timeoutMs.toLong else Long.MaxValue
     val consumer = new KafkaConsumer(consumerProps(conf), new ByteArrayDeserializer, new ByteArrayDeserializer)
 
     val consumerWrapper =
@@ -247,6 +248,10 @@ object ConsoleConsumer extends Logging {
       .withRequiredArg
       .describedAs("prop")
       .ofType(classOf[String])
+    val messageFormatterConfigOpt = parser.accepts("formatter-config", s"Config properties file to initialize the message formatter. Note that $messageFormatterArgOpt takes precedence over this config.")
+      .withRequiredArg
+      .describedAs("config file")
+      .ofType(classOf[String])
     val resetBeginningOpt = parser.accepts("from-beginning", "If the consumer does not already have an established offset to consume from, " +
       "start with the earliest message present in the log rather than the latest message.")
     val maxMessagesOpt = parser.accepts("max-messages", "The maximum number of messages to consume before exiting. If not set, consumption is continual.")
@@ -294,9 +299,9 @@ object ConsoleConsumer extends Logging {
     val enableSystestEventsLogging = options.has(enableSystestEventsLoggingOpt)
 
     // topic must be specified.
-    var topicArg: String = null
-    var includedTopicsArg: String = null
-    var filterSpec: TopicFilter = null
+    var topicArg: String = _
+    var includedTopicsArg: String = _
+    var filterSpec: TopicFilter = _
     val extraConsumerProps = CommandLineUtils.parseKeyValueArgs(options.valuesOf(consumerPropertyOpt).asScala)
     val consumerProps = if (options.has(consumerConfigOpt))
       Utils.loadProps(options.valueOf(consumerConfigOpt))
@@ -306,7 +311,11 @@ object ConsoleConsumer extends Logging {
     val partitionArg = if (options.has(partitionIdOpt)) Some(options.valueOf(partitionIdOpt).intValue) else None
     val skipMessageOnError = options.has(skipMessageOnErrorOpt)
     val messageFormatterClass = Class.forName(options.valueOf(messageFormatterOpt))
-    val formatterArgs = CommandLineUtils.parseKeyValueArgs(options.valuesOf(messageFormatterArgOpt).asScala)
+    val formatterArgs = if (options.has(messageFormatterConfigOpt))
+      Utils.loadProps(options.valueOf(messageFormatterConfigOpt))
+    else
+      new Properties()
+    formatterArgs ++= CommandLineUtils.parseKeyValueArgs(options.valuesOf(messageFormatterArgOpt).asScala)
     val maxMessages = if (options.has(maxMessagesOpt)) options.valueOf(maxMessagesOpt).intValue else -1
     val timeoutMs = if (options.has(timeoutMsOpt)) options.valueOf(timeoutMsOpt).intValue else -1
     val bootstrapServer = options.valueOf(bootstrapServerOpt)
@@ -406,8 +415,15 @@ object ConsoleConsumer extends Logging {
     }
   }
 
-  private[tools] class ConsumerWrapper(topic: Option[String], partitionId: Option[Int], offset: Option[Long], includedTopics: Option[String],
-                                       consumer: Consumer[Array[Byte], Array[Byte]], val timeoutMs: Long = Long.MaxValue) {
+  private[tools] class ConsumerWrapper(
+    topic: Option[String],
+    partitionId: Option[Int],
+    offset: Option[Long],
+    includedTopics: Option[String],
+    consumer: Consumer[Array[Byte], Array[Byte]],
+    timeoutMs: Long = Long.MaxValue,
+    time: Time = Time.SYSTEM
+  ) {
     consumerInit()
     var recordIter = Collections.emptyList[ConsumerRecord[Array[Byte], Array[Byte]]]().iterator()
 
@@ -452,10 +468,12 @@ object ConsoleConsumer extends Logging {
     }
 
     def receive(): ConsumerRecord[Array[Byte], Array[Byte]] = {
-      if (!recordIter.hasNext) {
+      val startTimeMs = time.milliseconds
+      while (!recordIter.hasNext) {
         recordIter = consumer.poll(Duration.ofMillis(timeoutMs)).iterator
-        if (!recordIter.hasNext)
+        if (!recordIter.hasNext && (time.milliseconds - startTimeMs > timeoutMs)) {
           throw new TimeoutException()
+        }
       }
 
       recordIter.next

@@ -35,6 +35,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
@@ -157,6 +159,13 @@ public class UtilsTest {
         assertEquals("", Utils.join(Collections.emptyList(), ","));
         assertEquals("1", Utils.join(asList("1"), ","));
         assertEquals("1,2,3", Utils.join(asList(1, 2, 3), ","));
+    }
+
+    @Test
+    public void testMkString() {
+        assertEquals("[]", Utils.mkString(Stream.empty(), "[", "]", ","));
+        assertEquals("(1)", Utils.mkString(Stream.of("1"), "(", ")", ","));
+        assertEquals("{1,2,3}", Utils.mkString(Stream.of(1, 2, 3), "{", "}", ","));
     }
 
     @Test
@@ -901,5 +910,18 @@ public class UtilsTest {
         }
         assertTrue(Utils.isEqualConstantTime(first, second));
         assertTrue(Utils.isEqualConstantTime(second, first));
+    }
+
+    @Test
+    public void testToLogDateTimeFormat() {
+        final LocalDateTime timestampWithMilliSeconds = LocalDateTime.of(2020, 11, 9, 12, 34, 5, 123000000);
+        final LocalDateTime timestampWithSeconds = LocalDateTime.of(2020, 11, 9, 12, 34, 5);
+
+        DateTimeFormatter offsetFormatter = DateTimeFormatter.ofPattern("XXX");
+        ZoneOffset offset = ZoneId.systemDefault().getRules().getOffset(timestampWithSeconds);
+        String requiredOffsetFormat = offsetFormatter.format(offset);
+
+        assertEquals(String.format("2020-11-09 12:34:05,123 %s", requiredOffsetFormat), Utils.toLogDateTimeFormat(timestampWithMilliSeconds.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+        assertEquals(String.format("2020-11-09 12:34:05,000 %s", requiredOffsetFormat), Utils.toLogDateTimeFormat(timestampWithSeconds.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
     }
 }

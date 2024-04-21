@@ -20,7 +20,7 @@ package kafka.tools
 import java.util.concurrent.atomic.{AtomicInteger, AtomicLong}
 import java.util.concurrent.{CompletableFuture, CountDownLatch, LinkedBlockingDeque, TimeUnit}
 import joptsimple.OptionException
-import kafka.network.SocketServer
+import kafka.network.{DataPlaneAcceptor, SocketServer}
 import kafka.raft.{KafkaRaftManager, RaftManager}
 import kafka.security.CredentialProvider
 import kafka.server.{KafkaConfig, KafkaRequestHandlerPool, MetaProperties, SimpleApiVersionManager}
@@ -38,6 +38,7 @@ import org.apache.kafka.common.{TopicPartition, Uuid, protocol}
 import org.apache.kafka.raft.errors.NotLeaderException
 import org.apache.kafka.raft.{Batch, BatchReader, LeaderAndEpoch, RaftClient, RaftConfig}
 import org.apache.kafka.server.common.serialization.RecordSerde
+import org.apache.kafka.server.fault.ProcessTerminatingFaultHandler
 import org.apache.kafka.snapshot.SnapshotReader
 
 import scala.jdk.CollectionConverters._
@@ -74,7 +75,6 @@ class TestRaftServer(
 
     val apiVersionManager = new SimpleApiVersionManager(ListenerType.CONTROLLER)
     socketServer = new SocketServer(config, metrics, time, credentialProvider, apiVersionManager)
-    socketServer.startup(startProcessingRequests = false)
 
     val metaProperties = MetaProperties(
       clusterId = Uuid.ZERO_UUID.toString,
@@ -90,7 +90,8 @@ class TestRaftServer(
       time,
       metrics,
       Some(threadNamePrefix),
-      CompletableFuture.completedFuture(RaftConfig.parseVoterConnections(config.quorumVoters))
+      CompletableFuture.completedFuture(RaftConfig.parseVoterConnections(config.quorumVoters)),
+      new ProcessTerminatingFaultHandler.Builder().build()
     )
 
     workloadGenerator = new RaftWorkloadGenerator(
@@ -113,13 +114,13 @@ class TestRaftServer(
       requestHandler,
       time,
       config.numIoThreads,
-      s"${SocketServer.DataPlaneMetricPrefix}RequestHandlerAvgIdlePercent",
-      SocketServer.DataPlaneThreadPrefix
+      s"${DataPlaneAcceptor.MetricPrefix}RequestHandlerAvgIdlePercent",
+      DataPlaneAcceptor.ThreadPrefix
     )
 
     workloadGenerator.start()
     raftManager.startup()
-    socketServer.startProcessingRequests(Map.empty)
+    socketServer.enableRequestProcessing(Map.empty)
   }
 
   def shutdown(): Unit = {
@@ -299,11 +300,7 @@ object TestRaftServer extends Logging {
       out.writeByteArray(data)
     }
 
-    override def read(input: protocol.Readable, size: Int): Array[Byte] = {
-      val data = new Array[Byte](size)
-      input.readArray(data)
-      data
-    }
+    override def read(input: protocol.Readable, size: Int): Array[Byte] = input.readArray(size)
   }
 
   private class LatencyHistogram(

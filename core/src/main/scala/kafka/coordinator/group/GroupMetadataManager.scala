@@ -26,7 +26,6 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.{ConcurrentHashMap, TimeUnit}
 
 import com.yammer.metrics.core.Gauge
-import kafka.api.{ApiVersion, KAFKA_0_10_1_IV0, KAFKA_2_1_IV0, KAFKA_2_1_IV1, KAFKA_2_3_IV0}
 import kafka.common.OffsetAndMetadata
 import kafka.internals.generated.{GroupMetadataValue, OffsetCommitKey, OffsetCommitValue, GroupMetadataKey => GroupMetadataKeyData}
 import kafka.log.AppendOrigin
@@ -47,13 +46,15 @@ import org.apache.kafka.common.requests.ProduceResponse.PartitionResponse
 import org.apache.kafka.common.requests.{OffsetCommitRequest, OffsetFetchResponse}
 import org.apache.kafka.common.utils.{Time, Utils}
 import org.apache.kafka.common.{KafkaException, MessageFormatter, TopicPartition}
+import org.apache.kafka.server.common.MetadataVersion
+import org.apache.kafka.server.common.MetadataVersion.{IBP_0_10_1_IV0, IBP_2_1_IV0, IBP_2_1_IV1, IBP_2_3_IV0}
 
 import scala.collection._
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.CollectionConverters._
 
 class GroupMetadataManager(brokerId: Int,
-                           interBrokerProtocolVersion: ApiVersion,
+                           interBrokerProtocolVersion: MetadataVersion,
                            config: OffsetConfig,
                            val replicaManager: ReplicaManager,
                            time: Time,
@@ -318,7 +319,6 @@ class GroupMetadataManager(brokerId: Int,
 
       case None =>
         responseCallback(Errors.NOT_COORDINATOR)
-        None
     }
   }
 
@@ -649,7 +649,6 @@ class GroupMetadataManager(brokerId: Int,
                 if (batchBaseOffset.isEmpty)
                   batchBaseOffset = Some(record.offset)
                 GroupMetadataManager.readMessageKey(record.key) match {
-
                   case offsetKey: OffsetKey =>
                     if (isTxnOffsetCommit && !pendingOffsets.contains(batch.producerId))
                       pendingOffsets.put(batch.producerId, mutable.Map[GroupTopicPartition, CommitRecordMetadataAndOffset]())
@@ -681,8 +680,10 @@ class GroupMetadataManager(brokerId: Int,
                       removedGroups.add(groupId)
                     }
 
-                  case unknownKey =>
-                    throw new IllegalStateException(s"Unexpected message key $unknownKey while loading offsets and group metadata")
+                  case unknownKey: UnknownKey =>
+                    warn(s"Unknown message key with version ${unknownKey.version}" +
+                      s" while loading offsets and group metadata from $topicPartition. Ignoring it. " +
+                      "It could be a left over from an aborted upgrade.")
                 }
               }
             }
@@ -994,11 +995,11 @@ class GroupMetadataManager(brokerId: Int,
     replicaManager.getMagic(new TopicPartition(Topic.GROUP_METADATA_TOPIC_NAME, partition))
 
   /**
-   * Add the partition into the owned list
+   * Add a partition to the owned partition set.
    *
-   * NOTE: this is for test only
+   * NOTE: this is for test only.
    */
-  private[group] def addPartitionOwnership(partition: Int): Unit = {
+  private[group] def addOwnedPartition(partition: Int): Unit = {
     inLock(partitionLock) {
       ownedPartitions.add(partition)
     }
@@ -1075,14 +1076,16 @@ object GroupMetadataManager {
    * Generates the payload for offset commit message from given offset and metadata
    *
    * @param offsetAndMetadata consumer's current offset and metadata
-   * @param apiVersion the api version
+   * @param metadataVersion the api version
    * @return payload for offset commit message
    */
   def offsetCommitValue(offsetAndMetadata: OffsetAndMetadata,
-                        apiVersion: ApiVersion): Array[Byte] = {
+                        metadataVersion: MetadataVersion): Array[Byte] = {
     val version =
-      if (apiVersion < KAFKA_2_1_IV0 || offsetAndMetadata.expireTimestamp.nonEmpty) 1.toShort
-      else if (apiVersion < KAFKA_2_1_IV1) 2.toShort
+      if (metadataVersion.isLessThan(IBP_2_1_IV0) || offsetAndMetadata.expireTimestamp.nonEmpty) 1.toShort
+      else if (metadataVersion.isLessThan(IBP_2_1_IV1)) 2.toShort
+      // Serialize with the highest supported non-flexible version
+      // until a tagged field is introduced or the version is bumped.
       else 3.toShort
     MessageUtil.toVersionPrefixedBytes(version, new OffsetCommitValue()
       .setOffset(offsetAndMetadata.offset)
@@ -1100,17 +1103,19 @@ object GroupMetadataManager {
    *
    * @param groupMetadata current group metadata
    * @param assignment the assignment for the rebalancing generation
-   * @param apiVersion the api version
+   * @param metadataVersion the api version
    * @return payload for offset commit message
    */
   def groupMetadataValue(groupMetadata: GroupMetadata,
                          assignment: Map[String, Array[Byte]],
-                         apiVersion: ApiVersion): Array[Byte] = {
+                         metadataVersion: MetadataVersion): Array[Byte] = {
 
     val version =
-      if (apiVersion < KAFKA_0_10_1_IV0) 0.toShort
-      else if (apiVersion < KAFKA_2_1_IV0) 1.toShort
-      else if (apiVersion < KAFKA_2_3_IV0) 2.toShort
+      if (metadataVersion.isLessThan(IBP_0_10_1_IV0)) 0.toShort
+      else if (metadataVersion.isLessThan(IBP_2_1_IV0)) 1.toShort
+      else if (metadataVersion.isLessThan(IBP_2_3_IV0)) 2.toShort
+      // Serialize with the highest supported non-flexible version
+      // until a tagged field is introduced or the version is bumped.
       else 3.toShort
 
     MessageUtil.toVersionPrefixedBytes(version, new GroupMetadataValue()
@@ -1151,7 +1156,9 @@ object GroupMetadataManager {
       // version 2 refers to group metadata
       val key = new GroupMetadataKeyData(new ByteBufferAccessor(buffer), version)
       GroupMetadataKey(version, key.group)
-    } else throw new IllegalStateException(s"Unknown group metadata message version: $version")
+    } else {
+      UnknownKey(version)
+    }
   }
 
   /**
@@ -1271,7 +1278,7 @@ object GroupMetadataManager {
       GroupMetadataManager.readMessageKey(record.key) match {
         case offsetKey: OffsetKey => parseOffsets(offsetKey, record.value)
         case groupMetadataKey: GroupMetadataKey => parseGroupMetadata(groupMetadataKey, record.value)
-        case _ => throw new KafkaException("Failed to decode message using offset topic decoder (message had an invalid key)")
+        case unknownKey: UnknownKey => (Some(s"unknown::version=${unknownKey.version}"), None)
       }
     }
   }
@@ -1349,18 +1356,20 @@ case class GroupTopicPartition(group: String, topicPartition: TopicPartition) {
     "[%s,%s,%d]".format(group, topicPartition.topic, topicPartition.partition)
 }
 
-trait BaseKey{
+sealed trait BaseKey{
   def version: Short
   def key: Any
 }
 
 case class OffsetKey(version: Short, key: GroupTopicPartition) extends BaseKey {
-
   override def toString: String = key.toString
 }
 
 case class GroupMetadataKey(version: Short, key: String) extends BaseKey {
-
   override def toString: String = key
 }
 
+case class UnknownKey(version: Short) extends BaseKey {
+  override def key: String = null
+  override def toString: String = key
+}

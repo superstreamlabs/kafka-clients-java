@@ -31,6 +31,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
+import org.apache.kafka.clients.consumer.internals.Utils.PartitionComparator;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,7 +96,6 @@ public abstract class AbstractStickyAssignor extends AbstractPartitionAssignor {
                                           Map<String, Subscription> subscriptions,
                                           Map<String, List<TopicPartition>> consumerToOwnedPartitions,
                                           Set<TopicPartition> partitionsWithMultiplePreviousOwners) {
-        Set<String> membersOfCurrentHighestGeneration = new HashSet<>();
         boolean isAllSubscriptionsEqual = true;
 
         Set<String> subscribedTopics = new HashSet<>();
@@ -105,8 +105,8 @@ public abstract class AbstractStickyAssignor extends AbstractPartitionAssignor {
         Map<TopicPartition, String> allPreviousPartitionsToOwner = new HashMap<>();
 
         for (Map.Entry<String, Subscription> subscriptionEntry : subscriptions.entrySet()) {
-            String consumer = subscriptionEntry.getKey();
-            Subscription subscription = subscriptionEntry.getValue();
+            final String consumer = subscriptionEntry.getKey();
+            final Subscription subscription = subscriptionEntry.getValue();
 
             // initialize the subscribed topics set if this is the first subscription
             if (subscribedTopics.isEmpty()) {
@@ -117,47 +117,57 @@ public abstract class AbstractStickyAssignor extends AbstractPartitionAssignor {
             }
 
             MemberData memberData = memberData(subscription);
+            final int memberGeneration = memberData.generation.orElse(DEFAULT_GENERATION);
+            maxGeneration = Math.max(maxGeneration, memberGeneration);
 
             List<TopicPartition> ownedPartitions = new ArrayList<>();
             consumerToOwnedPartitions.put(consumer, ownedPartitions);
 
-            // Only consider this consumer's owned partitions as valid if it is a member of the current highest
-            // generation, or it's generation is not present but we have not seen any known generation so far
-            if (memberData.generation.isPresent() && memberData.generation.get() >= maxGeneration
-                || !memberData.generation.isPresent() && maxGeneration == DEFAULT_GENERATION) {
+            // the member has a valid generation, so we can consider its owned partitions if it has the highest
+            // generation amongst
+            for (final TopicPartition tp : memberData.partitions) {
+                if (allTopics.contains(tp.topic())) {
+                    String otherConsumer = allPreviousPartitionsToOwner.put(tp, consumer);
+                    if (otherConsumer == null) {
+                        // this partition is not owned by other consumer in the same generation
+                        ownedPartitions.add(tp);
+                    } else {
+                        final int otherMemberGeneration = subscriptions.get(otherConsumer).generationId().orElse(DEFAULT_GENERATION);
 
-                // If the current member's generation is higher, all the previously owned partitions are invalid
-                if (memberData.generation.isPresent() && memberData.generation.get() > maxGeneration) {
-                    allPreviousPartitionsToOwner.clear();
-                    partitionsWithMultiplePreviousOwners.clear();
-                    for (String droppedOutConsumer : membersOfCurrentHighestGeneration) {
-                        consumerToOwnedPartitions.get(droppedOutConsumer).clear();
-                    }
-
-                    membersOfCurrentHighestGeneration.clear();
-                    maxGeneration = memberData.generation.get();
-                }
-
-                membersOfCurrentHighestGeneration.add(consumer);
-                for (final TopicPartition tp : memberData.partitions) {
-                    // filter out any topics that no longer exist or aren't part of the current subscription
-                    if (allTopics.contains(tp.topic())) {
-                        String otherConsumer = allPreviousPartitionsToOwner.put(tp, consumer);
-                        if (otherConsumer == null) {
-                            // this partition is not owned by other consumer in the same generation
-                            ownedPartitions.add(tp);
-                        } else {
+                        if (memberGeneration == otherMemberGeneration) {
+                            // if two members of the same generation own the same partition, revoke the partition
                             log.error("Found multiple consumers {} and {} claiming the same TopicPartition {} in the "
-                                + "same generation {}, this will be invalidated and removed from their previous assignment.",
-                                     consumer, otherConsumer, tp, maxGeneration);
-                            consumerToOwnedPartitions.get(otherConsumer).remove(tp);
+                                            + "same generation {}, this will be invalidated and removed from their previous assignment.",
+                                    consumer, otherConsumer, tp, memberGeneration);
                             partitionsWithMultiplePreviousOwners.add(tp);
+                            consumerToOwnedPartitions.get(otherConsumer).remove(tp);
+                            allPreviousPartitionsToOwner.put(tp, consumer);
+                        } else if (memberGeneration > otherMemberGeneration) {
+                            // move partition from the member with an older generation to the member with the newer generation
+                            ownedPartitions.add(tp);
+                            consumerToOwnedPartitions.get(otherConsumer).remove(tp);
+                            allPreviousPartitionsToOwner.put(tp, consumer);
+                            log.warn("Consumer {} in generation {} and consumer {} in generation {} claiming the same " +
+                                            "TopicPartition {} in different generations. The topic partition wil be " +
+                                            "assigned to the member with the higher generation {}.",
+                                    consumer, memberGeneration,
+                                    otherConsumer, otherMemberGeneration,
+                                    tp,
+                                    memberGeneration);
+                        } else {
+                            // let the other member continue to own the topic partition
+                            log.warn("Consumer {} in generation {} and consumer {} in generation {} claiming the same " +
+                                            "TopicPartition {} in different generations. The topic partition wil be " +
+                                            "assigned to the member with the higher generation {}.",
+                                    consumer, memberGeneration,
+                                    otherConsumer, otherMemberGeneration,
+                                    tp,
+                                    otherMemberGeneration);
                         }
                     }
                 }
             }
         }
-
         return isAllSubscriptionsEqual;
     }
 
@@ -490,7 +500,7 @@ public abstract class AbstractStickyAssignor extends AbstractPartitionAssignor {
      *
      * We loop the sortedPartition, and compare the ith element in sortedAssignedPartitions(i start from 0):
      *   - if not equal to the ith element, add to unassignedPartitions
-     *   - if equal to the the ith element, get next element from sortedAssignedPartitions
+     *   - if equal to the ith element, get next element from sortedAssignedPartitions
      *
      * @param sortedAllPartitions:          sorted all partitions
      * @param sortedAssignedPartitions:     sorted partitions, all are included in the sortedPartitions
@@ -538,7 +548,7 @@ public abstract class AbstractStickyAssignor extends AbstractPartitionAssignor {
      * We loop through the all sorted topics, and then iterate all partitions the topic has,
      * compared with the ith element in sortedAssignedPartitions(i starts from 0):
      *   - if not equal to the ith element, add to unassignedPartitions
-     *   - if equal to the the ith element, get next element from sortedAssignedPartitions
+     *   - if equal to the ith element, get next element from sortedAssignedPartitions
      *
      * @param totalPartitionsCount      all partitions counts in this assignment
      * @param partitionsPerTopic        the number of partitions for each subscribed topic.
@@ -588,7 +598,7 @@ public abstract class AbstractStickyAssignor extends AbstractPartitionAssignor {
     /**
      * update the prevAssignment with the partitions, consumer and generation in parameters
      *
-     * @param partitions:       The partitions to be updated the prevAssignement
+     * @param partitions:       The partitions to be updated the prevAssignment
      * @param consumer:         The consumer Id
      * @param prevAssignment:   The assignment contains the assignment with the 2nd largest generation
      * @param generation:       The generation of this assignment (partitions)
@@ -619,7 +629,7 @@ public abstract class AbstractStickyAssignor extends AbstractPartitionAssignor {
                                                Map<TopicPartition, ConsumerGenerationPair> prevAssignment) {
         // we need to process subscriptions' user data with each consumer's reported generation in mind
         // higher generations overwrite lower generations in case of a conflict
-        // note that a conflict could exists only if user data is for different generations
+        // note that a conflict could exist only if user data is for different generations
 
         for (Map.Entry<String, Subscription> subscriptionEntry: subscriptions.entrySet()) {
             String consumer = subscriptionEntry.getKey();
@@ -628,14 +638,15 @@ public abstract class AbstractStickyAssignor extends AbstractPartitionAssignor {
                 // since this is our 2nd time to deserialize memberData, rewind userData is necessary
                 subscription.userData().rewind();
             }
-            MemberData memberData = memberData(subscriptionEntry.getValue());
+
+            MemberData memberData = memberData(subscription);
 
             // we already have the maxGeneration info, so just compare the current generation of memberData, and put into prevAssignment
             if (memberData.generation.isPresent() && memberData.generation.get() < maxGeneration) {
                 // if the current member's generation is lower than maxGeneration, put into prevAssignment if needed
                 updatePrevAssignment(prevAssignment, memberData.partitions, consumer, memberData.generation.get());
             } else if (!memberData.generation.isPresent() && maxGeneration > DEFAULT_GENERATION) {
-                // if maxGeneration is larger then DEFAULT_GENERATION
+                // if maxGeneration is larger than DEFAULT_GENERATION
                 // put all (no generation) partitions as DEFAULT_GENERATION into prevAssignment if needed
                 updatePrevAssignment(prevAssignment, memberData.partitions, consumer, DEFAULT_GENERATION);
             }
@@ -1013,26 +1024,6 @@ public abstract class AbstractStickyAssignor extends AbstractPartitionAssignor {
             int ret = map.get(o1).size() - map.get(o2).size();
             if (ret == 0) {
                 ret = o1.compareTo(o2);
-            }
-            return ret;
-        }
-    }
-
-    private static class PartitionComparator implements Comparator<TopicPartition>, Serializable {
-        private static final long serialVersionUID = 1L;
-        private Map<String, List<String>> map;
-
-        PartitionComparator(Map<String, List<String>> map) {
-            this.map = map;
-        }
-
-        @Override
-        public int compare(TopicPartition o1, TopicPartition o2) {
-            int ret = map.get(o1.topic()).size() - map.get(o2.topic()).size();
-            if (ret == 0) {
-                ret = o1.topic().compareTo(o2.topic());
-                if (ret == 0)
-                    ret = o1.partition() - o2.partition();
             }
             return ret;
         }

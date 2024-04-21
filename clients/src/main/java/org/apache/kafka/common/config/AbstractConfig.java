@@ -24,8 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.kafka.common.config.provider.ConfigProvider;
 
-import ai.superstream.Superstream;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,8 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * A convenient base class for configurations to extend.
  * <p>
- * This class holds both the original configuration that was provided as well as
- * the parsed
+ * This class holds both the original configuration that was provided as well as the parsed
  */
 public class AbstractConfig {
 
@@ -66,77 +63,51 @@ public class AbstractConfig {
     private static final String CONFIG_PROVIDERS_PARAM = ".param.";
 
     /**
-     * Construct a configuration with a ConfigDef and the configuration properties,
-     * which can include properties
-     * for zero or more {@link ConfigProvider} that will be used to resolve
-     * variables in configuration property
+     * Construct a configuration with a ConfigDef and the configuration properties, which can include properties
+     * for zero or more {@link ConfigProvider} that will be used to resolve variables in configuration property
      * values.
-     *
-     * The originals is a name-value pair configuration properties and optional
-     * config provider configs. The
-     * value of the configuration can be a variable as defined below or the actual
-     * value. This constructor will
-     * first instantiate the ConfigProviders using the config provider configs, then
-     * it will find all the
-     * variables in the values of the originals configurations, attempt to resolve
-     * the variables using the named
+     * <p>
+     * The originals is a name-value pair configuration properties and optional config provider configs. The
+     * value of the configuration can be a variable as defined below or the actual value. This constructor will
+     * first instantiate the ConfigProviders using the config provider configs, then it will find all the
+     * variables in the values of the originals configurations, attempt to resolve the variables using the named
      * ConfigProviders, and then parse and validate the configurations.
-     *
-     * ConfigProvider configs can be passed either as configs in the originals map
-     * or in the separate
-     * configProviderProps map. If config providers properties are passed in the
-     * configProviderProps any config
-     * provider properties in originals map will be ignored. If ConfigProvider
-     * properties are not provided, the
-     * constructor will skip the variable substitution step and will simply validate
-     * and parse the supplied
+     * <p>
+     * ConfigProvider configs can be passed either as configs in the originals map or in the separate
+     * configProviderProps map. If config providers properties are passed in the configProviderProps any config
+     * provider properties in originals map will be ignored. If ConfigProvider properties are not provided, the
+     * constructor will skip the variable substitution step and will simply validate and parse the supplied
      * configuration.
-     *
-     * The "{@code config.providers}" configuration property and all configuration
-     * properties that begin with the
-     * "{@code config.providers.}" prefix are reserved. The
-     * "{@code config.providers}" configuration property
-     * specifies the names of the config providers, and properties that begin with
-     * the "{@code config.providers..}"
-     * prefix correspond to the properties for that named provider. For example, the
-     * "{@code config.providers..class}"
-     * property specifies the name of the {@link ConfigProvider} implementation
-     * class that should be used for
+     * <p>
+     * The "{@code config.providers}" configuration property and all configuration properties that begin with the
+     * "{@code config.providers.}" prefix are reserved. The "{@code config.providers}" configuration property
+     * specifies the names of the config providers, and properties that begin with the "{@code config.providers..}"
+     * prefix correspond to the properties for that named provider. For example, the "{@code config.providers..class}"
+     * property specifies the name of the {@link ConfigProvider} implementation class that should be used for
      * the provider.
-     *
-     * The keys for ConfigProvider configs in both originals and configProviderProps
-     * will start with the above
+     * <p>
+     * The keys for ConfigProvider configs in both originals and configProviderProps will start with the above
      * mentioned "{@code config.providers.}" prefix.
-     *
-     * Variables have the form "${providerName:[path:]key}", where "providerName" is
-     * the name of a ConfigProvider,
-     * "path" is an optional string, and "key" is a required string. This variable
-     * is resolved by passing the "key"
-     * and optional "path" to a ConfigProvider with the specified name, and the
-     * result from the ConfigProvider is
-     * then used in place of the variable. Variables that cannot be resolved by the
-     * AbstractConfig constructor will
+     * <p>
+     * Variables have the form "${providerName:[path:]key}", where "providerName" is the name of a ConfigProvider,
+     * "path" is an optional string, and "key" is a required string. This variable is resolved by passing the "key"
+     * and optional "path" to a ConfigProvider with the specified name, and the result from the ConfigProvider is
+     * then used in place of the variable. Variables that cannot be resolved by the AbstractConfig constructor will
      * be left unchanged in the configuration.
      *
-     *
-     * @param definition          the definition of the configurations; may not be
-     *                            null
-     * @param originals           the configuration properties plus any optional
-     *                            config provider properties;
-     * @param configProviderProps the map of properties of config providers which
-     *                            will be instantiated by
-     *                            the constructor to resolve any variables in
-     *                            {@code originals}; may be null or empty
+     * @param definition          the definition of the configurations; may not be null
+     * @param originals           the configuration properties plus any optional config provider properties;
+     * @param configProviderProps the map of properties of config providers which will be instantiated by
+     *                            the constructor to resolve any variables in {@code originals}; may be null or empty
      * @param doLog               whether the configurations should be logged
      */
     @SuppressWarnings("unchecked")
-    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, Map<String, ?> configProviderProps,
-            boolean doLog) {
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, Map<String, ?> configProviderProps, boolean doLog) {
         /* check that all the keys are really strings */
         for (Map.Entry<?, ?> entry : originals.entrySet())
             if (!(entry.getKey() instanceof String))
                 throw new ConfigException(entry.getKey().toString(), entry.getValue(), "Key must be a string.");
-        originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals);
+
         this.originals = resolveConfigVariables(configProviderProps, (Map<String, Object>) originals);
         this.values = definition.parse(this.originals);
         Map<String, Object> configUpdates = postProcessParsedConfig(Collections.unmodifiableMap(this.values));
@@ -155,8 +126,7 @@ public class AbstractConfig {
      * that will be used to resolve variables in configuration property values.
      *
      * @param definition the definition of the configurations; may not be null
-     * @param originals  the configuration properties plus any optional config
-     *                   provider properties; may not be null
+     * @param originals  the configuration properties plus any optional config provider properties; may not be null
      */
     public AbstractConfig(ConfigDef definition, Map<?, ?> originals) {
         this(definition, originals, Collections.emptyMap(), true);
@@ -168,8 +138,7 @@ public class AbstractConfig {
      * that will be used to resolve variables in configuration property values.
      *
      * @param definition the definition of the configurations; may not be null
-     * @param originals  the configuration properties plus any optional config
-     *                   provider properties; may not be null
+     * @param originals  the configuration properties plus any optional config provider properties; may not be null
      * @param doLog      whether the configurations should be logged
      */
     public AbstractConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog) {
@@ -178,13 +147,11 @@ public class AbstractConfig {
     }
 
     /**
-     * Called directly after user configs got parsed (and thus default values got
-     * set).
+     * Called directly after user configs got parsed (and thus default values got set).
      * This allows to change default values for "secondary defaults" if required.
      *
      * @param parsedValues unmodifiable map of current configuration
-     * @return a map of updates that should be applied to the configuration (will be
-     *         validated to prevent bad updates)
+     * @return a map of updates that should be applied to the configuration (will be validated to prevent bad updates)
      */
     protected Map<String, Object> postProcessParsedConfig(Map<String, Object> parsedValues) {
         return Collections.emptyMap();
@@ -273,7 +240,7 @@ public class AbstractConfig {
 
     /**
      * Get all the original settings, ensuring that all values are of type String.
-     * 
+     *
      * @return the original settings
      * @throws ClassCastException if any of the values are not strings
      */
@@ -289,8 +256,7 @@ public class AbstractConfig {
     }
 
     /**
-     * Gets all original settings with the given prefix, stripping the prefix before
-     * adding it to the output.
+     * Gets all original settings with the given prefix, stripping the prefix before adding it to the output.
      *
      * @param prefix the prefix to use as a filter
      * @return a Map containing the settings with the prefix
@@ -320,26 +286,18 @@ public class AbstractConfig {
     }
 
     /**
-     * Put all keys that do not start with {@code prefix} and their parsed values in
-     * the result map and then
-     * put all the remaining keys with the prefix stripped and their parsed values
-     * in the result map.
-     *
-     * This is useful if one wants to allow prefixed configs to override default
-     * ones.
+     * Put all keys that do not start with {@code prefix} and their parsed values in the result map and then
+     * put all the remaining keys with the prefix stripped and their parsed values in the result map.
+     * <p>
+     * This is useful if one wants to allow prefixed configs to override default ones.
      * <p>
      * Two forms of prefixes are supported:
      * <ul>
-     * <li>listener.name.{listenerName}.some.prop: If the provided prefix is
-     * `listener.name.{listenerName}.`,
-     * the key `some.prop` with the value parsed using the definition of `some.prop`
-     * is returned.</li>
-     * <li>listener.name.{listenerName}.{mechanism}.some.prop: If the provided
-     * prefix is `listener.name.{listenerName}.`,
-     * the key `{mechanism}.some.prop` with the value parsed using the definition of
-     * `some.prop` is returned.
-     * This is used to provide per-mechanism configs for a broker listener (e.g
-     * sasl.jaas.config)</li>
+     *     <li>listener.name.{listenerName}.some.prop: If the provided prefix is `listener.name.{listenerName}.`,
+     *         the key `some.prop` with the value parsed using the definition of `some.prop` is returned.</li>
+     *     <li>listener.name.{listenerName}.{mechanism}.some.prop: If the provided prefix is `listener.name.{listenerName}.`,
+     *         the key `{mechanism}.some.prop` with the value parsed using the definition of `some.prop` is returned.
+     *          This is used to provide per-mechanism configs for a broker listener (e.g sasl.jaas.config)</li>
      * </ul>
      * </p>
      */
@@ -363,13 +321,10 @@ public class AbstractConfig {
     }
 
     /**
-     * If at least one key with {@code prefix} exists, all prefixed values will be
-     * parsed and put into map.
-     * If no value with {@code prefix} exists all unprefixed values will be
-     * returned.
-     *
-     * This is useful if one wants to allow prefixed configs to override default
-     * ones, but wants to use either
+     * If at least one key with {@code prefix} exists, all prefixed values will be parsed and put into map.
+     * If no value with {@code prefix} exists all unprefixed values will be returned.
+     * <p>
+     * This is useful if one wants to allow prefixed configs to override default ones, but wants to use either
      * only prefixed configs or only regular configs, but not mix them.
      */
     public Map<String, Object> valuesWithPrefixAllOrNothing(String prefix) {
@@ -425,15 +380,17 @@ public class AbstractConfig {
      * Log warnings for any unused configurations
      */
     public void logUnused() {
-        for (String key : unused())
-            log.warn("The configuration '{}' was supplied but isn't a known config.", key);
+        Set<String> unusedkeys = unused();
+        if (!unusedkeys.isEmpty()) {
+            log.warn("These configurations '{}' were supplied but are not used yet.", unusedkeys);
+        }
     }
 
     private <T> T getConfiguredInstance(Object klass, Class<T> t, Map<String, Object> configPairs) {
         if (klass == null)
             return null;
-
         Object o;
+
         if (klass instanceof String) {
             try {
                 o = Utils.newInstance((String) klass, t);
@@ -443,19 +400,21 @@ public class AbstractConfig {
         } else if (klass instanceof Class<?>) {
             o = Utils.newInstance((Class<?>) klass);
         } else
-            throw new KafkaException(
-                    "Unexpected element of type " + klass.getClass().getName() + ", expected String or Class");
-        if (!t.isInstance(o))
-            throw new KafkaException(klass + " is not an instance of " + t.getName());
-        if (o instanceof Configurable)
-            ((Configurable) o).configure(configPairs);
-
+            throw new KafkaException("Unexpected element of type " + klass.getClass().getName() + ", expected String or Class");
+        try {
+            if (!t.isInstance(o))
+                throw new KafkaException(klass + " is not an instance of " + t.getName());
+            if (o instanceof Configurable)
+                ((Configurable) o).configure(configPairs);
+        } catch (Exception e) {
+            maybeClose(o, "AutoCloseable object constructed and configured during failed call to getConfiguredInstance");
+            throw e;
+        }
         return t.cast(o);
     }
 
     /**
-     * Get a configured instance of the give class specified by the given
-     * configuration key. If the object implements
+     * Get a configured instance of the give class specified by the given configuration key. If the object implements
      * Configurable configure it using the configuration.
      *
      * @param key The configuration key for the class
@@ -467,8 +426,7 @@ public class AbstractConfig {
     }
 
     /**
-     * Get a configured instance of the give class specified by the given
-     * configuration key. If the object implements
+     * Get a configured instance of the give class specified by the given configuration key. If the object implements
      * Configurable configure it using the configuration.
      *
      * @param key             The configuration key for the class
@@ -483,12 +441,10 @@ public class AbstractConfig {
     }
 
     /**
-     * Get a list of configured instances of the given class specified by the given
-     * configuration key. The configuration
-     * may specify either null or an empty string to indicate no configured
-     * instances. In both cases, this method
+     * Get a list of configured instances of the given class specified by the given configuration key. The configuration
+     * may specify either null or an empty string to indicate no configured instances. In both cases, this method
      * returns an empty list to indicate no configured instances.
-     * 
+     *
      * @param key The configuration key for the class
      * @param t   The interface the class should implement
      * @return The list of configured instances
@@ -498,12 +454,10 @@ public class AbstractConfig {
     }
 
     /**
-     * Get a list of configured instances of the given class specified by the given
-     * configuration key. The configuration
-     * may specify either null or an empty string to indicate no configured
-     * instances. In both cases, this method
+     * Get a list of configured instances of the given class specified by the given configuration key. The configuration
+     * may specify either null or an empty string to indicate no configured instances. In both cases, this method
      * returns an empty list to indicate no configured instances.
-     * 
+     *
      * @param key             The configuration key for the class
      * @param t               The interface the class should implement
      * @param configOverrides Configuration overrides to use.
@@ -514,34 +468,44 @@ public class AbstractConfig {
     }
 
     /**
-     * Get a list of configured instances of the given class specified by the given
-     * configuration key. The configuration
-     * may specify either null or an empty string to indicate no configured
-     * instances. In both cases, this method
+     * Get a list of configured instances of the given class specified by the given configuration key. The configuration
+     * may specify either null or an empty string to indicate no configured instances. In both cases, this method
      * returns an empty list to indicate no configured instances.
-     * 
+     *
      * @param classNames      The list of class names of the instances to create
      * @param t               The interface the class should implement
      * @param configOverrides Configuration overrides to use.
      * @return The list of configured instances
      */
-    public <T> List<T> getConfiguredInstances(List<String> classNames, Class<T> t,
-            Map<String, Object> configOverrides) {
+    public <T> List<T> getConfiguredInstances(List<String> classNames, Class<T> t, Map<String, Object> configOverrides) {
         List<T> objects = new ArrayList<>();
         if (classNames == null)
             return objects;
         Map<String, Object> configPairs = originals();
         configPairs.putAll(configOverrides);
-        for (Object klass : classNames) {
-            Object o = getConfiguredInstance(klass, t, configPairs);
-            objects.add(t.cast(o));
+
+        try {
+            for (Object klass : classNames) {
+                Object o = getConfiguredInstance(klass, t, configPairs);
+                objects.add(t.cast(o));
+            }
+        } catch (Exception e) {
+            for (Object object : objects) {
+                maybeClose(object, "AutoCloseable object constructed and configured during failed call to getConfiguredInstances");
+            }
+            throw e;
         }
         return objects;
     }
 
+    private static void maybeClose(Object object, String name) {
+        if (object instanceof AutoCloseable) {
+            Utils.closeQuietly((AutoCloseable) object, name);
+        }
+    }
+
     private Map<String, String> extractPotentialVariables(Map<?, ?> configMap) {
-        // Variables are tuples of the form "${providerName:[path:]key}". From the
-        // configMap we extract the subset of configs with string
+        // Variables are tuples of the form "${providerName:[path:]key}". From the configMap we extract the subset of configs with string
         // values as potential variables.
         Map<String, String> configMapAsString = new HashMap<>();
         for (Map.Entry<?, ?> entry : configMap.entrySet()) {
@@ -553,10 +517,9 @@ public class AbstractConfig {
     }
 
     /**
-     * Instantiates given list of config providers and fetches the actual values of
-     * config variables from the config providers.
+     * Instantiates given list of config providers and fetches the actual values of config variables from the config providers.
      * returns a map of config key and resolved values.
-     * 
+     *
      * @param configProviderProps The map of config provider configs
      * @param originals           The map of raw configs.
      * @return map of resolved config variable.
@@ -566,8 +529,7 @@ public class AbstractConfig {
         Map<String, String> providerConfigString;
         Map<String, ?> configProperties;
         Map<String, Object> resolvedOriginals = new HashMap<>();
-        // As variable configs are strings, parse the originals and obtain the potential
-        // variable configs.
+        // As variable configs are strings, parse the originals and obtain the potential variable configs.
         Map<String, String> indirectVariables = extractPotentialVariables(originals);
 
         resolvedOriginals.putAll(originals);
@@ -592,8 +554,7 @@ public class AbstractConfig {
         return new ResolvingMap<>(resolvedOriginals, originals);
     }
 
-    private Map<String, Object> configProviderProperties(String configProviderPrefix,
-            Map<String, ?> providerConfigProperties) {
+    private Map<String, Object> configProviderProperties(String configProviderPrefix, Map<String, ?> providerConfigProperties) {
         Map<String, Object> result = new HashMap<>();
         for (Map.Entry<String, ?> entry : providerConfigProperties.entrySet()) {
             String key = entry.getKey();
@@ -605,20 +566,17 @@ public class AbstractConfig {
     }
 
     /**
-     * Instantiates and configures the ConfigProviders. The config providers configs
-     * are defined as follows:
+     * Instantiates and configures the ConfigProviders. The config providers configs are defined as follows:
      * config.providers : A comma-separated list of names for providers.
      * config.providers.{name}.class : The Java class name for a provider.
-     * config.providers.{name}.param.{param-name} : A parameter to be passed to the
-     * above Java class on initialization.
+     * config.providers.{name}.param.{param-name} : A parameter to be passed to the above Java class on initialization.
      * returns a map of config provider name and its instance.
-     * 
+     *
      * @param indirectConfigs          The map of potential variable configs
      * @param providerConfigProperties The map of config provider configs
      * @return map map of config provider name and its instance.
      */
-    private Map<String, ConfigProvider> instantiateConfigProviders(Map<String, String> indirectConfigs,
-            Map<String, ?> providerConfigProperties) {
+    private Map<String, ConfigProvider> instantiateConfigProviders(Map<String, String> indirectConfigs, Map<String, ?> providerConfigProperties) {
         final String configProviders = indirectConfigs.get(CONFIG_PROVIDERS_CONFIG);
 
         if (configProviders == null || configProviders.isEmpty()) {
@@ -644,8 +602,7 @@ public class AbstractConfig {
                 configProviderInstances.put(entry.getKey(), provider);
             } catch (ClassNotFoundException e) {
                 log.error("Could not load config provider class " + entry.getValue(), e);
-                throw new ConfigException(providerClassProperty(entry.getKey()), entry.getValue(),
-                        "Could not load config provider class or one of its dependencies");
+                throw new ConfigException(providerClassProperty(entry.getKey()), entry.getValue(), "Could not load config provider class or one of its dependencies");
             }
         }
 
@@ -658,10 +615,8 @@ public class AbstractConfig {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
         AbstractConfig that = (AbstractConfig) o;
 
@@ -674,10 +629,8 @@ public class AbstractConfig {
     }
 
     /**
-     * Marks keys retrieved via `get` as used. This is needed because
-     * `Configurable.configure` takes a `Map` instead
-     * of an `AbstractConfig` and we can't change that without breaking public API
-     * like `Partitioner`.
+     * Marks keys retrieved via `get` as used. This is needed because `Configurable.configure` takes a `Map` instead
+     * of an `AbstractConfig` and we can't change that without breaking public API like `Partitioner`.
      */
     private class RecordingMap<V> extends HashMap<String, V> {
 
@@ -722,13 +675,10 @@ public class AbstractConfig {
     }
 
     /**
-     * ResolvingMap keeps a track of the original map instance and the resolved
-     * configs.
-     * The originals are tracked in a separate nested map and may be a
-     * `RecordingMap`; thus
+     * ResolvingMap keeps a track of the original map instance and the resolved configs.
+     * The originals are tracked in a separate nested map and may be a `RecordingMap`; thus
      * any access to a value for a key needs to be recorded on the originals map.
-     * The resolved configs are kept in the inherited map and are therefore mutable,
-     * though any
+     * The resolved configs are kept in the inherited map and are therefore mutable, though any
      * mutations are not applied to the originals.
      */
     private static class ResolvingMap<V> extends HashMap<String, V> {

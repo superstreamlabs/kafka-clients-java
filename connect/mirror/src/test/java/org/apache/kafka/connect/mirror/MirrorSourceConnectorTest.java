@@ -16,27 +16,36 @@
  */
 package org.apache.kafka.connect.mirror;
 
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.DescribeAclsResult;
+import org.apache.kafka.common.KafkaFuture;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.acl.AccessControlEntry;
 import org.apache.kafka.common.acl.AclBinding;
 import org.apache.kafka.common.acl.AclOperation;
 import org.apache.kafka.common.acl.AclPermissionType;
+import org.apache.kafka.common.errors.SecurityDisabledException;
 import org.apache.kafka.common.resource.PatternType;
 import org.apache.kafka.common.resource.ResourcePattern;
 import org.apache.kafka.common.resource.ResourceType;
 import org.apache.kafka.clients.admin.Config;
+import org.apache.kafka.common.utils.LogCaptureAppender;
 import org.apache.kafka.connect.connector.ConnectorContext;
 import org.apache.kafka.clients.admin.ConfigEntry;
 import org.apache.kafka.clients.admin.NewTopic;
 
 import org.junit.jupiter.api.Test;
 
-import static org.apache.kafka.connect.mirror.MirrorConnectorConfig.TASK_TOPIC_PARTITIONS;
+import static org.apache.kafka.connect.mirror.MirrorSourceConfig.TASK_TOPIC_PARTITIONS;
 import static org.apache.kafka.connect.mirror.TestUtils.makeProps;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
@@ -44,19 +53,23 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 public class MirrorSourceConnectorTest {
 
     @Test
     public void testReplicatesHeartbeatsByDefault() {
-        MirrorSourceConnector connector = new MirrorSourceConnector(new SourceAndTarget("source", "target"), 
+        MirrorSourceConnector connector = new MirrorSourceConnector(new SourceAndTarget("source", "target"),
             new DefaultReplicationPolicy(), new DefaultTopicFilter(), new DefaultConfigPropertyFilter());
         assertTrue(connector.shouldReplicateTopic("heartbeats"), "should replicate heartbeats");
         assertTrue(connector.shouldReplicateTopic("us-west.heartbeats"), "should replicate upstream heartbeats");
@@ -136,7 +149,52 @@ public class MirrorSourceConnectorTest {
         assertEquals(processedDenyAllAclBinding.entry().operation(), AclOperation.ALL, "should not change ALL");
         assertEquals(processedDenyAllAclBinding.entry().permissionType(), AclPermissionType.DENY, "should not change DENY");
     }
-    
+
+    @Test
+    public void testNoBrokerAclAuthorizer() throws Exception {
+        Admin sourceAdmin = mock(Admin.class);
+        Admin targetAdmin = mock(Admin.class);
+        MirrorSourceConnector connector = new MirrorSourceConnector(sourceAdmin, targetAdmin);
+
+        ExecutionException describeAclsFailure = new ExecutionException(
+                "Failed to describe ACLs",
+                new SecurityDisabledException("No ACL authorizer configured on this broker")
+        );
+        @SuppressWarnings("unchecked")
+        KafkaFuture<Collection<AclBinding>> describeAclsFuture = mock(KafkaFuture.class);
+        when(describeAclsFuture.get()).thenThrow(describeAclsFailure);
+        DescribeAclsResult describeAclsResult = mock(DescribeAclsResult.class);
+        when(describeAclsResult.values()).thenReturn(describeAclsFuture);
+        when(sourceAdmin.describeAcls(any())).thenReturn(describeAclsResult);
+
+        try (LogCaptureAppender connectorLogs = LogCaptureAppender.createAndRegister(MirrorSourceConnector.class)) {
+            LogCaptureAppender.setClassLoggerToTrace(MirrorSourceConnector.class);
+            connector.syncTopicAcls();
+            long aclSyncDisableMessages = connectorLogs.getMessages().stream()
+                    .filter(m -> m.contains("Consider disabling topic ACL syncing"))
+                    .count();
+            assertEquals(1, aclSyncDisableMessages, "Should have recommended that user disable ACL syncing");
+            long aclSyncSkippingMessages = connectorLogs.getMessages().stream()
+                    .filter(m -> m.contains("skipping topic ACL sync"))
+                    .count();
+            assertEquals(0, aclSyncSkippingMessages, "Should not have logged ACL sync skip at same time as suggesting ACL sync be disabled");
+
+            connector.syncTopicAcls();
+            connector.syncTopicAcls();
+            aclSyncDisableMessages = connectorLogs.getMessages().stream()
+                    .filter(m -> m.contains("Consider disabling topic ACL syncing"))
+                    .count();
+            assertEquals(1, aclSyncDisableMessages, "Should not have recommended that user disable ACL syncing more than once");
+            aclSyncSkippingMessages = connectorLogs.getMessages().stream()
+                    .filter(m -> m.contains("skipping topic ACL sync"))
+                    .count();
+            assertEquals(2, aclSyncSkippingMessages, "Should have logged ACL sync skip instead of suggesting disabling ACL syncing");
+        }
+
+        // We should never have tried to perform an ACL sync on the target cluster
+        verifyNoInteractions(targetAdmin);
+    }
+
     @Test
     public void testConfigPropertyFiltering() {
         MirrorSourceConnector connector = new MirrorSourceConnector(new SourceAndTarget("source", "target"),
@@ -150,6 +208,49 @@ public class MirrorSourceConnectorTest {
             .anyMatch(x -> x.name().equals("name-1")), "should replicate properties");
         assertFalse(targetConfig.entries().stream()
             .anyMatch(x -> x.name().equals("min.insync.replicas")), "should not replicate excluded properties");
+    }
+
+    @Test
+    public void testNewTopicConfigs() throws Exception {
+        Map<String, Object> filterConfig = new HashMap<>();
+        filterConfig.put(DefaultConfigPropertyFilter.CONFIG_PROPERTIES_EXCLUDE_CONFIG, "follower\\.replication\\.throttled\\.replicas, "
+                + "leader\\.replication\\.throttled\\.replicas, "
+                + "message\\.timestamp\\.difference\\.max\\.ms, "
+                + "message\\.timestamp\\.type, "
+                + "unclean\\.leader\\.election\\.enable, "
+                + "min\\.insync\\.replicas,"
+                + "exclude_param.*");
+        DefaultConfigPropertyFilter filter = new DefaultConfigPropertyFilter();
+        filter.configure(filterConfig);
+
+        MirrorSourceConnector connector = spy(new MirrorSourceConnector(new SourceAndTarget("source", "target"),
+                new DefaultReplicationPolicy(), x -> true, filter));
+
+        final String topic = "testtopic";
+        List<ConfigEntry> entries = new ArrayList<>();
+        entries.add(new ConfigEntry("name-1", "value-1"));
+        entries.add(new ConfigEntry("exclude_param.param1", "value-param1"));
+        entries.add(new ConfigEntry("min.insync.replicas", "2"));
+        Config config = new Config(entries);
+        doReturn(Collections.singletonMap(topic, config)).when(connector).describeTopicConfigs(any());
+        doAnswer(invocation -> {
+            Map<String, NewTopic> newTopics = invocation.getArgument(0);
+            assertNotNull(newTopics.get("source." + topic));
+            Map<String, String> targetConfig = newTopics.get("source." + topic).configs();
+
+            // property 'name-1' isn't defined in the exclude filter -> should be replicated
+            assertNotNull(targetConfig.get("name-1"), "should replicate properties");
+
+            // this property is in default list, just double check it:
+            String prop1 = "min.insync.replicas";
+            assertNull(targetConfig.get(prop1), "should not replicate excluded properties " + prop1);
+            // this property is only in exclude filter custom parameter, also tests regex on the way:
+            String prop2 = "exclude_param.param1";
+            assertNull(targetConfig.get(prop2), "should not replicate excluded properties " + prop2);
+            return null;
+        }).when(connector).createNewTopics(any());
+        connector.createNewTopics(Collections.singleton(topic), Collections.singletonMap(topic, 1L));
+        verify(connector).createNewTopics(any(), any());
     }
 
     @Test
@@ -175,7 +276,7 @@ public class MirrorSourceConnectorTest {
         knownSourceTopicPartitions.add(new TopicPartition("t2", 1));
 
         // MirrorConnectorConfig example for test
-        MirrorConnectorConfig config = new MirrorConnectorConfig(makeProps());
+        MirrorSourceConfig config = new MirrorSourceConfig(makeProps());
 
         // MirrorSourceConnector as minimum to run taskConfig()
         MirrorSourceConnector connector = new MirrorSourceConnector(knownSourceTopicPartitions, config);
@@ -273,4 +374,18 @@ public class MirrorSourceConnectorTest {
         connector.refreshTopicPartitions();
         verify(connector, times(1)).computeAndCreateTopicPartitions();
     }
+
+    @Test
+    public void testIsCycleWithNullUpstreamTopic() {
+        class CustomReplicationPolicy extends DefaultReplicationPolicy {
+            @Override
+            public String upstreamTopic(String topic) {
+                return null;
+            }
+        }
+        MirrorSourceConnector connector = new MirrorSourceConnector(new SourceAndTarget("source", "target"),
+                new CustomReplicationPolicy(), new DefaultTopicFilter(), new DefaultConfigPropertyFilter());
+        assertDoesNotThrow(() -> connector.isCycle(".b"));
+    }
+
 }

@@ -52,9 +52,11 @@ public class DelegatingClassLoaderTest {
     }
 
     @Test
-    public void testLoadingUnloadedPluginClass() throws ClassNotFoundException {
-        TestPlugins.assertAvailable();
-        DelegatingClassLoader classLoader = new DelegatingClassLoader(Collections.emptyList());
+    public void testLoadingUnloadedPluginClass() {
+        DelegatingClassLoader classLoader = new DelegatingClassLoader(
+                Collections.emptyList(),
+                DelegatingClassLoader.class.getClassLoader()
+        );
         classLoader.initLoaders();
         for (String pluginClassName : TestPlugins.pluginClasses()) {
             assertThrows(ClassNotFoundException.class, () -> classLoader.loadClass(pluginClassName));
@@ -63,8 +65,10 @@ public class DelegatingClassLoaderTest {
 
     @Test
     public void testLoadingPluginClass() throws ClassNotFoundException {
-        TestPlugins.assertAvailable();
-        DelegatingClassLoader classLoader = new DelegatingClassLoader(TestPlugins.pluginPath());
+        DelegatingClassLoader classLoader = new DelegatingClassLoader(
+                TestPlugins.pluginPath(),
+                DelegatingClassLoader.class.getClassLoader()
+        );
         classLoader.initLoaders();
         for (String pluginClassName : TestPlugins.pluginClasses()) {
             assertNotNull(classLoader.loadClass(pluginClassName));
@@ -77,7 +81,9 @@ public class DelegatingClassLoaderTest {
         pluginDir.newFile("invalid.jar");
 
         DelegatingClassLoader classLoader = new DelegatingClassLoader(
-            Collections.singletonList(pluginDir.getRoot().getAbsolutePath()));
+                Collections.singletonList(pluginDir.getRoot().getAbsolutePath()),
+                DelegatingClassLoader.class.getClassLoader()
+        );
         classLoader.initLoaders();
     }
 
@@ -87,14 +93,18 @@ public class DelegatingClassLoaderTest {
         pluginDir.newFile("my-plugin/invalid.jar");
 
         DelegatingClassLoader classLoader = new DelegatingClassLoader(
-            Collections.singletonList(pluginDir.getRoot().getAbsolutePath()));
+                Collections.singletonList(pluginDir.getRoot().getAbsolutePath()),
+                DelegatingClassLoader.class.getClassLoader()
+        );
         classLoader.initLoaders();
     }
 
     @Test
-    public void testLoadingNoPlugins() throws Exception {
+    public void testLoadingNoPlugins() {
         DelegatingClassLoader classLoader = new DelegatingClassLoader(
-            Collections.singletonList(pluginDir.getRoot().getAbsolutePath()));
+                Collections.singletonList(pluginDir.getRoot().getAbsolutePath()),
+                DelegatingClassLoader.class.getClassLoader()
+        );
         classLoader.initLoaders();
     }
 
@@ -103,14 +113,14 @@ public class DelegatingClassLoaderTest {
         pluginDir.newFolder("my-plugin");
 
         DelegatingClassLoader classLoader = new DelegatingClassLoader(
-            Collections.singletonList(pluginDir.getRoot().getAbsolutePath()));
+                Collections.singletonList(pluginDir.getRoot().getAbsolutePath()),
+                DelegatingClassLoader.class.getClassLoader()
+        );
         classLoader.initLoaders();
     }
 
     @Test
     public void testLoadingMixOfValidAndInvalidPlugins() throws Exception {
-        TestPlugins.assertAvailable();
-
         pluginDir.newFile("invalid.jar");
         pluginDir.newFolder("my-plugin");
         pluginDir.newFile("my-plugin/invalid.jar");
@@ -122,7 +132,9 @@ public class DelegatingClassLoaderTest {
         }
 
         DelegatingClassLoader classLoader = new DelegatingClassLoader(
-            Collections.singletonList(pluginDir.getRoot().getAbsolutePath()));
+                Collections.singletonList(pluginDir.getRoot().getAbsolutePath()),
+                DelegatingClassLoader.class.getClassLoader()
+        );
         classLoader.initLoaders();
         for (String pluginClassName : TestPlugins.pluginClasses()) {
             assertNotNull(classLoader.loadClass(pluginClassName));

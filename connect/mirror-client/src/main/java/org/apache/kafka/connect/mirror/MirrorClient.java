@@ -17,7 +17,7 @@
 
 package org.apache.kafka.connect.mirror;
 
-import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.ByteArrayDeserializer;
@@ -56,22 +56,22 @@ import java.util.concurrent.ExecutionException;
 public class MirrorClient implements AutoCloseable {
     private static final Logger log = LoggerFactory.getLogger(MirrorClient.class);
 
-    private AdminClient adminClient;
-    private ReplicationPolicy replicationPolicy;
-    private Map<String, Object> consumerConfig;
+    private final Admin adminClient;
+    private final ReplicationPolicy replicationPolicy;
+    private final Map<String, Object> consumerConfig;
 
     public MirrorClient(Map<String, Object> props) {
         this(new MirrorClientConfig(props));
     }
 
     public MirrorClient(MirrorClientConfig config) {
-        adminClient = AdminClient.create(config.adminConfig());
+        adminClient = config.forwardingAdmin(config.adminConfig());
         consumerConfig = config.consumerConfig();
         replicationPolicy = config.replicationPolicy();
     }
 
     // for testing
-    MirrorClient(AdminClient adminClient, ReplicationPolicy replicationPolicy,
+    MirrorClient(Admin adminClient, ReplicationPolicy replicationPolicy,
             Map<String, Object> consumerConfig) {
         this.adminClient = adminClient;
         this.replicationPolicy = replicationPolicy;
@@ -121,7 +121,6 @@ public class MirrorClient implements AutoCloseable {
         return listTopics().stream()
             .filter(this::isHeartbeatTopic)
             .flatMap(x -> allSources(x).stream())
-            .distinct()
             .collect(Collectors.toSet());
     }
 
@@ -137,7 +136,6 @@ public class MirrorClient implements AutoCloseable {
         return listTopics().stream()
             .filter(this::isRemoteTopic)
             .filter(x -> source.equals(replicationPolicy.topicSource(x)))
-            .distinct()
             .collect(Collectors.toSet());
     }
 
@@ -151,9 +149,9 @@ public class MirrorClient implements AutoCloseable {
             String remoteClusterAlias, Duration timeout) {
         long deadline = System.currentTimeMillis() + timeout.toMillis();
         Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
-        KafkaConsumer<byte[], byte[]> consumer = new KafkaConsumer<>(consumerConfig,
-            new ByteArrayDeserializer(), new ByteArrayDeserializer());
-        try {
+
+        try (KafkaConsumer<byte[], byte[]> consumer = new KafkaConsumer<>(consumerConfig,
+                new ByteArrayDeserializer(), new ByteArrayDeserializer())) {
             // checkpoint topics are not "remote topics", as they are not replicated. So we don't need
             // to use ReplicationPolicy to create the checkpoint topic here.
             String checkpointTopic = replicationPolicy.checkpointsTopic(remoteClusterAlias);
@@ -176,8 +174,6 @@ public class MirrorClient implements AutoCloseable {
             }
             log.info("Consumed {} checkpoint records for {} from {}.", offsets.size(),
                 consumerGroupId, checkpointTopic);
-        } finally {
-            consumer.close();
         }
         return offsets;
     }

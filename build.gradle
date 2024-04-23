@@ -296,10 +296,6 @@ subprojects {
         // To test locally, invoke gradlew with `-PmavenUrl=file:///some/local/path`
         maven {
           url = mavenUrl
-          credentials {
-            username = mavenUsername
-            password = mavenPassword
-          }
         }
       }
       publications {

@@ -50,11 +50,6 @@ plugins {
   id 'com.diffplug.spotless' version '6.14.0' apply false // 6.14.1 and newer require Java 11 at compile time, so we can't upgrade until AK 4.0
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
 
 ext {
   gradleVersion = versions.gradle
@@ -261,6 +256,9 @@ subprojects {
   }
 
   java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }    
     consistentResolution {
       // resolve the compileClasspath and then "inject" the result of resolution as strict constraints into the runtimeClasspath
       useCompileClasspathVersions()

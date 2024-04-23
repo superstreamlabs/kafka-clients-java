@@ -37,8 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.kafka.superstream.Superstream;
-
 /**
  * A convenient base class for configurations to extend.
  * <p>
@@ -111,7 +109,7 @@ public class AbstractConfig {
     @SuppressWarnings({"this-escape"})
     public AbstractConfig(ConfigDef definition, Map<?, ?> originals, Map<String, ?> configProviderProps, boolean doLog) {
         Map<String, Object> originalMap = Utils.castToStringObjectMap(originals);
-        originalMap = Superstream.initSuperstreamConfig(originalMap);
+
         this.originals = resolveConfigVariables(configProviderProps, originalMap);
         this.values = definition.parse(this.originals);
         Map<String, Object> configUpdates = postProcessParsedConfig(Collections.unmodifiableMap(this.values));

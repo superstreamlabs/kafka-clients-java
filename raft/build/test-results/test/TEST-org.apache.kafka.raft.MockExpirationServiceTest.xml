@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.apache.kafka.raft.MockExpirationServiceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:20:22" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.008">
-  <properties/>
-  <testcase name="testFailAfter()" classname="org.apache.kafka.raft.MockExpirationServiceTest" time="0.008"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

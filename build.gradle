@@ -269,7 +269,7 @@ subprojects {
       options.compilerArgs << "-Xlint:-rawtypes"
     options.compilerArgs << "-Xlint:-serial"
     options.compilerArgs << "-Xlint:-try"
-    // options.compilerArgs << "-Werror"
+    options.compilerArgs << "-Werror"
 
     // --release is the recommended way to select the target release, but it's only supported in Java 9 so we also
     // set --source and --target via `sourceCompatibility` and `targetCompatibility` a couple of lines below
@@ -296,10 +296,10 @@ subprojects {
         // To test locally, invoke gradlew with `-PmavenUrl=file:///some/local/path`
         maven {
           url = mavenUrl
-          // credentials {
-          //   username = mavenUsername
-          //   password = mavenPassword
-          // }
+          credentials {
+            username = mavenUsername
+            password = mavenPassword
+          }
         }
       }
       publications {
@@ -338,9 +338,8 @@ subprojects {
 
             artifactId = archivesBaseName
             pom {
-              name = 'Superstream Kafka'
-              description = 'Superstream Kafka Clients'
-              url = 'https://superstream.ai'
+              name = 'Apache Kafka'
+              url = 'https://kafka.apache.org'
               licenses {
                 license {
                   name = 'The Apache License, Version 2.0'
@@ -348,20 +347,7 @@ subprojects {
                   distribution = 'repo'
                 }
               }
-              developers {
-                    developer {
-                        id = 'teammemphis'
-                        name = 'Team Memphis'
-                        email = 'team@memphis.dev'
-                    }
-                }
-              scm {
-                    connection = 'scm:git:git://github.com:memphisdev/superstream-kafka.git'
-                    developerConnection = 'scm:git:ssh://github.com:memphisdev/superstream-kafka.git'
-                    url = 'https://superstream.ai'
-                }
             }
-            
           }
         }
       }
@@ -1444,10 +1430,6 @@ project(':clients') {
     implementation libs.snappy
     implementation libs.slf4jApi
     implementation libs.opentelemetryProto
-
-    implementation 'io.nats:jnats:2.17.3'
-    implementation 'com.google.protobuf:protobuf-java-util:3.19.1'
-    implementation 'com.google.protobuf:protobuf-java:3.19.1'
 
     // libraries which should be added as runtime dependencies in generated pom.xml should be defined here:
     shadowed libs.zstd

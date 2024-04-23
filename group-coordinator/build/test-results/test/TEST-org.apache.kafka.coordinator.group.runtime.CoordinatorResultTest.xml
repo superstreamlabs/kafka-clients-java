@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.apache.kafka.coordinator.group.runtime.CoordinatorResultTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:19:22" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.005">
-  <properties/>
-  <testcase name="testRecordsCannotBeNull()" classname="org.apache.kafka.coordinator.group.runtime.CoordinatorResultTest" time="0.002"/>
-  <testcase name="testAttributes()" classname="org.apache.kafka.coordinator.group.runtime.CoordinatorResultTest" time="0.0"/>
-  <testcase name="testEquals()" classname="org.apache.kafka.coordinator.group.runtime.CoordinatorResultTest" time="0.002"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

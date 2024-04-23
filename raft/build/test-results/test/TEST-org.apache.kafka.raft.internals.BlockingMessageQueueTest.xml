@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.apache.kafka.raft.internals.BlockingMessageQueueTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:21:04" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="1.918">
-  <properties/>
-  <testcase name="testOfferAndPoll()" classname="org.apache.kafka.raft.internals.BlockingMessageQueueTest" time="1.838"/>
-  <testcase name="testWakeupFromPoll()" classname="org.apache.kafka.raft.internals.BlockingMessageQueueTest" time="0.018"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

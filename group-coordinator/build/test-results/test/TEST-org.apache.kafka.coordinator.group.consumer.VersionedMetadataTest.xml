@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.apache.kafka.coordinator.group.consumer.VersionedMetadataTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:20:05" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="0.004">
-  <properties/>
-  <testcase name="testMetadataCannotBeNull()" classname="org.apache.kafka.coordinator.group.consumer.VersionedMetadataTest" time="0.003"/>
-  <testcase name="testAttributes()" classname="org.apache.kafka.coordinator.group.consumer.VersionedMetadataTest" time="0.001"/>
-  <testcase name="testEquals()" classname="org.apache.kafka.coordinator.group.consumer.VersionedMetadataTest" time="0.0"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

@@ -1,8 +1,0 @@
-/Users/shay23bra/memphisdev/superstream-kafka/examples/build/classes/java/main/kafka/examples/Consumer.class
-/Users/shay23bra/memphisdev/superstream-kafka/examples/build/classes/java/main/kafka/examples/Producer.class
-/Users/shay23bra/memphisdev/superstream-kafka/examples/build/classes/java/main/kafka/examples/KafkaProperties.class
-/Users/shay23bra/memphisdev/superstream-kafka/examples/build/classes/java/main/kafka/examples/ExactlyOnceMessageProcessor.class
-/Users/shay23bra/memphisdev/superstream-kafka/examples/build/classes/java/main/kafka/examples/Producer$ProducerCallback.class
-/Users/shay23bra/memphisdev/superstream-kafka/examples/build/classes/java/main/kafka/examples/Utils.class
-/Users/shay23bra/memphisdev/superstream-kafka/examples/build/classes/java/main/kafka/examples/KafkaExactlyOnceDemo.class
-/Users/shay23bra/memphisdev/superstream-kafka/examples/build/classes/java/main/kafka/examples/KafkaConsumerProducerDemo.class

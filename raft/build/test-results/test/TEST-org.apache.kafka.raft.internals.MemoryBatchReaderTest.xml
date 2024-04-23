@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="org.apache.kafka.raft.internals.MemoryBatchReaderTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2024-04-09T11:20:34" hostname="ip-192-168-1-113.eu-central-1.compute.internal" time="7.132">
-  <properties/>
-  <testcase name="testIteration()" classname="org.apache.kafka.raft.internals.MemoryBatchReaderTest" time="7.132"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

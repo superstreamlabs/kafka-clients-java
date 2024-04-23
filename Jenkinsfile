@@ -26,7 +26,7 @@ pipeline {
                     def version = readFile('version-alpha.conf').trim()
                     env.versionTag = version
                     echo "Using version from version-alpha.conf: ${env.versionTag}" 
-                    sh "apk add curl"
+                    // sh "apk add curl"
                     // setupGPG()     
                     publishClients() 
                     uploadBundleAndCheckStatus()                         

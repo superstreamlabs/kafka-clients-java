@@ -255,10 +255,7 @@ subprojects {
     fineTuneEclipseClasspathFile(eclipse, project)
   }
 
-  java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }    
+  java {  
     consistentResolution {
       // resolve the compileClasspath and then "inject" the result of resolution as strict constraints into the runtimeClasspath
       useCompileClasspathVersions()

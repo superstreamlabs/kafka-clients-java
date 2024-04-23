@@ -50,6 +50,12 @@ plugins {
   id 'com.diffplug.spotless' version '6.14.0' apply false // 6.14.1 and newer require Java 11 at compile time, so we can't upgrade until AK 4.0
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 ext {
   gradleVersion = versions.gradle
   minJavaVersion = 8
@@ -1439,7 +1445,7 @@ project(':clients') {
     implementation libs.snappy
     implementation libs.slf4jApi
     implementation libs.opentelemetryProto
-    // implementation 'ai.superstream:superstream-java:1.0.0'
+    implementation 'ai.superstream:superstream-java:1.0.0'
 
     // libraries which should be added as runtime dependencies in generated pom.xml should be defined here:
     shadowed libs.zstd

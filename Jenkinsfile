@@ -3,7 +3,8 @@ pipeline {
     agent {
         docker {
             label 'memphis-jenkins-big-fleet,'
-            image 'gradle:8.6'
+            // image 'gradle:8.6'
+            image '8.6.0-jdk21-alpine'
             args '-u root'
         }
     } 
@@ -24,7 +25,7 @@ pipeline {
                     def version = readFile('version-alpha.conf').trim()
                     env.versionTag = version
                     echo "Using version from version-alpha.conf: ${env.versionTag}" 
-                    setupGPG()     
+                    // setupGPG()     
                     publishClients() 
                     uploadBundleAndCheckStatus()                         
                 }

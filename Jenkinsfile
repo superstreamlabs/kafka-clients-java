@@ -4,7 +4,7 @@ pipeline {
         docker {
             label 'memphis-jenkins-big-fleet,'
             // image 'gradle:8.6'
-            image '8.6.0-jdk21-alpine'
+            image 'gradle:8.6.0-jdk21-alpine'
             args '-u root'
         }
     } 

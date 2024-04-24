@@ -255,13 +255,20 @@ subprojects {
     publishing {
       repositories {
         // To test locally, invoke gradlew with `-PmavenUrl=file:///some/local/path`
+        // maven {
+        //   url = mavenUrl
+        //   // credentials {
+        //   //   username = mavenUsername
+        //   //   password = mavenPassword
+        //   // }
+        // }
         maven {
-          url = mavenUrl
-          // credentials {
-          //   username = mavenUsername
-          //   password = mavenPassword
-          // }
-        }
+            url = 'https://superstream.jfrog.io/artifactory/superstream-libs-release'
+            credentials {
+                username 'beka@memphis.dev'
+                password 'eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiI4bUJ2SXQzc05RaS1YM2ZXR3F2WjhpY1RqaHoxZGtiUl9FSzJQcE03Mlk4In0.eyJzdWIiOiJqZmFjQDAxaHczNGFlajBzMHNrMWoyNWhkamowbW5nL3VzZXJzL2Jla2FAbWVtcGhpcy5kZXYiLCJzY3AiOiJhcHBsaWVkLXBlcm1pc3Npb25zL3VzZXIiLCJhdWQiOiIqQCoiLCJpc3MiOiJqZmZlQDAxaHczNGFlajBzMHNrMWoyNWhkamowbW5nIiwiaWF0IjoxNzEzODgyOTc5LCJqdGkiOiI0OWU5YjBmOC1kZWVjLTRmYjMtYTg5MC0yN2U2MWUzNTljNzQifQ.eFyx4nrcKce2ujBsaNFW6mTm1qo4i9utc-l2Ga_VFPY2aJqPxcSg_D_3YJoMrIoj8iu71xTKYWWzSHV_ygcdpbYdi8e8UPQNxQKgPMjdE0mIgvBoIL6FhnKEgXTOc15SRB2fxNVzE6NTpKrG-W1oCSytIlfTp6zN2iOviG4dNEyCimBEqwOPp1FhAqYa1-dk8yd1wEvzotDyc6VxCKKS7d6H6RJomWhzS28fZJLeDvbc8b9REvlmtlil_FWcxek-f4SeQs28XjxBoFIm73rCjzNmrAbSx3eBAk_4ii_y1z9LhoH16pVycy6Vey5tsaA0TXfbYpMZbfwZfrKTl2w4cQ'
+            }
+        }         
       }
       publications {
         mavenJava(MavenPublication) {

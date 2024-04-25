@@ -58,8 +58,8 @@ pipeline {
                 // GIT_SSH_COMMAND='ssh -i $check -o StrictHostKeyChecking=no' git push --set-upstream origin $versionTag
                 // """
                 sh """
-                           git config --global user.email "jenkins@memphis.dev"
-                           git config --global user.name "Jenkins"                
+                GIT_SSH_COMMAND='ssh -i $check -o StrictHostKeyChecking=no' git config --global user.email "jenkins@memphis.dev"
+                GIT_SSH_COMMAND='ssh -i $check -o StrictHostKeyChecking=no' git config --global user.name "Jenkins"                
                 git tag -a $versionTag -m "$versionTag"
                 git push origin $versionTag
                 """

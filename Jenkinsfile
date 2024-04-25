@@ -44,8 +44,19 @@ pipeline {
         sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
         sh """
         cd /tmp/kafka-clients
-        tar czvf ai.tar.gz ai        
+        tar czvf kafka-client-${env.versionTag}.tar.gz ai        
         """
+                sh """
+                    curl -L https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz -o gh.tar.gz 
+                    tar -xvf gh.tar.gz
+                    mv gh_2.40.0_linux_amd64/bin/gh /usr/local/bin 
+                    rm -rf gh_2.40.0_linux_amd64 gh.tar.gz
+                """
+                withCredentials([string(credentialsId: 'gh_token', variable: 'GH_TOKEN')]) {
+                sh """
+                gh release create $versionTag kafka-client-${env.versionTag}.tar.gz --generate-notes
+                """
+                }        
         sh "sleep 3600"
     }                
             }

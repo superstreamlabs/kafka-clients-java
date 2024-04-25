@@ -24,10 +24,26 @@ pipeline {
                     def version = readFile('version-alpha.conf').trim()
                     env.versionTag = version
                     echo "Using version from version-alpha.conf: ${env.versionTag}" 
-                    setupGPG()     
-                    publishClients() 
-                    uploadBundleAndCheckStatus()                         
+                    // setupGPG()     
+                    // publishClients() 
+                    // uploadBundleAndCheckStatus()                         
                 }
+    withCredentials([file(credentialsId: 'gpg-key', variable: 'GPG_KEY')]) {
+        sh """
+            apt update
+            apt install -y gnupg
+        """
+        sh """
+            echo '${env.GPG_PASSPHRASE}' | gpg --batch --yes --passphrase-fd 0 --import $GPG_KEY
+            echo "allow-loopback-pinentry" > ~/.gnupg/gpg-agent.conf
+            echo RELOADAGENT | gpg-connect-agent
+            echo "D64C041FB68170463BE78AD7C4E3F1A8A5F0A659:6:" | gpg --import-ownertrust 
+            gpg --batch --pinentry-mode loopback --passphrase '${env.GPG_PASSPHRASE}' --export-secret-keys -o clients/secring.gpg
+        """
+        sh "./gradlew :clients:publish -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE}"
+        sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
+        sh "sleep 3600"
+    }                
             }
         }
         stage('Beta Release') {

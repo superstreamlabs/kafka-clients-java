@@ -53,9 +53,13 @@ pipeline {
                     rm -rf gh_2.40.0_linux_amd64 gh.tar.gz
                 """
                 withCredentials([sshUserPrivateKey(keyFileVariable:'check',credentialsId: 'main-github')]) {
+                // sh """
+                // GIT_SSH_COMMAND='ssh -i $check -o StrictHostKeyChecking=no' git checkout -b $versionTag
+                // GIT_SSH_COMMAND='ssh -i $check -o StrictHostKeyChecking=no' git push --set-upstream origin $versionTag
+                // """
                 sh """
-                GIT_SSH_COMMAND='ssh -i $check -o StrictHostKeyChecking=no' git checkout -b $versionTag
-                GIT_SSH_COMMAND='ssh -i $check -o StrictHostKeyChecking=no' git push --set-upstream origin $versionTag
+                git tag -a $versionTag -m "$versionTag"
+                git push origin $versionTag
                 """
                 }                
                 withCredentials([string(credentialsId: 'gh_token', variable: 'GH_TOKEN')]) {

@@ -270,45 +270,79 @@ subprojects {
         //     }
         // }         
       }
+      // publications {
+      //   mavenJava(MavenPublication) {
+      //     from components.java
+
+      //     afterEvaluate {
+      //       ["srcJar", "javadocJar", "scaladocJar", "testJar", "testSrcJar"].forEach { taskName ->
+      //         def task = tasks.findByName(taskName)
+      //         if (task != null)
+      //           artifact task
+      //       }
+
+      //       artifactId = archivesBaseName
+      //       pom {
+      //         name = 'Superstream Kafka'
+      //         description = 'Superstream Kafka Clients'
+      //         url = 'https://superstream.ai'
+      //         licenses {
+      //           license {
+      //             name = 'The Apache License, Version 2.0'
+      //             url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+      //             distribution = 'repo'
+      //           }
+      //         }
+      //         developers {
+      //               developer {
+      //                   id = 'teammemphis'
+      //                   name = 'Team Memphis'
+      //                   email = 'team@memphis.dev'
+      //               }
+      //           }
+      //         scm {
+      //               connection = 'scm:git:git://github.com:memphisdev/superstream-kafka.git'
+      //               developerConnection = 'scm:git:ssh://github.com:memphisdev/superstream-kafka.git'
+      //               url = 'https://superstream.ai'
+      //           }
+      //       }
+      //     }
+      //   }
+      // }
       publications {
-        mavenJava(MavenPublication) {
-          from components.java
+          mavenJava(MavenPublication) {
+              from components.java  // This includes only the main artifact built from the Java component
 
-          afterEvaluate {
-            ["srcJar", "javadocJar", "scaladocJar", "testJar", "testSrcJar"].forEach { taskName ->
-              def task = tasks.findByName(taskName)
-              if (task != null)
-                artifact task
-            }
+              // Set the artifact ID and version directly
+              artifactId = archivesBaseName
+              version = '3.1.0-alpha6'
 
-            artifactId = archivesBaseName
-            pom {
-              name = 'Superstream Kafka'
-              description = 'Superstream Kafka Clients'
-              url = 'https://superstream.ai'
-              licenses {
-                license {
-                  name = 'The Apache License, Version 2.0'
-                  url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                  distribution = 'repo'
-                }
+              pom {
+                  name = 'Superstream Kafka'
+                  description = 'Superstream Kafka Clients'
+                  url = 'https://superstream.ai'
+                  licenses {
+                      license {
+                          name = 'The Apache License, Version 2.0'
+                          url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                          distribution = 'repo'
+                      }
+                  }
+                  developers {
+                      developer {
+                          id = 'teammemphis'
+                          name = 'Team Memphis'
+                          email = 'team@memphis.dev'
+                      }
+                  }
+                  scm {
+                      connection = 'scm:git:git://github.com/memphisdev/superstream-kafka.git'
+                      developerConnection = 'scm:git:ssh://github.com/memphisdev/superstream-kafka.git'
+                      url = 'https://superstream.ai'
+                  }
               }
-              developers {
-                    developer {
-                        id = 'teammemphis'
-                        name = 'Team Memphis'
-                        email = 'team@memphis.dev'
-                    }
-                }
-              scm {
-                    connection = 'scm:git:git://github.com:memphisdev/superstream-kafka.git'
-                    developerConnection = 'scm:git:ssh://github.com:memphisdev/superstream-kafka.git'
-                    url = 'https://superstream.ai'
-                }
-            }
           }
-        }
-      }
+      }      
     }
 
     if (shouldSign) {

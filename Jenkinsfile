@@ -41,11 +41,15 @@ pipeline {
             gpg --batch --pinentry-mode loopback --passphrase '${env.GPG_PASSPHRASE}' --export-secret-keys -o clients/secring.gpg
         """
         sh "./gradlew :clients:publish -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE}"
+                        input 'Do you want to deploy to production?'
+
         sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
         sh """
         cd /tmp/kafka-clients
+        
         tar czvf kafka-client-${env.versionTag}.tar.gz ai        
         """
+
                 sh """
                     curl -L https://github.com/cli/cli/releases/download/v2.40.0/gh_2.40.0_linux_amd64.tar.gz -o gh.tar.gz 
                     tar -xvf gh.tar.gz

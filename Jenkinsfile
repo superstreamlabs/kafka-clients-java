@@ -42,6 +42,10 @@ pipeline {
         """
         sh "./gradlew :clients:publish -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE}"
         sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
+        sh """
+        cd /tmp/kafka-clients
+        tar czvf ai.tar.gz ai        
+        """
         sh "sleep 3600"
     }                
             }

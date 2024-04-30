@@ -613,6 +613,10 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
         this(configs, null, null);
     }
 
+    static {
+        System.out.println("Running Superstream Kafka Consumer");
+    }
+
     /**
      * A consumer is instantiated by providing a {@link java.util.Properties} object as configuration.
      * <p>

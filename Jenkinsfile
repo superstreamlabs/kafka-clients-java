@@ -121,11 +121,11 @@ def publishClients() {
 def uploadBundleAndCheckStatus() {
     def response = sh(script: """
         cd /tmp/kafka-clients
-        tar czvf ai.tar.gz ai
+        tar czvf kafka-client-${env.versionTag}.tar.gz ai
         curl --request POST \\
              --verbose \\
              --header 'Authorization: Bearer ${env.TOKEN}' \\
-             --form bundle=@ai.tar.gz \\
+             --form bundle=@kafka-client-${env.versionTag}.tar.gz \\
              'https://central.sonatype.com/api/v1/publisher/upload?name=kafka-clients-${env.versionTag}'
     """, returnStdout: true).trim()
     def id = response.split("\n").last().trim()

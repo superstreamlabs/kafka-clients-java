@@ -274,10 +274,11 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     public KafkaProducer(final Map<String, Object> configs) {
         this(configs, null, null);
     }
-
+    // ** Added by Superstream
     static {
         System.out.println("Running Superstream Kafka Producer");
     }
+    // Added by Superstream **
 
     /**
      * A producer is instantiated by providing a set of key-value pairs as configuration, a key and a value {@link Serializer}.

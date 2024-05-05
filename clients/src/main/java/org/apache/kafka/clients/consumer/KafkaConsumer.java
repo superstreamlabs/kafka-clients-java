@@ -596,10 +596,6 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
     // to keep from repeatedly scanning subscriptions in poll(), cache the result during metadata updates
     private boolean cachedSubscriptionHashAllFetchPositions;
 
-    static {
-        System.out.println("Running Superstream Kafka Consumer");
-    }
-
     /**
      * A consumer is instantiated by providing a set of key-value pairs as configuration. Valid configuration strings
      * are documented <a href="http://kafka.apache.org/documentation.html#consumerconfigs" >here</a>. Values can be

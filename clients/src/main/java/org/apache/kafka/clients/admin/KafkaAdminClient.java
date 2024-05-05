@@ -31,6 +31,7 @@ import org.apache.kafka.clients.admin.CreateTopicsResult.TopicMetadataAndConfig;
 import org.apache.kafka.clients.admin.DeleteAclsResult.FilterResult;
 import org.apache.kafka.clients.admin.DeleteAclsResult.FilterResults;
 import org.apache.kafka.clients.admin.DescribeReplicaLogDirsResult.ReplicaLogDirInfo;
+import org.apache.kafka.clients.admin.KafkaAdminClient.TimeoutProcessorFactory;
 import org.apache.kafka.clients.admin.ListOffsetsResult.ListOffsetsResultInfo;
 import org.apache.kafka.clients.admin.OffsetSpec.TimestampSpec;
 import org.apache.kafka.clients.admin.internals.AbortTransactionHandler;
@@ -91,7 +92,10 @@ import org.apache.kafka.common.errors.UnsupportedSaslMechanismException;
 import org.apache.kafka.common.errors.UnsupportedVersionException;
 import org.apache.kafka.common.internals.KafkaFutureImpl;
 import org.apache.kafka.common.message.AlterPartitionReassignmentsRequestData;
+import org.apache.kafka.common.message.AlterPartitionReassignmentsRequestData.ReassignablePartition;
 import org.apache.kafka.common.message.AlterPartitionReassignmentsRequestData.ReassignableTopic;
+import org.apache.kafka.common.message.AlterPartitionReassignmentsResponseData.ReassignablePartitionResponse;
+import org.apache.kafka.common.message.AlterPartitionReassignmentsResponseData.ReassignableTopicResponse;
 import org.apache.kafka.common.message.AlterReplicaLogDirsRequestData;
 import org.apache.kafka.common.message.AlterReplicaLogDirsRequestData.AlterReplicaLogDir;
 import org.apache.kafka.common.message.AlterReplicaLogDirsRequestData.AlterReplicaLogDirTopic;
@@ -146,6 +150,9 @@ import org.apache.kafka.common.message.ListOffsetsRequestData.ListOffsetsTopic;
 import org.apache.kafka.common.message.ListOffsetsResponseData.ListOffsetsPartitionResponse;
 import org.apache.kafka.common.message.ListOffsetsResponseData.ListOffsetsTopicResponse;
 import org.apache.kafka.common.message.ListPartitionReassignmentsRequestData;
+import org.apache.kafka.common.message.ListPartitionReassignmentsRequestData.ListPartitionReassignmentsTopics;
+import org.apache.kafka.common.message.ListPartitionReassignmentsResponseData.OngoingPartitionReassignment;
+import org.apache.kafka.common.message.ListPartitionReassignmentsResponseData.OngoingTopicReassignment;
 import org.apache.kafka.common.message.MetadataRequestData;
 import org.apache.kafka.common.message.RenewDelegationTokenRequestData;
 import org.apache.kafka.common.message.UnregisterBrokerRequestData;
@@ -231,12 +238,18 @@ import org.apache.kafka.common.security.auth.KafkaPrincipal;
 import org.apache.kafka.common.security.scram.internals.ScramFormatter;
 import org.apache.kafka.common.security.token.delegation.DelegationToken;
 import org.apache.kafka.common.security.token.delegation.TokenInformation;
+import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.common.utils.KafkaThread;
 import org.apache.kafka.common.utils.LogContext;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
+
+// ** Added by Superstream
+import ai.superstream.Consts;
+import ai.superstream.Superstream;
+// Added by Superstream **
 
 import java.net.InetSocketAddress;
 import java.security.InvalidKeyException;
@@ -370,6 +383,33 @@ public class KafkaAdminClient extends AdminClient {
     private final int maxRetries;
 
     private final long retryBackoffMs;
+    // ** Added by Superstream
+    public Superstream superstreamConnection;
+    public void configureSuperstream(Map<String, ?> configs) {
+        try {
+            System.out.println("Running Superstream Kafka Admin Client");
+            String token  = configs.get(Consts.superstreamTokenKey) != null ? (String) configs.get(Consts.superstreamTokenKey) : null;
+            if (token == null) {
+                throw new Exception("token is required");
+            }
+            String superstreamHost = configs.get(Consts.superstreamHostKey) != null ? (String) configs.get(Consts.superstreamHostKey) : Consts.superstreamDefaultHost;
+            if (superstreamHost == null) {
+                superstreamHost = Consts.superstreamDefaultHost;
+            }
+            int learningFactor = configs.get(Consts.superstreamLearningFactorKey) != null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
+            Boolean enableReduction = configs.get(Consts.superstreamReductionEnabledKey) != null ? (Boolean) configs.get(Consts.superstreamReductionEnabledKey) : false;
+            Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "", configs, enableReduction);
+            superstreamConn.init();
+            this.superstreamConnection = superstreamConn;
+        } catch (Exception e) {
+            String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
+            if (superstreamConnection != null) {
+                superstreamConnection.handleError(errMsg);
+            }
+            System.out.println(errMsg);
+        }
+    }
+    // Added by Superstream **
 
     /**
      * Get or create a list value from a map.
@@ -528,8 +568,9 @@ public class KafkaAdminClient extends AdminClient {
                 null,
                 logContext,
                 (hostResolver == null) ? new DefaultHostResolver() : hostResolver);
+                // ** Added by Superstream - 'config.originals()' **
             return new KafkaAdminClient(config, clientId, time, metadataManager, metrics, networkClient,
-                timeoutProcessorFactory, logContext);
+                timeoutProcessorFactory, logContext, config.originals());
         } catch (Throwable exc) {
             closeQuietly(metrics, "Metrics");
             closeQuietly(networkClient, "NetworkClient");
@@ -549,8 +590,9 @@ public class KafkaAdminClient extends AdminClient {
         try {
             metrics = new Metrics(new MetricConfig(), new LinkedList<>(), time);
             LogContext logContext = createLogContext(clientId);
+            // ** Added by Superstream - 'config.originals()' **
             return new KafkaAdminClient(config, clientId, time, metadataManager, metrics,
-                client, null, logContext);
+                client, null, logContext, config.originals());
         } catch (Throwable exc) {
             closeQuietly(metrics, "Metrics");
             throw new KafkaException("Failed to create new KafkaAdminClient", exc);
@@ -560,7 +602,7 @@ public class KafkaAdminClient extends AdminClient {
     static LogContext createLogContext(String clientId) {
         return new LogContext("[AdminClient clientId=" + clientId + "] ");
     }
-
+    // ** Added by Superstream - 'configs' **
     private KafkaAdminClient(AdminClientConfig config,
                              String clientId,
                              Time time,
@@ -568,7 +610,10 @@ public class KafkaAdminClient extends AdminClient {
                              Metrics metrics,
                              KafkaClient client,
                              TimeoutProcessorFactory timeoutProcessorFactory,
-                             LogContext logContext) {
+                             LogContext logContext, Map<String, Object> configs) {
+        // ** Added by Superstream
+        configureSuperstream(config.originals());
+        // Added by Superstream **
         this.clientId = clientId;
         this.log = logContext.logger(KafkaAdminClient.class);
         this.logContext = logContext;

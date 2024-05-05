@@ -384,31 +384,29 @@ public class KafkaAdminClient extends AdminClient {
 
     private final long retryBackoffMs;
     // ** Added by Superstream
-    private Superstream superstreamConnection;
-    private class SuperstreamConfigurator {
-        public void configureSuperstream(Map<String, ?> configs) {
-            try {
-                System.out.println("Running Superstream Kafka Admin Client");
-                String token  = configs.get(Consts.superstreamTokenKey) != null ? (String) configs.get(Consts.superstreamTokenKey) : null;
-                if (token == null) {
-                    throw new Exception("token is required");
-                }
-                String superstreamHost = configs.get(Consts.superstreamHostKey) != null ? (String) configs.get(Consts.superstreamHostKey) : Consts.superstreamDefaultHost;
-                if (superstreamHost == null) {
-                    superstreamHost = Consts.superstreamDefaultHost;
-                }
-                int learningFactor = configs.get(Consts.superstreamLearningFactorKey) != null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
-                Boolean enableReduction = configs.get(Consts.superstreamReductionEnabledKey) != null ? (Boolean) configs.get(Consts.superstreamReductionEnabledKey) : false;
-                Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "", configs, enableReduction);
-                superstreamConn.init();
-                this.superstreamConnection = superstreamConn;
-            } catch (Exception e) {
-                String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
-                if (superstreamConnection != null) {
-                    superstreamConnection.handleError(errMsg);
-                }
-                System.out.println(errMsg);
+    public Superstream superstreamConnection;
+    public void configureSuperstream(Map<String, ?> configs) {
+        try {
+            System.out.println("Running Superstream Kafka Admin Client");
+            String token  = configs.get(Consts.superstreamTokenKey) != null ? (String) configs.get(Consts.superstreamTokenKey) : null;
+            if (token == null) {
+                throw new Exception("token is required");
             }
+            String superstreamHost = configs.get(Consts.superstreamHostKey) != null ? (String) configs.get(Consts.superstreamHostKey) : Consts.superstreamDefaultHost;
+            if (superstreamHost == null) {
+                superstreamHost = Consts.superstreamDefaultHost;
+            }
+            int learningFactor = configs.get(Consts.superstreamLearningFactorKey) != null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
+            Boolean enableReduction = configs.get(Consts.superstreamReductionEnabledKey) != null ? (Boolean) configs.get(Consts.superstreamReductionEnabledKey) : false;
+            Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "", configs, enableReduction);
+            superstreamConn.init();
+            this.superstreamConnection = superstreamConn;
+        } catch (Exception e) {
+            String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
+            if (superstreamConnection != null) {
+                superstreamConnection.handleError(errMsg);
+            }
+            System.out.println(errMsg);
         }
     }
     // Added by Superstream **
@@ -524,10 +522,6 @@ public class KafkaAdminClient extends AdminClient {
         LogContext logContext = createLogContext(clientId);
 
         try {
-            // ** Added by Superstream
-            SuperstreamConfigurator superstreamConfigurator = new SuperstreamConfigurator();
-            superstreamConfigurator.configureSuperstream(config.originals());
-            // Added by Superstream **
             // Since we only request node information, it's safe to pass true for allowAutoTopicCreation (and it
             // simplifies communication with older brokers)
             AdminMetadataManager metadataManager = new AdminMetadataManager(logContext,
@@ -574,8 +568,9 @@ public class KafkaAdminClient extends AdminClient {
                 null,
                 logContext,
                 (hostResolver == null) ? new DefaultHostResolver() : hostResolver);
+                // ** Added by Superstream - 'config.originals()' **
             return new KafkaAdminClient(config, clientId, time, metadataManager, metrics, networkClient,
-                timeoutProcessorFactory, logContext);
+                timeoutProcessorFactory, logContext, config.originals());
         } catch (Throwable exc) {
             closeQuietly(metrics, "Metrics");
             closeQuietly(networkClient, "NetworkClient");
@@ -595,8 +590,9 @@ public class KafkaAdminClient extends AdminClient {
         try {
             metrics = new Metrics(new MetricConfig(), new LinkedList<>(), time);
             LogContext logContext = createLogContext(clientId);
+            // ** Added by Superstream - 'config.originals()' **
             return new KafkaAdminClient(config, clientId, time, metadataManager, metrics,
-                client, null, logContext);
+                client, null, logContext, config.originals());
         } catch (Throwable exc) {
             closeQuietly(metrics, "Metrics");
             throw new KafkaException("Failed to create new KafkaAdminClient", exc);
@@ -606,7 +602,7 @@ public class KafkaAdminClient extends AdminClient {
     static LogContext createLogContext(String clientId) {
         return new LogContext("[AdminClient clientId=" + clientId + "] ");
     }
-
+    // ** Added by Superstream - 'configs' **
     private KafkaAdminClient(AdminClientConfig config,
                              String clientId,
                              Time time,
@@ -614,7 +610,10 @@ public class KafkaAdminClient extends AdminClient {
                              Metrics metrics,
                              KafkaClient client,
                              TimeoutProcessorFactory timeoutProcessorFactory,
-                             LogContext logContext) {
+                             LogContext logContext, Map<String, Object> configs) {
+        // ** Added by Superstream
+        configureSuperstream(config.originals());
+        // Added by Superstream **
         this.clientId = clientId;
         this.log = logContext.logger(KafkaAdminClient.class);
         this.logContext = logContext;

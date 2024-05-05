@@ -600,7 +600,6 @@ public class KafkaAdminClient extends AdminClient {
     static LogContext createLogContext(String clientId) {
         return new LogContext("[AdminClient clientId=" + clientId + "] ");
     }
-    // ** Added by Superstream - 'configs' **
     private KafkaAdminClient(AdminClientConfig config,
                              String clientId,
                              Time time,

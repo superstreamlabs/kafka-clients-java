@@ -138,9 +138,9 @@ public class AbstractConfig {
         for (Map.Entry<?, ?> entry : originals.entrySet())
             if (!(entry.getKey() instanceof String))
                 throw new ConfigException(entry.getKey().toString(), entry.getValue(), "Key must be a string.");
-        // ** Added by Superstream
+        // ** Added by Superstream **
         originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals);
-        // Added by Superstream **
+        // ** Added by Superstream **
         this.originals = resolveConfigVariables(configProviderProps, (Map<String, Object>) originals);
         this.values = definition.parse(this.originals);
         Map<String, Object> configUpdates = postProcessParsedConfig(Collections.unmodifiableMap(this.values));

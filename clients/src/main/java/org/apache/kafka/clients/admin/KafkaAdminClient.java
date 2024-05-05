@@ -383,6 +383,33 @@ public class KafkaAdminClient extends AdminClient {
     private final int maxRetries;
 
     private final long retryBackoffMs;
+    // ** Added by Superstream
+    public Superstream superstreamConnection;
+    public void configureSuperstream(Map<String, ?> configs) {
+        try {
+            System.out.println("Running Superstream Kafka Admin Client");
+            String token  = configs.get(Consts.superstreamTokenKey) != null ? (String) configs.get(Consts.superstreamTokenKey) : null;
+            if (token == null) {
+                throw new Exception("token is required");
+            }
+            String superstreamHost = configs.get(Consts.superstreamHostKey) != null ? (String) configs.get(Consts.superstreamHostKey) : Consts.superstreamDefaultHost;
+            if (superstreamHost == null) {
+                superstreamHost = Consts.superstreamDefaultHost;
+            }
+            int learningFactor = configs.get(Consts.superstreamLearningFactorKey) != null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
+            Boolean enableReduction = configs.get(Consts.superstreamReductionEnabledKey) != null ? (Boolean) configs.get(Consts.superstreamReductionEnabledKey) : false;
+            Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "", configs, enableReduction);
+            superstreamConn.init();
+            this.superstreamConnection = superstreamConn;
+        } catch (Exception e) {
+            String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
+            if (superstreamConnection != null) {
+                superstreamConnection.handleError(errMsg);
+            }
+            System.out.println(errMsg);
+        }
+    }
+    // Added by Superstream **
 
     /**
      * Get or create a list value from a map.
@@ -562,7 +589,6 @@ public class KafkaAdminClient extends AdminClient {
         try {
             metrics = new Metrics(new MetricConfig(), new LinkedList<>(), time);
             LogContext logContext = createLogContext(clientId);
-            // ** Added by Superstream - 'config.originals()' **
             return new KafkaAdminClient(config, clientId, time, metadataManager, metrics,
                 client, null, logContext);
         } catch (Throwable exc) {
@@ -574,6 +600,7 @@ public class KafkaAdminClient extends AdminClient {
     static LogContext createLogContext(String clientId) {
         return new LogContext("[AdminClient clientId=" + clientId + "] ");
     }
+    // ** Added by Superstream - 'configs' **
     private KafkaAdminClient(AdminClientConfig config,
                              String clientId,
                              Time time,
@@ -582,6 +609,9 @@ public class KafkaAdminClient extends AdminClient {
                              KafkaClient client,
                              TimeoutProcessorFactory timeoutProcessorFactory,
                              LogContext logContext) {
+        // ** Added by Superstream
+        configureSuperstream(config.originals());
+        // Added by Superstream **
         this.clientId = clientId;
         this.log = logContext.logger(KafkaAdminClient.class);
         this.logContext = logContext;

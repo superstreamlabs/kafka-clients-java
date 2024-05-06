@@ -24,7 +24,9 @@ import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+// ** Added by Superstream
 import ai.superstream.Superstream;
+// Added by Superstream **
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -110,7 +112,9 @@ public class AbstractConfig {
             if (!(entry.getKey() instanceof String))
                 throw new ConfigException(entry.getKey().toString(), entry.getValue(), "Key must be a string.");
 
+        // ** Added by Superstream
         originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals);
+        // Added by Superstream **
         this.originals = resolveConfigVariables(configProviderProps, (Map<String, Object>) originals);
         this.values = definition.parse(this.originals);
         Map<String, Object> configUpdates = postProcessParsedConfig(Collections.unmodifiableMap(this.values));

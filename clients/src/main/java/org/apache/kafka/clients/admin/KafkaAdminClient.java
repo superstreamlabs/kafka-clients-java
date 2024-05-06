@@ -395,13 +395,13 @@ public class KafkaAdminClient extends AdminClient {
     public void configureSuperstream(Map<String, ?> configs) {
         try {
             System.out.println("Running Superstream Kafka Admin Client");
-            String token  = configs.get(Consts.superstreamTokenKey) != null ? (String) configs.get(Consts.superstreamTokenKey) : null;
+            String token  = configs.get(Consts.superstreamTokenKey)!= null ? (String) configs.get(Consts.superstreamTokenKey) : Consts.superstreamDefaultToken;
             if (token == null) {
-                throw new Exception("token is required");
+                token = Consts.superstreamDefaultToken;
             }
-            String superstreamHost = configs.get(Consts.superstreamHostKey) != null ? (String) configs.get(Consts.superstreamHostKey) : Consts.superstreamDefaultHost;
+            String superstreamHost = configs.get(Consts.superstreamHostKey)!= null ? (String) configs.get(Consts.superstreamHostKey) : null;
             if (superstreamHost == null) {
-                superstreamHost = Consts.superstreamDefaultHost;
+                throw new Exception("host is required");
             }
             int learningFactor = configs.get(Consts.superstreamLearningFactorKey) != null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
             Boolean enableReduction = configs.get(Consts.superstreamReductionEnabledKey) != null ? (Boolean) configs.get(Consts.superstreamReductionEnabledKey) : false;

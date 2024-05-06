@@ -273,10 +273,6 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
         this(configs, null, null);
     }
 
-    static {
-        System.out.println("Running Superstream Kafka Producer");
-    }
-
     /**
      * A producer is instantiated by providing a set of key-value pairs as configuration, a key and a value {@link Serializer}.
      * Valid configuration strings are documented <a href="http://kafka.apache.org/documentation.html#producerconfigs">here</a>.

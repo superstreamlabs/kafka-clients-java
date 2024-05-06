@@ -244,6 +244,11 @@ import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 
+// ** Added by Superstream
+import ai.superstream.Consts;
+import ai.superstream.Superstream;
+// Added by Superstream **
+
 import java.net.InetSocketAddress;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -384,6 +389,34 @@ public class KafkaAdminClient extends AdminClient {
     private final int maxRetries;
 
     private final long retryBackoffMs;
+
+    // ** Added by Superstream
+    public Superstream superstreamConnection;
+    public void configureSuperstream(Map<String, ?> configs) {
+        try {
+            System.out.println("Running Superstream Kafka Admin Client");
+            String token  = configs.get(Consts.superstreamTokenKey)!= null ? (String) configs.get(Consts.superstreamTokenKey) : Consts.superstreamDefaultToken;
+            if (token == null) {
+                token = Consts.superstreamDefaultToken;
+            }
+            String superstreamHost = configs.get(Consts.superstreamHostKey)!= null ? (String) configs.get(Consts.superstreamHostKey) : null;
+            if (superstreamHost == null) {
+                throw new Exception("host is required");
+            }
+            int learningFactor = configs.get(Consts.superstreamLearningFactorKey) != null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
+            Boolean enableReduction = configs.get(Consts.superstreamReductionEnabledKey) != null ? (Boolean) configs.get(Consts.superstreamReductionEnabledKey) : false;
+            Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "", configs, enableReduction);
+            superstreamConn.init();
+            this.superstreamConnection = superstreamConn;
+        } catch (Exception e) {
+            String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
+            if (superstreamConnection != null) {
+                superstreamConnection.handleError(errMsg);
+            }
+            System.out.println(errMsg);
+        }
+    }
+    // Added by Superstream **
 
     /**
      * Get or create a list value from a map.
@@ -582,6 +615,9 @@ public class KafkaAdminClient extends AdminClient {
                              KafkaClient client,
                              TimeoutProcessorFactory timeoutProcessorFactory,
                              LogContext logContext) {
+        // ** Added by Superstream
+        configureSuperstream(config.originals());
+        // Added by Superstream **
         this.clientId = clientId;
         this.log = logContext.logger(KafkaAdminClient.class);
         this.logContext = logContext;

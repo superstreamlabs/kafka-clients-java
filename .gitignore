@@ -6,7 +6,6 @@ build/
 build_eclipse/
 out/
 .gradle/
-.vscode/
 lib_managed/
 src_managed/
 project/boot/
@@ -54,11 +53,6 @@ systest/
 *.swp
 jmh-benchmarks/generated
 jmh-benchmarks/src/main/generated
-**/.jqwik-database
+raft/.jqwik-database
 **/src/generated
 **/src/generated-test
-
-storage/kafka-tiered-storage/
-
-docker/test/report_*.html
-__pycache__

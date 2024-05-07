@@ -21,6 +21,6 @@ import java.util.Map;
 
 public class FakeForwardingAdmin extends ForwardingAdmin {
     public FakeForwardingAdmin(Map<String, Object> configs) {
-        super(configs, "fake-forwarding-admin");
+        super(configs);
     }
 }

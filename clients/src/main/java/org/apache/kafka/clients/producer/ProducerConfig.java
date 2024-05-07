@@ -593,7 +593,7 @@ public class ProducerConfig extends AbstractConfig {
     }
 
     ProducerConfig(Map<?, ?> props, boolean doLog) {
-        super(CONFIG, props, doLog);
+        super(CONFIG, props, doLog, "producer");
     }
 
     public static Set<String> configNames() {

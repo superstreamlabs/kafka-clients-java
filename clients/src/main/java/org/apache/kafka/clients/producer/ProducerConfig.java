@@ -585,11 +585,11 @@ public class ProducerConfig extends AbstractConfig {
     }
 
     public ProducerConfig(Properties props) {
-        super(CONFIG, props);
+        super(CONFIG, props, "producer");
     }
 
     public ProducerConfig(Map<String, Object> props) {
-        super(CONFIG, props);
+        super(CONFIG, props, "producer");
     }
 
     ProducerConfig(Map<?, ?> props, boolean doLog) {

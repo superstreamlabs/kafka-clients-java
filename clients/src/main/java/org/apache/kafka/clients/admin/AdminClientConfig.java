@@ -240,8 +240,9 @@ public class AdminClientConfig extends AbstractConfig {
         this(props, false);
     }
 
-    protected AdminClientConfig(Map<?, ?> props, boolean doLog) {
-        super(CONFIG, props, doLog);
+    protected AdminClientConfig(Map<?, ?> props, boolean doLog) {   
+        // ** Added by Superstream "admin" (type)
+        super(CONFIG, props, doLog, "admin");
     }
 
     public static Set<String> configNames() {

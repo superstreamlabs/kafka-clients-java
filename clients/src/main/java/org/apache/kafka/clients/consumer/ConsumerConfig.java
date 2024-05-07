@@ -645,11 +645,11 @@ public class ConsumerConfig extends AbstractConfig {
     }
 
     public ConsumerConfig(Properties props) {
-        super(CONFIG, props);
+        super(CONFIG, props, "consumer");
     }
 
     public ConsumerConfig(Map<String, Object> props) {
-        super(CONFIG, props);
+        super(CONFIG, props, "consumer");
     }
 
     protected ConsumerConfig(Map<?, ?> props, boolean doLog) {

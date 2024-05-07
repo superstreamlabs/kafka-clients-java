@@ -393,7 +393,6 @@ public class KafkaAdminClient extends AdminClient {
     // ** Added by Superstream
     public Superstream superstreamConnection;
     public void configureSuperstream(Map<String, ?> configs) {
-        try {
             System.out.println("Running Superstream Kafka Admin Client");
             Superstream superstreamConn = (Superstream) configs.get(Consts.superstreamConnectionKey);
             if (superstreamConn == null) {
@@ -401,13 +400,6 @@ public class KafkaAdminClient extends AdminClient {
             } else {
                 this.superstreamConnection = superstreamConn;
             }
-        } catch (Exception e) {
-            String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
-            if (superstreamConnection != null) {
-                superstreamConnection.handleError(errMsg);
-            }
-            System.out.println(errMsg);
-        }
     }
     // Added by Superstream **
 

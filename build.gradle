@@ -315,16 +315,16 @@ subprojects {
               }
               developers {
                     developer {
-                        id = 'teammemphis'
-                        name = 'Team Memphis'
-                        email = 'team@memphis.dev'
+                        id = 'superstreamlabs'
+                        name = 'Superstream Labs'
+                        email = 'support@superstream.ai'
                     }
-              }
+                }
               scm {
-                    connection = 'scm:git:git://github.com:memphisdev/superstream-kafka.git'
-                    developerConnection = 'scm:git:ssh://github.com:memphisdev/superstream-kafka.git'
+                    connection = 'scm:git:git://github.com:superstreamlabs/apache-kafka-java-sdk.git'
+                    developerConnection = 'scm:git:ssh://github.com:superstreamlabs/apache-kafka-java-sdk.git'
                     url = 'https://superstream.ai'
-              }                            
+                }                         
             }
           }
         }

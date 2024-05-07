@@ -1,3 +1,21 @@
+file://<WORKSPACE>/clients/src/test/java/org/apache/kafka/common/security/TestSecurityConfig.java
+### java.util.NoSuchElementException: next on empty iterator
+
+occurred in the presentation compiler.
+
+presentation compiler configuration:
+Scala version: 3.3.3
+Classpath:
+<HOME>/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala3-library_3/3.3.3/scala3-library_3-3.3.3.jar [exists ], <HOME>/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/2.13.12/scala-library-2.13.12.jar [exists ]
+Options:
+
+
+
+action parameters:
+offset: 2670
+uri: file://<WORKSPACE>/clients/src/test/java/org/apache/kafka/common/security/TestSecurityConfig.java
+text:
+```scala
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
@@ -44,6 +62,28 @@ public class TestSecurityConfig extends AbstractConfig {
             .withClientSaslSupport();
 
     public TestSecurityConfig(Map<?, ?> originals) {
-        super(CONFIG, originals, false, "test-security-config");
+        super(CONFIG, originals, false@@);
     }
 }
+
+```
+
+
+
+#### Error stacktrace:
+
+```
+scala.collection.Iterator$$anon$19.next(Iterator.scala:973)
+	scala.collection.Iterator$$anon$19.next(Iterator.scala:971)
+	scala.collection.mutable.MutationTracker$CheckedIterator.next(MutationTracker.scala:76)
+	scala.collection.IterableOps.head(Iterable.scala:222)
+	scala.collection.IterableOps.head$(Iterable.scala:222)
+	scala.collection.AbstractIterable.head(Iterable.scala:933)
+	dotty.tools.dotc.interactive.InteractiveDriver.run(InteractiveDriver.scala:168)
+	scala.meta.internal.pc.MetalsDriver.run(MetalsDriver.scala:45)
+	scala.meta.internal.pc.HoverProvider$.hover(HoverProvider.scala:34)
+	scala.meta.internal.pc.ScalaPresentationCompiler.hover$$anonfun$1(ScalaPresentationCompiler.scala:368)
+```
+#### Short summary: 
+
+java.util.NoSuchElementException: next on empty iterator

@@ -557,7 +557,7 @@ public class DistributedConfig extends WorkerConfig {
 
     // Visible for testing
     DistributedConfig(Crypto crypto, Map<String, String> props) {
-        super(config(crypto), props);
+        super(config(crypto), props, "distributed");
         this.crypto = crypto;
         exactlyOnceSourceSupport = ExactlyOnceSourceSupport.fromProperty(getString(EXACTLY_ONCE_SOURCE_SUPPORT_CONFIG));
         validateInterWorkerKeyConfigs();

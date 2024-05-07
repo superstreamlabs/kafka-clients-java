@@ -76,3 +76,5 @@ storage/kafka-tiered-storage/
 
 docker/test/report_*.html
 __pycache__
+
+/.metals/.reports/

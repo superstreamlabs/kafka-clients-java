@@ -47,7 +47,7 @@ public class StringConverterConfig extends ConverterConfig {
     }
 
     public StringConverterConfig(Map<String, ?> props) {
-        super(CONFIG, props);
+        super(CONFIG, props, "string-converter");
     }
 
     /**

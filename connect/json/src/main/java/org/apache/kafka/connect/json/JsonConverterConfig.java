@@ -78,7 +78,7 @@ public class JsonConverterConfig extends ConverterConfig {
     private final DecimalFormat decimalFormat;
 
     public JsonConverterConfig(Map<String, ?> props) {
-        super(CONFIG, props);
+        super(CONFIG, props, "json-converter");
         this.schemasEnabled = getBoolean(SCHEMAS_ENABLE_CONFIG);
         this.schemaCacheSize = getInt(SCHEMAS_CACHE_SIZE_CONFIG);
         this.decimalFormat = DecimalFormat.valueOf(getString(DECIMAL_FORMAT_CONFIG).toUpperCase(Locale.ROOT));

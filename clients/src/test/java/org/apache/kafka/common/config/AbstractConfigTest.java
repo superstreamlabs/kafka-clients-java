@@ -62,13 +62,13 @@ public class AbstractConfigTest {
         AbstractConfig conf;
         ConfigDef configDef = new ConfigDef().define("a", Type.LIST, "", new ConfigDef.NonNullValidator(), Importance.HIGH, "doc");
 
-        conf = new AbstractConfig(configDef, Collections.emptyMap());
+        conf = new AbstractConfig(configDef, Collections.emptyMap(), "");
         assertEquals(Collections.emptyList(), conf.getList("a"));
 
-        conf = new AbstractConfig(configDef, Collections.singletonMap("a", ""));
+        conf = new AbstractConfig(configDef, Collections.singletonMap("a", ""), "");
         assertEquals(Collections.emptyList(), conf.getList("a"));
 
-        conf = new AbstractConfig(configDef, Collections.singletonMap("a", "b,c,d"));
+        conf = new AbstractConfig(configDef, Collections.singletonMap("a", "b,c,d"), "");
         assertEquals(Arrays.asList("b", "c", "d"), conf.getList("a"));
     }
 

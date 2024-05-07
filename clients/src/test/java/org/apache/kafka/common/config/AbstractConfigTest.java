@@ -553,7 +553,7 @@ public class AbstractConfigTest {
         }
 
         public TestIndirectConfigResolution(Map<?, ?> props, Map<String, ?> providers) {
-            super(CONFIG, props, providers, true);
+            super(CONFIG, props, providers, true, "");
         }
     }
 

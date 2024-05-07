@@ -396,7 +396,7 @@ public class BlockingConnectorTest {
         }
 
         public Block(Map<String, String> props) {
-            this(new AbstractConfig(config(), props).getString(BLOCK_CONFIG));
+            this(new AbstractConfig(config(), props).getString(BLOCK_CONFIG), "blocking-connector");
         }
 
         public Block(String block) {

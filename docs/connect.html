@@ -534,7 +534,7 @@ public void start(Map&lt;String, String&gt; props) {
     // This connector doesn't need to do any of that, but we do log a helpful message to the user.
 
     this.props = props;
-    AbstractConfig config = new AbstractConfig(CONFIG_DEF, props);
+    AbstractConfig config = new AbstractConfig(CONFIG_DEF, props, "");
     String filename = config.getString(FILE_CONFIG);
     filename = (filename == null || filename.isEmpty()) ? "standard input" : config.getString(FILE_CONFIG);
     log.info("Starting file source connector reading from {}", filename);

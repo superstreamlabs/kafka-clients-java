@@ -1300,7 +1300,7 @@ public class StreamsConfig extends AbstractConfig {
 
     protected StreamsConfig(final Map<?, ?> props,
                             final boolean doLog) {
-        super(CONFIG, props, doLog);
+        super(CONFIG, props, doLog, "streams");
         eosEnabled = StreamsConfigUtils.eosEnabled(this);
 
         final String processingModeConfig = getString(StreamsConfig.PROCESSING_GUARANTEE_CONFIG);

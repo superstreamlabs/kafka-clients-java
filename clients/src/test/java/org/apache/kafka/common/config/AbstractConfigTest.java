@@ -549,11 +549,11 @@ public class AbstractConfigTest {
         }
 
         public TestIndirectConfigResolution(Map<?, ?> props) {
-            super(CONFIG, props, true);
+            super(CONFIG, props, true, "test-indirect-config");
         }
 
         public TestIndirectConfigResolution(Map<?, ?> props, Map<String, ?> providers) {
-            super(CONFIG, props, providers, true, "");
+            super(CONFIG, props, providers, true, "test-indirect-config");
         }
     }
 
@@ -569,11 +569,11 @@ public class AbstractConfigTest {
         }
 
         public ClassTestConfig() {
-            super(CONFIG, new Properties());
+            super(CONFIG, new Properties(), "test-class-config");
         }
 
         public ClassTestConfig(Object classPropOverride, Object listPropOverride) {
-            super(CONFIG, overrideProps(classPropOverride, listPropOverride));
+            super(CONFIG, overrideProps(classPropOverride, listPropOverride), "test-class-config");
         }
 
         void checkInstances(Class<?> expectedClassPropClass, Class<?>... expectedListPropClasses) {
@@ -619,7 +619,7 @@ public class AbstractConfigTest {
         }
 
         public TestConfig(Map<?, ?> props) {
-            super(CONFIG, props);
+            super(CONFIG, props, "test-config");
         }
     }
 

@@ -109,7 +109,7 @@ public abstract class MirrorConnectorConfig extends AbstractConfig {
     public static final String OFFSET_SYNCS_TOPIC_LOCATION_DOC = "The location (source/target) of the offset-syncs topic.";
 
     protected MirrorConnectorConfig(ConfigDef configDef, Map<String, String> props) {
-        super(configDef, props, true);
+        super(configDef, props, true, "mirror-connector");
     }
 
     String connectorName() {

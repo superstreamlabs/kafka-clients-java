@@ -66,7 +66,7 @@ public class JaasOptionsUtils {
     public Map<String, ?> getSslClientConfig() {
         ConfigDef sslConfigDef = new ConfigDef();
         sslConfigDef.withClientSslSupport();
-        AbstractConfig sslClientConfig = new AbstractConfig(sslConfigDef, options);
+        AbstractConfig sslClientConfig = new AbstractConfig(sslConfigDef, options, "ssl");
         return sslClientConfig.values();
     }
 

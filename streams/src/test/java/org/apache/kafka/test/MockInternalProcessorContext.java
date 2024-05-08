@@ -59,7 +59,7 @@ public class MockInternalProcessorContext extends MockProcessorContext implement
     }
 
     public MockInternalProcessorContext(final Properties config, final TaskId taskId, final File stateDir) {
-        super(config, taskId, stateDir);
+        super(config, taskId, stateDir, "mock-interal-processor-context");
         processorMetadata = new ProcessorMetadata();
     }
 

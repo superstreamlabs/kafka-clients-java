@@ -44,6 +44,6 @@ public class TestSecurityConfig extends AbstractConfig {
             .withClientSaslSupport();
 
     public TestSecurityConfig(Map<?, ?> originals) {
-        super(CONFIG, originals, false);
+        super(CONFIG, originals, false, "test-security-config");
     }
 }

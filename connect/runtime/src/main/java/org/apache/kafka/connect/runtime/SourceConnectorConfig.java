@@ -257,7 +257,7 @@ public class SourceConnectorConfig extends ConnectorConfig {
             ConfigDef defaultConfigDef = embedDefaultGroup(configDef());
             // This config is only used to set default values for partitions and replication
             // factor from the default group and otherwise it remains unused
-            AbstractConfig defaultGroup = new AbstractConfig(defaultConfigDef, props, false);
+            AbstractConfig defaultGroup = new AbstractConfig(defaultConfigDef, props, false, "source-connector");
 
             // If the user has added regex of include or exclude patterns in the default group,
             // they should be ignored.

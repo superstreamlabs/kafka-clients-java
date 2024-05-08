@@ -126,7 +126,7 @@ public class TopologyConfig extends AbstractConfig {
     }
 
     public TopologyConfig(final String topologyName, final StreamsConfig globalAppConfigs, final Properties topologyOverrides) {
-        super(CONFIG, topologyOverrides, false);
+        super(CONFIG, topologyOverrides, false, "topology");
 
         this.topologyName = topologyName;
         this.eosEnabled = StreamsConfigUtils.eosEnabled(globalAppConfigs);

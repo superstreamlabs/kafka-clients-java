@@ -1191,7 +1191,7 @@ public class EosV2UpgradeIntegrationTest {
         private final AtomicBoolean crash;
 
         public ErrorInjector(final Map<String, Object> configs) {
-            super(configs, new ByteArraySerializer(), new ByteArraySerializer());
+            super(configs, new ByteArraySerializer(), new ByteArraySerializer(), "test-error-injector");
             final String clientId = configs.get(ProducerConfig.CLIENT_ID_CONFIG).toString();
             if (clientId.contains(APP_DIR_1)) {
                 crash = commitErrorInjectedClient1;

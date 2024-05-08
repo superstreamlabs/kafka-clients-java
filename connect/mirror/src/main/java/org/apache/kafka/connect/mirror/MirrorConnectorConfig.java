@@ -112,7 +112,7 @@ public abstract class MirrorConnectorConfig extends AbstractConfig {
     private final ReplicationPolicy replicationPolicy;
 
     protected MirrorConnectorConfig(ConfigDef configDef, Map<String, String> props) {
-        super(configDef, props, true);
+        super(configDef, props, true, "mirror-connector");
         replicationPolicy = getConfiguredInstance(REPLICATION_POLICY_CLASS, ReplicationPolicy.class);
     }
 

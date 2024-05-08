@@ -85,7 +85,7 @@ public class MirrorCheckpointConfig extends MirrorConnectorConfig {
     }
 
     public MirrorCheckpointConfig(ConfigDef configDef, Map<String, String> props) {
-        super(configDef, props);
+        super(configDef, props, "mirror-checkpoint");
     }
 
     Duration emitCheckpointsInterval() {

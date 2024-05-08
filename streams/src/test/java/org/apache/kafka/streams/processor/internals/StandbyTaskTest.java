@@ -36,6 +36,7 @@ import org.apache.kafka.streams.errors.StreamsException;
 import org.apache.kafka.streams.processor.TaskId;
 import org.apache.kafka.streams.processor.internals.Task.TaskType;
 import org.apache.kafka.streams.processor.internals.metrics.StreamsMetricsImpl;
+import org.apache.kafka.streams.TopologyConfig;
 import org.apache.kafka.streams.state.internals.ThreadCache;
 import org.apache.kafka.test.MockKeyValueStore;
 import org.apache.kafka.test.MockKeyValueStoreBuilder;
@@ -204,6 +205,49 @@ public class StandbyTaskTest {
         task.closeClean();
 
         assertThrows(IllegalStateException.class, task::prepareCommit);
+    }
+
+
+    @Test
+    public void shouldAlwaysCheckpointStateIfEnforced() {
+        stateManager.flush();
+        EasyMock.expectLastCall().once();
+        stateManager.checkpoint();
+        EasyMock.expectLastCall().once();
+        EasyMock.expect(stateManager.changelogOffsets()).andReturn(Collections.emptyMap()).anyTimes();
+        EasyMock.replay(stateManager);
+
+        task = createStandbyTask();
+
+        task.initializeIfNeeded();
+        task.maybeCheckpoint(true);
+
+        EasyMock.verify(stateManager);
+    }
+
+    @Test
+    public void shouldOnlyCheckpointStateWithBigAdvanceIfNotEnforced() {
+        stateManager.flush();
+        EasyMock.expectLastCall().once();
+        stateManager.checkpoint();
+        EasyMock.expectLastCall().once();
+        EasyMock.expect(stateManager.changelogOffsets())
+                .andReturn(Collections.singletonMap(partition, 50L))
+                .andReturn(Collections.singletonMap(partition, 11000L))
+                .andReturn(Collections.singletonMap(partition, 12000L));
+        EasyMock.replay(stateManager);
+
+        task = createStandbyTask();
+        task.initializeIfNeeded();
+
+        task.maybeCheckpoint(false);  // this should not checkpoint
+        assertTrue(task.offsetSnapshotSinceLastFlush.isEmpty());
+        task.maybeCheckpoint(false);  // this should checkpoint
+        assertEquals(Collections.singletonMap(partition, 11000L), task.offsetSnapshotSinceLastFlush);
+        task.maybeCheckpoint(false);  // this should not checkpoint
+        assertEquals(Collections.singletonMap(partition, 11000L), task.offsetSnapshotSinceLastFlush);
+
+        EasyMock.verify(stateManager);
     }
 
     @Test
@@ -581,7 +625,7 @@ public class StandbyTaskTest {
     }
 
     @Test
-    public void shouldCLearTaskTimeout() {
+    public void shouldClearTaskTimeout() {
         EasyMock.replay(stateManager);
 
         task = createStandbyTask();
@@ -611,7 +655,7 @@ public class StandbyTaskTest {
             taskId,
             Collections.singleton(partition),
             topology,
-            config,
+            new TopologyConfig(config).getTaskConfig(),
             streamsMetrics,
             stateManager,
             stateDirectory,

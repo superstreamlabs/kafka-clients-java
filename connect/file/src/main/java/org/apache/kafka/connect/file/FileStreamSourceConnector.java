@@ -58,7 +58,7 @@ public class FileStreamSourceConnector extends SourceConnector {
 
     @Override
     public void start(Map<String, String> props) {
-        AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, props);
+        AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, props, "source-connector");
         filename = parsedConfig.getString(FILE_CONFIG);
         List<String> topics = parsedConfig.getList(TOPIC_CONFIG);
         if (topics.size() != 1) {

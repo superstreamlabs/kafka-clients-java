@@ -79,7 +79,7 @@ public class MirrorMakerConfig extends AbstractConfig {
     private final Plugins plugins;
    
     public MirrorMakerConfig(Map<?, ?> props) {
-        super(CONFIG_DEF, props, true);
+        super(CONFIG_DEF, props, true, "mirror-maker");
         plugins = new Plugins(originalsStrings());
     }
 

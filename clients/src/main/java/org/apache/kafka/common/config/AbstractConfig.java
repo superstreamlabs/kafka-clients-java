@@ -131,15 +131,16 @@ public class AbstractConfig {
      *                            {@code originals}; may be null or empty
      * @param doLog               whether the configurations should be logged
      */
+    // ** Added by Superstream "type"
     @SuppressWarnings("unchecked")
     public AbstractConfig(ConfigDef definition, Map<?, ?> originals, Map<String, ?> configProviderProps,
-            boolean doLog) {
+            boolean doLog, String type) {
         /* check that all the keys are really strings */
         for (Map.Entry<?, ?> entry : originals.entrySet())
             if (!(entry.getKey() instanceof String))
                 throw new ConfigException(entry.getKey().toString(), entry.getValue(), "Key must be a string.");
         // ** Added by Superstream
-        originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals);
+        originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals, type);
         // Added by Superstream **
         this.originals = resolveConfigVariables(configProviderProps, (Map<String, Object>) originals);
         this.values = definition.parse(this.originals);
@@ -162,8 +163,9 @@ public class AbstractConfig {
      * @param originals  the configuration properties plus any optional config
      *                   provider properties; may not be null
      */
-    public AbstractConfig(ConfigDef definition, Map<?, ?> originals) {
-        this(definition, originals, Collections.emptyMap(), true);
+    // ** Added by Superstream "type"
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, String type) {
+        this(definition, originals, Collections.emptyMap(), true, type);
     }
 
     /**
@@ -176,8 +178,9 @@ public class AbstractConfig {
      *                   provider properties; may not be null
      * @param doLog      whether the configurations should be logged
      */
-    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog) {
-        this(definition, originals, Collections.emptyMap(), doLog);
+    // ** Added by Superstream "type"
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog, String type) {
+        this(definition, originals, Collections.emptyMap(), doLog, type);
 
     }
 

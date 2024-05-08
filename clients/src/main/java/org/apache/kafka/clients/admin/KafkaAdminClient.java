@@ -386,27 +386,12 @@ public class KafkaAdminClient extends AdminClient {
     // ** Added by Superstream
     public Superstream superstreamConnection;
     public void configureSuperstream(Map<String, ?> configs) {
-        try {
-            System.out.println("Running Superstream Kafka Admin Client");
-            String token  = configs.get(Consts.superstreamTokenKey)!= null ? (String) configs.get(Consts.superstreamTokenKey) : Consts.superstreamDefaultToken;
-            if (token == null) {
-                token = Consts.superstreamDefaultToken;
-            }
-            String superstreamHost = configs.get(Consts.superstreamHostKey)!= null ? (String) configs.get(Consts.superstreamHostKey) : null;
-            if (superstreamHost == null) {
-                throw new Exception("host is required");
-            }
-            int learningFactor = configs.get(Consts.superstreamLearningFactorKey) != null ? (Integer) configs.get(Consts.superstreamLearningFactorKey) : Consts.superstreamDefaultLearningFactor;
-            Boolean enableReduction = configs.get(Consts.superstreamReductionEnabledKey) != null ? (Boolean) configs.get(Consts.superstreamReductionEnabledKey) : false;
-            Superstream superstreamConn = new Superstream(token, superstreamHost, learningFactor, "", configs, enableReduction);
-            superstreamConn.init();
+        System.out.println("Running Superstream Kafka Admin Client");
+        Superstream superstreamConn = (Superstream) configs.get(Consts.superstreamConnectionKey);
+        if (superstreamConn == null) {
+            System.out.println("Failed to connect to Superstream - Running Kafka Admin Client");
+        } else {
             this.superstreamConnection = superstreamConn;
-        } catch (Exception e) {
-            String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
-            if (superstreamConnection != null) {
-                superstreamConnection.handleError(errMsg);
-            }
-            System.out.println(errMsg);
         }
     }
     // Added by Superstream **

@@ -163,7 +163,7 @@ public class ConnectorConfig extends AbstractConfig {
     private final EnrichedConnectorConfig enrichedConfig;
     private static class EnrichedConnectorConfig extends AbstractConfig {
         EnrichedConnectorConfig(ConfigDef configDef, Map<String, String> props) {
-            super(configDef, props);
+            super(configDef, props, "enriched-connector");
         }
 
         @Override

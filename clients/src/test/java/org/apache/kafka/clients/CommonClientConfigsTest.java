@@ -53,7 +53,7 @@ public class CommonClientConfigsTest {
         }
 
         public TestConfig(Map<?, ?> props) {
-            super(CONFIG, props);
+            super(CONFIG, props, "test-config");
         }
     }
 

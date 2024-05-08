@@ -58,7 +58,7 @@ public class MirrorClientConfig extends AbstractConfig {
     public static final String PRODUCER_CLIENT_PREFIX = "producer.";
 
     MirrorClientConfig(Map<?, ?> props) {
-        super(CONFIG_DEF, props, true);
+        super(CONFIG_DEF, props, true, "mirror-client");
     }
 
     public ReplicationPolicy replicationPolicy() {

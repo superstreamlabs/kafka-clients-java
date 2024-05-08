@@ -48,7 +48,7 @@ public class FileStreamSinkConnector extends SinkConnector {
 
     @Override
     public void start(Map<String, String> props) {
-        AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, props);
+        AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, props, "sink-connector");
         filename = parsedConfig.getString(FILE_CONFIG);
     }
 

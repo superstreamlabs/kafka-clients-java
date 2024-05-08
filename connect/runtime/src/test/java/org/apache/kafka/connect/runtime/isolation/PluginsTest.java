@@ -179,7 +179,7 @@ public class PluginsTest {
 
         assertThrows(ConnectException.class, () -> plugins.newPlugin(
             TestPlugins.ALWAYS_THROW_EXCEPTION,
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
             Converter.class
         ));
     }
@@ -190,7 +190,7 @@ public class PluginsTest {
         TestPlugins.assertAvailable();
         Converter firstPlugin = plugins.newPlugin(
             TestPlugins.ALIASED_STATIC_FIELD,
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
             Converter.class
         );
 
@@ -198,7 +198,7 @@ public class PluginsTest {
 
         Converter secondPlugin = plugins.newPlugin(
             TestPlugins.ALIASED_STATIC_FIELD,
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
             Converter.class
         );
 
@@ -214,7 +214,7 @@ public class PluginsTest {
         TestPlugins.assertAvailable();
         Converter plugin = plugins.newPlugin(
             TestPlugins.SERVICE_LOADER,
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
             Converter.class
         );
 
@@ -231,7 +231,7 @@ public class PluginsTest {
         TestPlugins.assertAvailable();
         Converter plugin = plugins.newPlugin(
             TestPlugins.ALIASED_STATIC_FIELD,
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
             Converter.class
         );
 

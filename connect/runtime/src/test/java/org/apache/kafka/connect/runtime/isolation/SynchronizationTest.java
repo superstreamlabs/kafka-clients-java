@@ -234,7 +234,7 @@ public class SynchronizationTest {
             // 4. Load the isolated plugin class and return
             new AbstractConfig(
                 new ConfigDef().define("a.class", Type.CLASS, Importance.HIGH, ""),
-                Collections.singletonMap("a.class", t1Class));
+                Collections.singletonMap("a.class", t1Class), "synchronization-test");
             Plugins.compareAndSwapLoaders(savedLoader);
         };
 
@@ -251,7 +251,7 @@ public class SynchronizationTest {
             // 3. Enter the DelegatingClassLoader
             // 4. Load the non-isolated class and return
             new AbstractConfig(new ConfigDef().define("a.class", Type.CLASS, Importance.HIGH, ""),
-                Collections.singletonMap("a.class", t2Class));
+                Collections.singletonMap("a.class", t2Class), "synchronization-test");
             Plugins.compareAndSwapLoaders(savedLoader);
         };
 

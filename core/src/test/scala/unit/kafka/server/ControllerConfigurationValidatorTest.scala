@@ -17,18 +17,20 @@
 
 package kafka.server
 
-import java.util.TreeMap
-import java.util.Collections.emptyMap
-
-import org.junit.jupiter.api.Test
+import kafka.utils.TestUtils
 import org.apache.kafka.common.config.ConfigResource
 import org.apache.kafka.common.config.ConfigResource.Type.{BROKER, BROKER_LOGGER, TOPIC}
 import org.apache.kafka.common.config.TopicConfig.{SEGMENT_BYTES_CONFIG, SEGMENT_JITTER_MS_CONFIG, SEGMENT_MS_CONFIG}
 import org.apache.kafka.common.errors.{InvalidConfigurationException, InvalidRequestException, InvalidTopicException}
 import org.junit.jupiter.api.Assertions.{assertEquals, assertThrows}
+import org.junit.jupiter.api.Test
+
+import java.util.Collections.emptyMap
+import java.util.TreeMap
 
 class ControllerConfigurationValidatorTest {
-  val validator = new ControllerConfigurationValidator()
+  val config = new KafkaConfig(TestUtils.createDummyBrokerConfig())
+  val validator = new ControllerConfigurationValidator(config)
 
   @Test
   def testDefaultTopicResourceIsRejected(): Unit = {
@@ -39,8 +41,8 @@ class ControllerConfigurationValidatorTest {
 
   @Test
   def testInvalidTopicNameRejected(): Unit = {
-    assertEquals("Topic name \"(<-invalid->)\" is illegal, it contains a character " +
-      "other than ASCII alphanumerics, '.', '_' and '-'",
+    assertEquals("Topic name is invalid: '(<-invalid->)' contains " +
+      "one or more characters other than ASCII alphanumerics, '.', '_' and '-'",
         assertThrows(classOf[InvalidTopicException], () => validator.validate(
           new ConfigResource(TOPIC, "(<-invalid->)"), emptyMap())). getMessage())
   }

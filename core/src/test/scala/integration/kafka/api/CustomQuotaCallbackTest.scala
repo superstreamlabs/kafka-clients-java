@@ -14,7 +14,6 @@
 
 package kafka.api
 
-import java.io.File
 import java.{lang, util}
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
@@ -27,7 +26,7 @@ import kafka.utils.JaasTestUtils.ScramLoginModule
 import kafka.utils.{JaasTestUtils, Logging, TestUtils}
 import kafka.zk.ConfigEntityChangeNotificationZNode
 import org.apache.kafka.clients.admin.{Admin, AdminClientConfig}
-import org.apache.kafka.clients.consumer.{ConsumerConfig, KafkaConsumer}
+import org.apache.kafka.clients.consumer.{Consumer, ConsumerConfig}
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerConfig, ProducerRecord}
 import org.apache.kafka.common.{Cluster, Reconfigurable}
 import org.apache.kafka.common.config.SaslConfigs
@@ -46,7 +45,7 @@ class CustomQuotaCallbackTest extends IntegrationTestHarness with SaslSetup {
   override protected def listenerName = new ListenerName("CLIENT")
   override protected def interBrokerListenerName: ListenerName = new ListenerName("BROKER")
 
-  override protected lazy val trustStoreFile = Some(File.createTempFile("truststore", ".jks"))
+  override protected lazy val trustStoreFile = Some(TestUtils.tempFile("truststore", ".jks"))
   override val brokerCount: Int = 2
 
   private val kafkaServerSaslMechanisms = Seq("SCRAM-SHA-256")
@@ -81,8 +80,8 @@ class CustomQuotaCallbackTest extends IntegrationTestHarness with SaslSetup {
     super.tearDown()
   }
 
-  override def configureSecurityBeforeServersStart(): Unit = {
-    super.configureSecurityBeforeServersStart()
+  override def configureSecurityBeforeServersStart(testInfo: TestInfo): Unit = {
+    super.configureSecurityBeforeServersStart(testInfo)
     zkClient.makeSurePersistentPathExists(ConfigEntityChangeNotificationZNode.path)
     createScramCredentials(zkConnect, JaasTestUtils.KafkaScramAdmin, JaasTestUtils.KafkaScramAdminPassword)
   }
@@ -233,7 +232,7 @@ class CustomQuotaCallbackTest extends IntegrationTestHarness with SaslSetup {
   case class GroupedUser(user: String, userGroup: String, topic: String, leaderNode: KafkaServer,
                          producerClientId: String, consumerClientId: String,
                          override val producer: KafkaProducer[Array[Byte], Array[Byte]],
-                         override val consumer: KafkaConsumer[Array[Byte], Array[Byte]],
+                         override val consumer: Consumer[Array[Byte], Array[Byte]],
                          override val adminClient: Admin) extends
     QuotaTestClients(topic, leaderNode, producerClientId, consumerClientId, producer, consumer, adminClient) {
 

@@ -29,6 +29,8 @@ import org.apache.kafka.streams.kstream.internals.graph.GraphNode;
 import org.apache.kafka.streams.kstream.internals.graph.ProcessorGraphNode;
 import org.apache.kafka.streams.kstream.internals.graph.ProcessorParameters;
 import org.apache.kafka.streams.kstream.internals.graph.StreamStreamJoinNode;
+import org.apache.kafka.streams.kstream.internals.graph.WindowedStreamProcessorNode;
+import org.apache.kafka.streams.processor.TaskId;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.internals.TimestampedKeyAndJoinSide;
 import org.apache.kafka.streams.state.StoreBuilder;
@@ -46,6 +48,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.apache.kafka.streams.internals.ApiUtils.prepareMillisCheckFailMsgPrefix;
 import static org.apache.kafka.streams.internals.ApiUtils.validateMillisecondDuration;
@@ -55,6 +58,18 @@ class KStreamImplJoin {
     private final InternalStreamsBuilder builder;
     private final boolean leftOuter;
     private final boolean rightOuter;
+
+    static class TimeTrackerSupplier {
+        private final Map<TaskId, TimeTracker> tracker = new ConcurrentHashMap<>();
+
+        public TimeTracker get(final TaskId taskId) {
+            return tracker.computeIfAbsent(taskId, taskId1 -> new TimeTracker());
+        }
+
+        public void remove(final TaskId taskId) {
+            tracker.remove(taskId);
+        }
+    }
 
     static class TimeTracker {
         private long emitIntervalMs = 1000L;
@@ -143,13 +158,13 @@ class KStreamImplJoin {
         final KStreamJoinWindow<K, V1> thisWindowedStream = new KStreamJoinWindow<>(thisWindowStore.name());
 
         final ProcessorParameters<K, V1, ?, ?> thisWindowStreamProcessorParams = new ProcessorParameters<>(thisWindowedStream, thisWindowStreamProcessorName);
-        final ProcessorGraphNode<K, V1> thisWindowedStreamsNode = new ProcessorGraphNode<>(thisWindowStreamProcessorName, thisWindowStreamProcessorParams);
+        final ProcessorGraphNode<K, V1> thisWindowedStreamsNode = new WindowedStreamProcessorNode<>(thisWindowStore.name(), thisWindowStreamProcessorParams);
         builder.addGraphNode(thisGraphNode, thisWindowedStreamsNode);
 
         final KStreamJoinWindow<K, V2> otherWindowedStream = new KStreamJoinWindow<>(otherWindowStore.name());
 
         final ProcessorParameters<K, V2, ?, ?> otherWindowStreamProcessorParams = new ProcessorParameters<>(otherWindowedStream, otherWindowStreamProcessorName);
-        final ProcessorGraphNode<K, V2> otherWindowedStreamsNode = new ProcessorGraphNode<>(otherWindowStreamProcessorName, otherWindowStreamProcessorParams);
+        final ProcessorGraphNode<K, V2> otherWindowedStreamsNode = new WindowedStreamProcessorNode<>(otherWindowStore.name(), otherWindowStreamProcessorParams);
         builder.addGraphNode(otherGraphNode, otherWindowedStreamsNode);
 
         Optional<StoreBuilder<KeyValueStore<TimestampedKeyAndJoinSide<K>, LeftOrRightValue<V1, V2>>>> outerJoinWindowStore = Optional.empty();
@@ -158,7 +173,7 @@ class KStreamImplJoin {
         }
 
         // Time-shared between joins to keep track of the maximum stream time
-        final TimeTracker sharedTimeTracker = new TimeTracker();
+        final TimeTrackerSupplier sharedTimeTrackerSupplier = new TimeTrackerSupplier();
 
         final JoinWindowsInternal internalWindows = new JoinWindowsInternal(windows);
         final KStreamKStreamJoin<K, V1, V2, VOut> joinThis = new KStreamKStreamJoin<>(
@@ -168,7 +183,7 @@ class KStreamImplJoin {
             joiner,
             leftOuter,
             outerJoinWindowStore.map(StoreBuilder::name),
-            sharedTimeTracker
+            sharedTimeTrackerSupplier
         );
 
         final KStreamKStreamJoin<K, V2, V1, VOut> joinOther = new KStreamKStreamJoin<>(
@@ -178,7 +193,14 @@ class KStreamImplJoin {
             AbstractStream.reverseJoinerWithKey(joiner),
             rightOuter,
             outerJoinWindowStore.map(StoreBuilder::name),
-            sharedTimeTracker
+            sharedTimeTrackerSupplier
+        );
+
+        final KStreamKStreamSelfJoin<K, V1, V2, VOut> selfJoin = new KStreamKStreamSelfJoin<>(
+            thisWindowStore.name(),
+            internalWindows,
+            joiner,
+            windows.size() + windows.gracePeriodMs()
         );
 
         final PassThrough<K, VOut> joinMerge = new PassThrough<>();
@@ -188,6 +210,7 @@ class KStreamImplJoin {
         final ProcessorParameters<K, V1, ?, ?> joinThisProcessorParams = new ProcessorParameters<>(joinThis, joinThisName);
         final ProcessorParameters<K, V2, ?, ?> joinOtherProcessorParams = new ProcessorParameters<>(joinOther, joinOtherName);
         final ProcessorParameters<K, VOut, ?, ?> joinMergeProcessorParams = new ProcessorParameters<>(joinMerge, joinMergeName);
+        final ProcessorParameters<K, V1, ?, ?> selfJoinProcessorParams = new ProcessorParameters<>(selfJoin, joinMergeName);
 
         joinBuilder.withJoinMergeProcessorParameters(joinMergeProcessorParams)
                    .withJoinThisProcessorParameters(joinThisProcessorParams)
@@ -198,7 +221,8 @@ class KStreamImplJoin {
                    .withOtherWindowedStreamProcessorParameters(otherWindowStreamProcessorParams)
                    .withOuterJoinWindowStoreBuilder(outerJoinWindowStore)
                    .withValueJoiner(joiner)
-                   .withNodeName(joinMergeName);
+                   .withNodeName(joinMergeName)
+                   .withSelfJoinProcessorParameters(selfJoinProcessorParams);
 
         if (internalWindows.spuriousResultFixEnabled()) {
             joinBuilder.withSpuriousResultFixEnabled();

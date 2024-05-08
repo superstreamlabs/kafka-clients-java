@@ -17,7 +17,6 @@
 package kafka.controller
 
 import kafka.api.LeaderAndIsr
-import kafka.log.LogConfig
 import kafka.server.KafkaConfig
 import kafka.utils.TestUtils
 import kafka.zk.KafkaZkClient.UpdateLeaderAndIsrResult
@@ -25,6 +24,7 @@ import kafka.zk.{KafkaZkClient, TopicPartitionStateZNode}
 import kafka.zookeeper._
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.server.common.MetadataVersion.{IBP_3_1_IV0, IBP_3_2_IV0}
+import org.apache.kafka.storage.internals.log.LogConfig
 import org.apache.zookeeper.KeeperException.Code
 import org.apache.zookeeper.data.Stat
 import org.junit.jupiter.api.Assertions._
@@ -34,11 +34,13 @@ import org.junit.jupiter.params.provider.ValueSource
 import org.mockito.ArgumentMatchers.{any, anyInt}
 import org.mockito.Mockito.{mock, verify, when}
 
+import java.util.Properties
+
 class PartitionStateMachineTest {
-  private var controllerContext: ControllerContext = null
-  private var mockZkClient: KafkaZkClient = null
-  private var mockControllerBrokerRequestBatch: ControllerBrokerRequestBatch = null
-  private var partitionStateMachine: PartitionStateMachine = null
+  private var controllerContext: ControllerContext = _
+  private var mockZkClient: KafkaZkClient = _
+  private var mockControllerBrokerRequestBatch: ControllerBrokerRequestBatch = _
+  private var partitionStateMachine: PartitionStateMachine = _
 
   private val brokerId = 5
   private val config = KafkaConfig.fromProps(TestUtils.createBrokerConfig(brokerId, "zkConnect"))
@@ -257,7 +259,7 @@ class PartitionStateMachineTest {
         TopicPartitionStateZNode.encode(leaderIsrAndControllerEpoch), stat, ResponseMetadata(0, 0))))
 
     when(mockZkClient.getLogConfigs(Set.empty, config.originals()))
-      .thenReturn((Map(partition.topic -> LogConfig()), Map.empty[String, Exception]))
+      .thenReturn((Map(partition.topic -> new LogConfig(new Properties)), Map.empty[String, Exception]))
     val leaderAndIsrAfterElection = leaderAndIsr.newLeader(brokerId)
     val updatedLeaderAndIsr = leaderAndIsrAfterElection.withPartitionEpoch(2)
     when(mockZkClient.updateLeaderAndIsr(Map(partition -> leaderAndIsrAfterElection), controllerEpoch, controllerContext.epochZkVersion))

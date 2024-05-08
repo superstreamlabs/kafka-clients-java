@@ -79,7 +79,7 @@ class ConnectStandaloneFileTest(Test):
         parameterizations to test different converters (which also test per-connector converter overrides), schema/schemaless
         modes, and security support.
         """
-        assert converter != None, "converter type must be set"
+        assert converter is not None, "converter type must be set"
         # Template parameters. Note that we don't set key/value.converter. These default to JsonConverter and we validate
         # converter overrides via the connector configuration.
         if converter != "org.apache.kafka.connect.json.JsonConverter":
@@ -138,9 +138,11 @@ class ConnectStandaloneFileTest(Test):
             return False
 
     @cluster(num_nodes=5)
-    @parametrize(error_tolerance=ErrorTolerance.ALL)
-    @parametrize(error_tolerance=ErrorTolerance.NONE)
-    def test_skip_and_log_to_dlq(self, error_tolerance):
+    @parametrize(error_tolerance=ErrorTolerance.ALL, metadata_quorum=quorum.zk)
+    @parametrize(error_tolerance=ErrorTolerance.NONE, metadata_quorum=quorum.isolated_kraft)
+    @parametrize(error_tolerance=ErrorTolerance.ALL, metadata_quorum=quorum.isolated_kraft)
+    @parametrize(error_tolerance=ErrorTolerance.NONE, metadata_quorum=quorum.zk)
+    def test_skip_and_log_to_dlq(self, error_tolerance, metadata_quorum):
         self.kafka = KafkaService(self.test_context, self.num_brokers, self.zk, topics=self.topics)
 
         # set config props
@@ -171,7 +173,8 @@ class ConnectStandaloneFileTest(Test):
         self.sink = ConnectStandaloneService(self.test_context, self.kafka, [self.OUTPUT_FILE, self.OFFSETS_FILE],
                                              include_filestream_connectors=True)
 
-        self.zk.start()
+        if self.zk:
+            self.zk.start()
         self.kafka.start()
 
         self.override_key_converter = "org.apache.kafka.connect.storage.StringConverter"

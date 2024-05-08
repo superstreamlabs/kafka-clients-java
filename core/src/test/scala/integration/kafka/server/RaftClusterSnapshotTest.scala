@@ -71,7 +71,7 @@ class RaftClusterSnapshotTest {
 
       assertEquals(numberOfControllers + numberOfBrokers, cluster.raftManagers.size())
 
-      // For every controller and broker perform some sanity checks against the lastest snapshot
+      // For every controller and broker perform some sanity checks against the latest snapshot
       for ((_, raftManager) <- cluster.raftManagers().asScala) {
         TestUtils.resource(
           RecordsSnapshotReader.of(
@@ -83,10 +83,10 @@ class RaftClusterSnapshotTest {
           )
         ) { snapshot =>
           // Check that the snapshot is non-empty
-          assertTrue(snapshot.hasNext())
+          assertTrue(snapshot.hasNext)
 
           // Check that we can read the entire snapshot
-          while (snapshot.hasNext()) {
+          while (snapshot.hasNext) {
             val batch = snapshot.next()
             assertTrue(batch.sizeInBytes > 0)
             assertNotEquals(Collections.emptyList(), batch.records())

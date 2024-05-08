@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.apache.kafka.connect.runtime.SourceConnectorConfig.ExactlyOnceSupportLevel.REQUESTED;
 import static org.apache.kafka.connect.runtime.SourceConnectorConfig.ExactlyOnceSupportLevel.REQUIRED;
@@ -47,6 +49,8 @@ import static org.apache.kafka.connect.source.SourceTask.TransactionBoundary.POL
 import static org.apache.kafka.common.utils.Utils.enumOptions;
 
 public class SourceConnectorConfig extends ConnectorConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SourceConnectorConfig.class);
 
     protected static final String TOPIC_CREATION_GROUP = "Topic Creation";
 
@@ -75,8 +79,8 @@ public class SourceConnectorConfig extends ConnectorConfig {
 
     public static final String EXACTLY_ONCE_SUPPORT_CONFIG = "exactly.once.support";
     private static final String EXACTLY_ONCE_SUPPORT_DOC = "Permitted values are " + String.join(", ", enumOptions(ExactlyOnceSupportLevel.class)) + ". "
-            + "If set to \"" + REQUIRED + "\", forces a preflight check for the connector to ensure that it can provide exactly-once delivery "
-            + "with the given configuration. Some connectors may be capable of providing exactly-once delivery but not signal to "
+            + "If set to \"" + REQUIRED + "\", forces a preflight check for the connector to ensure that it can provide exactly-once semantics "
+            + "with the given configuration. Some connectors may be capable of providing exactly-once semantics but not signal to "
             + "Connect that they support this; in that case, documentation for the connector should be consulted carefully before "
             + "creating it, and the value for this property should be set to \"" + REQUESTED + "\". "
             + "Additionally, if the value is set to \"" + REQUIRED + "\" but the worker that performs preflight validation does not have "
@@ -113,10 +117,6 @@ public class SourceConnectorConfig extends ConnectorConfig {
             super(plugins, configDef, props);
         }
 
-        @Override
-        public Object get(String key) {
-            return super.get(key);
-        }
     }
 
     private final TransactionBoundary transactionBoundary;
@@ -221,6 +221,13 @@ public class SourceConnectorConfig extends ConnectorConfig {
         Object aliases = ConfigDef.parseType(TOPIC_CREATION_GROUPS_CONFIG, props.get(TOPIC_CREATION_GROUPS_CONFIG), ConfigDef.Type.LIST);
         if (aliases instanceof List) {
             topicCreationGroups.addAll((List<?>) aliases);
+        }
+
+        //Remove "topic.creation.groups" config if its present and the value is "default"
+        if (topicCreationGroups.contains(DEFAULT_TOPIC_CREATION_GROUP)) {
+            log.warn("'{}' topic creation group always exists and does not need to be listed explicitly",
+                DEFAULT_TOPIC_CREATION_GROUP);
+            topicCreationGroups.removeAll(Collections.singleton(DEFAULT_TOPIC_CREATION_GROUP));
         }
 
         ConfigDef newDef = new ConfigDef(baseConfigDef);

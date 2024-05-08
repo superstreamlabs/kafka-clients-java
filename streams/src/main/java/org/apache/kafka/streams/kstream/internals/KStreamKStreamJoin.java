@@ -20,12 +20,12 @@ import org.apache.kafka.common.metrics.Sensor;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.kstream.ValueJoinerWithKey;
 import org.apache.kafka.streams.kstream.internals.KStreamImplJoin.TimeTracker;
+import org.apache.kafka.streams.kstream.internals.KStreamImplJoin.TimeTrackerSupplier;
 import org.apache.kafka.streams.processor.api.ContextualProcessor;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 import org.apache.kafka.streams.processor.api.Record;
-import org.apache.kafka.streams.processor.api.RecordMetadata;
 import org.apache.kafka.streams.processor.internals.InternalProcessorContext;
 import org.apache.kafka.streams.processor.internals.metrics.StreamsMetricsImpl;
 import org.apache.kafka.streams.state.KeyValueIterator;
@@ -58,7 +58,7 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
     private final Optional<String> outerJoinWindowName;
     private final ValueJoinerWithKey<? super K, ? super V1, ? super V2, ? extends VOut> joiner;
 
-    private final TimeTracker sharedTimeTracker;
+    private final TimeTrackerSupplier sharedTimeTrackerSupplier;
 
     KStreamKStreamJoin(final boolean isLeftSide,
                        final String otherWindowName,
@@ -66,7 +66,7 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
                        final ValueJoinerWithKey<? super K, ? super V1, ? super V2, ? extends VOut> joiner,
                        final boolean outer,
                        final Optional<String> outerJoinWindowName,
-                       final TimeTracker sharedTimeTracker) {
+                       final TimeTrackerSupplier sharedTimeTrackerSupplier) {
         this.isLeftSide = isLeftSide;
         this.otherWindowName = otherWindowName;
         if (isLeftSide) {
@@ -83,7 +83,7 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
         this.joiner = joiner;
         this.outer = outer;
         this.outerJoinWindowName = outerJoinWindowName;
-        this.sharedTimeTracker = sharedTimeTracker;
+        this.sharedTimeTrackerSupplier = sharedTimeTrackerSupplier;
     }
 
     @Override
@@ -96,6 +96,7 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
         private Sensor droppedRecordsSensor;
         private Optional<KeyValueStore<TimestampedKeyAndJoinSide<K>, LeftOrRightValue<V1, V2>>> outerJoinStore = Optional.empty();
         private InternalProcessorContext<K, VOut> internalProcessorContext;
+        private TimeTracker sharedTimeTracker;
 
         @Override
         public void init(final ProcessorContext<K, VOut> context) {
@@ -105,6 +106,7 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
             final StreamsMetricsImpl metrics = (StreamsMetricsImpl) context.metrics();
             droppedRecordsSensor = droppedRecordsSensor(Thread.currentThread().getName(), context.taskId().toString(), metrics);
             otherWindowStore = context.getStateStore(otherWindowName);
+            sharedTimeTracker = sharedTimeTrackerSupplier.get(context.taskId());
 
             if (enableSpuriousResultFix) {
                 outerJoinStore = outerJoinWindowName.map(context::getStateStore);
@@ -122,29 +124,9 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
         @SuppressWarnings("unchecked")
         @Override
         public void process(final Record<K, V1> record) {
-            // we do join iff keys are equal, thus, if key is null we cannot join and just ignore the record
-            //
-            // we also ignore the record if value is null, because in a key-value data model a null-value indicates
-            // an empty message (ie, there is nothing to be joined) -- this contrast SQL NULL semantics
-            // furthermore, on left/outer joins 'null' in ValueJoiner#apply() indicates a missing record --
-            // thus, to be consistent and to avoid ambiguous null semantics, null values are ignored
-            if (record.key() == null || record.value() == null) {
-                if (context().recordMetadata().isPresent()) {
-                    final RecordMetadata recordMetadata = context().recordMetadata().get();
-                    LOG.warn(
-                        "Skipping record due to null key or value. "
-                            + "topic=[{}] partition=[{}] offset=[{}]",
-                        recordMetadata.topic(), recordMetadata.partition(), recordMetadata.offset()
-                    );
-                } else {
-                    LOG.warn(
-                        "Skipping record due to null key or value. Topic, partition, and offset not known."
-                    );
-                }
-                droppedRecordsSensor.record();
+            if (StreamStreamJoinUtil.skipRecord(record, LOG, droppedRecordsSensor, context())) {
                 return;
             }
-
             boolean needOuterJoin = outer;
 
             final long inputRecordTimestamp = record.timestamp();
@@ -157,7 +139,6 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
             if (inputRecordTimestamp == sharedTimeTracker.streamTime) {
                 outerJoinStore.ifPresent(store -> emitNonJoinedOuterRecords(store, record));
             }
-
             try (final WindowStoreIterator<V2> iter = otherWindowStore.fetch(record.key(), timeFrom, timeTo)) {
                 while (iter.hasNext()) {
                     needOuterJoin = false;
@@ -184,7 +165,7 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
                     // problem:
                     //
                     // Say we have a window size of 5 seconds
-                    //  1. A non-joined record wth time T10 is seen in the left-topic (maxLeftStreamTime: 10)
+                    //  1. A non-joined record with time T10 is seen in the left-topic (maxLeftStreamTime: 10)
                     //     The record is not processed yet, and is added to the outer-join store
                     //  2. A non-joined record with time T2 is seen in the right-topic (maxRightStreamTime: 2)
                     //     The record is not processed yet, and is added to the outer-join store
@@ -226,9 +207,10 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
             if (internalProcessorContext.currentSystemTimeMs() < sharedTimeTracker.nextTimeToEmit) {
                 return;
             }
-            if (sharedTimeTracker.nextTimeToEmit == 0) {
-                sharedTimeTracker.nextTimeToEmit = internalProcessorContext.currentSystemTimeMs();
-            }
+
+            // Ensure `nextTimeToEmit` is synced with `currentSystemTimeMs`, if we dont set it everytime,
+            // they can get out of sync during a clock drift
+            sharedTimeTracker.nextTimeToEmit = internalProcessorContext.currentSystemTimeMs();
             sharedTimeTracker.advanceNextTimeToEmit();
 
             // reset to MAX_VALUE in case the store is empty
@@ -282,6 +264,11 @@ class KStreamKStreamJoin<K, V1, V2, VOut> implements ProcessorSupplier<K, V1, K,
                     store.put(prevKey, null);
                 }
             }
+        }
+
+        @Override
+        public void close() {
+            sharedTimeTrackerSupplier.remove(context().taskId());
         }
     }
 }

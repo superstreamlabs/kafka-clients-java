@@ -26,6 +26,7 @@ import org.apache.kafka.clients.admin.{Admin, NewPartitions, NewTopic}
 import org.apache.kafka.common.errors.InvalidReplicaAssignmentException
 import org.apache.kafka.common.requests.MetadataResponse.TopicMetadata
 import org.apache.kafka.common.requests.{MetadataRequest, MetadataResponse}
+import org.apache.kafka.server.common.AdminOperationException
 import org.junit.jupiter.api.Assertions._
 import org.junit.jupiter.api.{BeforeEach, TestInfo}
 import org.junit.jupiter.params.ParameterizedTest
@@ -53,7 +54,7 @@ class AddPartitionsTest extends BaseRequestTest {
   val topic4Assignment = Map(0 -> ReplicaAssignment(Seq(0,3), List(), List()))
   val topic5 = "new-topic5"
   val topic5Assignment = Map(1 -> ReplicaAssignment(Seq(0,1), List(), List()))
-  var admin: Admin = null
+  var admin: Admin = _
 
   @BeforeEach
   override def setUp(testInfo: TestInfo): Unit = {

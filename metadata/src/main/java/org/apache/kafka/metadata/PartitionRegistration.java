@@ -28,12 +28,97 @@ import org.slf4j.Logger;
 import java.util.Arrays;
 import java.util.Objects;
 
-import static org.apache.kafka.common.metadata.MetadataRecordType.PARTITION_RECORD;
 import static org.apache.kafka.metadata.LeaderConstants.NO_LEADER;
 import static org.apache.kafka.metadata.LeaderConstants.NO_LEADER_CHANGE;
 
 
 public class PartitionRegistration {
+
+    /**
+     * A builder class which creates a PartitionRegistration.
+     */
+    static public class Builder {
+        private int[] replicas;
+        private int[] isr;
+        private int[] removingReplicas = Replicas.NONE;
+        private int[] addingReplicas = Replicas.NONE;
+        private Integer leader;
+        private LeaderRecoveryState leaderRecoveryState;
+        private Integer leaderEpoch;
+        private Integer partitionEpoch;
+
+        public Builder setReplicas(int[] replicas) {
+            this.replicas = replicas;
+            return this;
+        }
+
+        public Builder setIsr(int[] isr) {
+            this.isr = isr;
+            return this;
+        }
+
+        public Builder setRemovingReplicas(int[] removingReplicas) {
+            this.removingReplicas = removingReplicas;
+            return this;
+        }
+
+        public Builder setAddingReplicas(int[] addingReplicas) {
+            this.addingReplicas = addingReplicas;
+            return this;
+        }
+
+        public Builder setLeader(Integer leader) {
+            this.leader = leader;
+            return this;
+        }
+
+        public Builder setLeaderRecoveryState(LeaderRecoveryState leaderRecoveryState) {
+            this.leaderRecoveryState = leaderRecoveryState;
+            return this;
+        }
+
+        public Builder setLeaderEpoch(Integer leaderEpoch) {
+            this.leaderEpoch = leaderEpoch;
+            return this;
+        }
+
+        public Builder setPartitionEpoch(Integer partitionEpoch) {
+            this.partitionEpoch = partitionEpoch;
+            return this;
+        }
+
+        public PartitionRegistration build() {
+            if (replicas == null) {
+                throw new IllegalStateException("You must set replicas.");
+            } else if (isr == null) {
+                throw new IllegalStateException("You must set isr.");
+            } else if (removingReplicas == null) {
+                throw new IllegalStateException("You must set removing replicas.");
+            } else if (addingReplicas == null) {
+                throw new IllegalStateException("You must set adding replicas.");
+            } else if (leader == null) {
+                throw new IllegalStateException("You must set leader.");
+            } else if (leaderRecoveryState == null) {
+                throw new IllegalStateException("You must set leader recovery state.");
+            } else if (leaderEpoch == null) {
+                throw new IllegalStateException("You must set leader epoch.");
+            } else if (partitionEpoch == null) {
+                throw new IllegalStateException("You must set partition epoch.");
+            }
+
+            return new PartitionRegistration(
+                replicas,
+                isr,
+                removingReplicas,
+                addingReplicas,
+                leader,
+                leaderRecoveryState,
+                leaderEpoch,
+                partitionEpoch
+            );
+        }
+    }
+
     public final int[] replicas;
     public final int[] isr;
     public final int[] removingReplicas;
@@ -58,7 +143,7 @@ public class PartitionRegistration {
             record.partitionEpoch());
     }
 
-    public PartitionRegistration(int[] replicas, int[] isr, int[] removingReplicas,
+    private PartitionRegistration(int[] replicas, int[] isr, int[] removingReplicas,
                                  int[] addingReplicas, int leader, LeaderRecoveryState leaderRecoveryState,
                                  int leaderEpoch, int partitionEpoch) {
         this.replicas = replicas;
@@ -182,7 +267,7 @@ public class PartitionRegistration {
             setLeader(leader).
             setLeaderRecoveryState(leaderRecoveryState.value()).
             setLeaderEpoch(leaderEpoch).
-            setPartitionEpoch(partitionEpoch), PARTITION_RECORD.highestSupportedVersion());
+            setPartitionEpoch(partitionEpoch), (short) 0);
     }
 
     public LeaderAndIsrPartitionState toLeaderAndIsrPartitionState(TopicPartition tp,
@@ -202,17 +287,10 @@ public class PartitionRegistration {
             setIsNew(isNew);
     }
 
-    /**
-     * Returns true if this partition is reassigning.
-     */
-    public boolean isReassigning() {
-        return removingReplicas.length > 0 || addingReplicas.length > 0;
-    }
-
     @Override
     public int hashCode() {
-        return Objects.hash(replicas, isr, removingReplicas, addingReplicas, leader, leaderRecoveryState,
-            leaderEpoch, partitionEpoch);
+        return Objects.hash(Arrays.hashCode(replicas), Arrays.hashCode(isr), Arrays.hashCode(removingReplicas),
+            Arrays.hashCode(addingReplicas), leader, leaderRecoveryState, leaderEpoch, partitionEpoch);
     }
 
     @Override
@@ -242,5 +320,11 @@ public class PartitionRegistration {
         builder.append(", partitionEpoch=").append(partitionEpoch);
         builder.append(")");
         return builder.toString();
+    }
+
+    public boolean hasSameAssignment(PartitionRegistration registration) {
+        return Arrays.equals(this.replicas, registration.replicas) &&
+            Arrays.equals(this.addingReplicas, registration.addingReplicas) &&
+            Arrays.equals(this.removingReplicas, registration.removingReplicas);
     }
 }

@@ -18,12 +18,11 @@
 package org.apache.kafka.image;
 
 import org.apache.kafka.common.metadata.ProducerIdsRecord;
-import org.apache.kafka.server.common.ApiMessageAndVersion;
+import org.apache.kafka.image.node.ProducerIdsImageNode;
+import org.apache.kafka.image.writer.ImageWriter;
+import org.apache.kafka.image.writer.ImageWriterOptions;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
 
 
 /**
@@ -34,24 +33,30 @@ import java.util.function.Consumer;
 public final class ProducerIdsImage {
     public final static ProducerIdsImage EMPTY = new ProducerIdsImage(-1L);
 
+    /**
+     * The next producer ID, or -1 in the special case where no producer IDs have been issued.
+     */
     private final long nextProducerId;
 
     public ProducerIdsImage(long nextProducerId) {
         this.nextProducerId = nextProducerId;
     }
 
-    public long highestSeenProducerId() {
+    public long nextProducerId() {
         return nextProducerId;
     }
 
-    public void write(Consumer<List<ApiMessageAndVersion>> out) {
+    public void write(ImageWriter writer, ImageWriterOptions options) {
         if (nextProducerId >= 0) {
-            out.accept(Collections.singletonList(new ApiMessageAndVersion(
-                new ProducerIdsRecord().
+            writer.write(0, new ProducerIdsRecord().
                     setBrokerId(-1).
                     setBrokerEpoch(-1).
-                    setNextProducerId(nextProducerId), (short) 0)));
+                    setNextProducerId(nextProducerId));
         }
+    }
+
+    public boolean isEmpty() {
+        return nextProducerId == EMPTY.nextProducerId;
     }
 
     @Override
@@ -68,10 +73,6 @@ public final class ProducerIdsImage {
 
     @Override
     public String toString() {
-        return "ProducerIdsImage(highestSeenProducerId=" + nextProducerId + ")";
-    }
-
-    public boolean isEmpty() {
-        return nextProducerId < 0;
+        return new ProducerIdsImageNode(this).stringify();
     }
 }

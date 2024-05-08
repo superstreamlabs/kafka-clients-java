@@ -16,7 +16,8 @@
  */
 package org.apache.kafka.streams.integration;
 
-import kafka.tools.StreamsResetter;
+import org.apache.kafka.common.utils.Utils;
+import org.apache.kafka.tools.StreamsResetter;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.Admin;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -42,7 +43,6 @@ import org.apache.kafka.streams.kstream.Produced;
 import org.apache.kafka.streams.kstream.TimeWindows;
 import org.apache.kafka.test.IntegrationTest;
 import org.apache.kafka.test.TestUtils;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,7 +54,6 @@ import org.junit.rules.Timeout;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -83,14 +82,6 @@ public abstract class AbstractResetIntegrationTest {
 
     @Rule
     public final TestName testName = new TestName();
-
-    @AfterClass
-    public static void afterClassCleanup() {
-        if (adminClient != null) {
-            adminClient.close(Duration.ofSeconds(10));
-            adminClient = null;
-        }
-    }
 
     protected Properties commonClientConfig;
     protected Properties streamsConfig;
@@ -151,7 +142,7 @@ public abstract class AbstractResetIntegrationTest {
         streamsConfig.put(StreamsConfig.STATE_DIR_CONFIG, testFolder.getRoot().getPath());
         streamsConfig.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.Long().getClass());
         streamsConfig.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        streamsConfig.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+        streamsConfig.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 0);
         streamsConfig.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 100L);
         streamsConfig.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 100);
         streamsConfig.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -186,10 +177,12 @@ public abstract class AbstractResetIntegrationTest {
     }
 
     void cleanupTest() throws Exception {
-        if (streams != null) {
-            streams.close(Duration.ofSeconds(30));
-        }
+        Utils.closeQuietly(streams, "kafka streams");
         IntegrationTestUtils.purgeLocalStreamsState(streamsConfig);
+        if (adminClient != null) {
+            Utils.closeQuietly(adminClient, "admin client");
+            adminClient = null;
+        }
     }
 
     private void add10InputElements() {
@@ -394,7 +387,7 @@ public abstract class AbstractResetIntegrationTest {
                                    final String appID) throws Exception {
         final List<String> parameterList = new ArrayList<>(
             Arrays.asList("--application-id", appID,
-                    "--bootstrap-servers", cluster.bootstrapServers(),
+                    "--bootstrap-server", cluster.bootstrapServers(),
                     "--input-topics", INPUT_TOPIC
             ));
         if (withIntermediateTopics) {
@@ -427,7 +420,7 @@ public abstract class AbstractResetIntegrationTest {
         cleanUpConfig.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 100);
         cleanUpConfig.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, Integer.toString(CLEANUP_CONSUMER_TIMEOUT));
 
-        return new StreamsResetter().run(parameters, cleanUpConfig) == 0;
+        return new StreamsResetter().execute(parameters, cleanUpConfig) == 0;
     }
 
     protected void cleanGlobal(final boolean withIntermediateTopics,

@@ -16,6 +16,7 @@
  */
 package org.apache.kafka.streams;
 
+import java.util.Set;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -23,16 +24,19 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.config.TopicConfig;
+import org.apache.kafka.common.security.auth.SecurityProtocol;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.common.utils.Utils;
 import org.apache.kafka.streams.errors.StreamsException;
+import org.apache.kafka.streams.internals.UpgradeFromValues;
 import org.apache.kafka.streams.processor.FailOnInvalidTimestamp;
 import org.apache.kafka.streams.processor.TimestampExtractor;
+import org.apache.kafka.streams.processor.internals.DefaultKafkaClientSupplier;
 import org.apache.kafka.streams.processor.internals.StreamsPartitionAssignor;
-import org.apache.kafka.streams.processor.internals.testutil.LogCaptureAppender;
+import org.apache.kafka.common.utils.LogCaptureAppender;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -60,11 +64,14 @@ import static org.apache.kafka.streams.StreamsConfig.EXACTLY_ONCE_BETA;
 import static org.apache.kafka.streams.StreamsConfig.EXACTLY_ONCE_V2;
 import static org.apache.kafka.streams.StreamsConfig.MAX_RACK_AWARE_ASSIGNMENT_TAG_KEY_LENGTH;
 import static org.apache.kafka.streams.StreamsConfig.MAX_RACK_AWARE_ASSIGNMENT_TAG_VALUE_LENGTH;
+import static org.apache.kafka.streams.StreamsConfig.RACK_AWARE_ASSIGNMENT_NON_OVERLAP_COST_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.RACK_AWARE_ASSIGNMENT_TRAFFIC_COST_CONFIG;
 import static org.apache.kafka.streams.StreamsConfig.STATE_DIR_CONFIG;
 import static org.apache.kafka.streams.StreamsConfig.TOPOLOGY_OPTIMIZATION_CONFIG;
 import static org.apache.kafka.streams.StreamsConfig.adminClientPrefix;
 import static org.apache.kafka.streams.StreamsConfig.consumerPrefix;
 import static org.apache.kafka.streams.StreamsConfig.producerPrefix;
+import static org.apache.kafka.streams.internals.StreamsConfigUtils.getTotalCacheSize;
 import static org.apache.kafka.test.StreamsTestUtils.getStreamsConfig;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -107,7 +114,7 @@ public class StreamsConfigTest {
 
     @Test
     public void testOsDefaultSocketBufferSizes() {
-        props.put(StreamsConfig.SEND_BUFFER_CONFIG, CommonClientConfigs.RECEIVE_BUFFER_LOWER_BOUND);
+        props.put(StreamsConfig.SEND_BUFFER_CONFIG, CommonClientConfigs.SEND_BUFFER_LOWER_BOUND);
         props.put(StreamsConfig.RECEIVE_BUFFER_CONFIG, CommonClientConfigs.RECEIVE_BUFFER_LOWER_BOUND);
         new StreamsConfig(props);
     }
@@ -201,7 +208,7 @@ public class StreamsConfigTest {
     }
 
     @Test
-    public void testGetMainConsumerConfigsWithMainConsumerOverridenPrefix() {
+    public void testGetMainConsumerConfigsWithMainConsumerOverriddenPrefix() {
         props.put(StreamsConfig.consumerPrefix(ConsumerConfig.MAX_POLL_RECORDS_CONFIG), "5");
         props.put(StreamsConfig.mainConsumerPrefix(ConsumerConfig.MAX_POLL_RECORDS_CONFIG), "50");
         props.put(StreamsConfig.mainConsumerPrefix(ConsumerConfig.GROUP_ID_CONFIG), "another-id");
@@ -460,7 +467,7 @@ public class StreamsConfigTest {
     }
 
     @Test
-    public void testGetRestoreConsumerConfigsWithRestoreConsumerOverridenPrefix() {
+    public void testGetRestoreConsumerConfigsWithRestoreConsumerOverriddenPrefix() {
         props.put(StreamsConfig.consumerPrefix(ConsumerConfig.MAX_POLL_RECORDS_CONFIG), "5");
         props.put(StreamsConfig.restoreConsumerPrefix(ConsumerConfig.MAX_POLL_RECORDS_CONFIG), "50");
         final StreamsConfig streamsConfig = new StreamsConfig(props);
@@ -508,7 +515,7 @@ public class StreamsConfigTest {
     }
 
     @Test
-    public void testGetGlobalConsumerConfigsWithGlobalConsumerOverridenPrefix() {
+    public void testGetGlobalConsumerConfigsWithGlobalConsumerOverriddenPrefix() {
         props.put(StreamsConfig.consumerPrefix(ConsumerConfig.MAX_POLL_RECORDS_CONFIG), "5");
         props.put(StreamsConfig.globalConsumerPrefix(ConsumerConfig.MAX_POLL_RECORDS_CONFIG), "50");
         final StreamsConfig streamsConfig = new StreamsConfig(props);
@@ -596,14 +603,14 @@ public class StreamsConfigTest {
 
     @Test
     public void shouldAcceptExactlyOnce() {
-        // don't use `StreamsConfig.EXACLTY_ONCE` to actually do a useful test
+        // don't use `StreamsConfig.EXACTLY_ONCE` to actually do a useful test
         props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once");
         new StreamsConfig(props);
     }
 
     @Test
     public void shouldAcceptExactlyOnceBeta() {
-        // don't use `StreamsConfig.EXACLTY_ONCE_BETA` to actually do a useful test
+        // don't use `StreamsConfig.EXACTLY_ONCE_BETA` to actually do a useful test
         props.put(StreamsConfig.PROCESSING_GUARANTEE_CONFIG, "exactly_once_beta");
         new StreamsConfig(props);
     }
@@ -1256,11 +1263,188 @@ public class StreamsConfigTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    public void shouldUseStateStoreCacheMaxBytesWhenBothOldAndNewConfigsAreSet() {
+        props.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 100);
+        props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 10);
+        final StreamsConfig config = new StreamsConfig(props);
+        assertEquals(getTotalCacheSize(config), 100);
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void shouldUseCacheMaxBytesBufferingConfigWhenOnlyDeprecatedConfigIsSet() {
+        props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 10);
+        final StreamsConfig config = new StreamsConfig(props);
+        assertEquals(getTotalCacheSize(config), 10);
+    }
+
+    @Test
+    public void shouldUseStateStoreCacheMaxBytesWhenNewConfigIsSet() {
+        props.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 10);
+        final StreamsConfig config = new StreamsConfig(props);
+        assertEquals(getTotalCacheSize(config), 10);
+    }
+
+    @Test
+    public void shouldUseDefaultStateStoreCacheMaxBytesConfigWhenNoConfigIsSet() {
+        final StreamsConfig config = new StreamsConfig(props);
+        assertEquals(getTotalCacheSize(config), 10 * 1024 * 1024);
+    }
+
+    @Test
+    public void testCaseInsensitiveSecurityProtocol() {
+        final String saslSslLowerCase = SecurityProtocol.SASL_SSL.name.toLowerCase(Locale.ROOT);
+        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, saslSslLowerCase);
+        final StreamsConfig config = new StreamsConfig(props);
+        assertEquals(saslSslLowerCase, config.originalsStrings().get(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG));
+    }
+
+    @Test
     public void testInvalidSecurityProtocol() {
         props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "abc");
         final ConfigException ce = assertThrows(ConfigException.class,
                 () -> new StreamsConfig(props));
         assertTrue(ce.getMessage().contains(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenTopologyOptimizationOnAndOff() {
+        final String value = String.join(",", StreamsConfig.OPTIMIZE, StreamsConfig.NO_OPTIMIZATION);
+        props.put(TOPOLOGY_OPTIMIZATION_CONFIG, value);
+        final ConfigException exception = assertThrows(ConfigException.class, () -> new StreamsConfig(props));
+        assertTrue(exception.getMessage().contains("is not a valid optimization config"));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenTopologyOptimizationOffAndSet() {
+        final String value = String.join(",", StreamsConfig.NO_OPTIMIZATION, StreamsConfig.REUSE_KTABLE_SOURCE_TOPICS);
+        props.put(TOPOLOGY_OPTIMIZATION_CONFIG, value);
+        final ConfigException exception = assertThrows(ConfigException.class, () -> new StreamsConfig(props));
+        assertTrue(exception.getMessage().contains("is not a valid optimization config"));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenOptimizationDoesNotExistInList() {
+        final String value = String.join(",",
+                                         StreamsConfig.REUSE_KTABLE_SOURCE_TOPICS,
+                                         "topology.optimization.does.not.exist",
+                                         StreamsConfig.MERGE_REPARTITION_TOPICS);
+        props.put(TOPOLOGY_OPTIMIZATION_CONFIG, value);
+        final ConfigException exception = assertThrows(ConfigException.class, () -> new StreamsConfig(props));
+        assertTrue(exception.getMessage().contains("Unrecognized config."));
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenTopologyOptimizationDoesNotExist() {
+        final String value = String.join(",", "topology.optimization.does.not.exist");
+        props.put(TOPOLOGY_OPTIMIZATION_CONFIG, value);
+        final ConfigException exception = assertThrows(ConfigException.class, () -> new StreamsConfig(props));
+        assertTrue(exception.getMessage().contains("Unrecognized config."));
+    }
+
+    @Test
+    public void shouldEnableSelfJoin() {
+        final String value = StreamsConfig.SINGLE_STORE_SELF_JOIN;
+        props.put(TOPOLOGY_OPTIMIZATION_CONFIG, value);
+        final StreamsConfig config = new StreamsConfig(props);
+        assertEquals(config.getString(TOPOLOGY_OPTIMIZATION_CONFIG), StreamsConfig.SINGLE_STORE_SELF_JOIN);
+    }
+
+    @Test
+    public void shouldAllowMultipleOptimizations() {
+        final String value = String.join(",",
+                                         StreamsConfig.SINGLE_STORE_SELF_JOIN,
+                                         StreamsConfig.REUSE_KTABLE_SOURCE_TOPICS,
+                                         StreamsConfig.MERGE_REPARTITION_TOPICS);
+        props.put(TOPOLOGY_OPTIMIZATION_CONFIG, value);
+        final StreamsConfig config = new StreamsConfig(props);
+        final List<String> configs = Arrays.asList(config.getString(TOPOLOGY_OPTIMIZATION_CONFIG).split(","));
+        assertEquals(3, configs.size());
+        assertTrue(configs.contains(StreamsConfig.SINGLE_STORE_SELF_JOIN));
+        assertTrue(configs.contains(StreamsConfig.REUSE_KTABLE_SOURCE_TOPICS));
+        assertTrue(configs.contains(StreamsConfig.MERGE_REPARTITION_TOPICS));
+    }
+
+    @Test
+    public void shouldEnableAllOptimizationsWithOptimizeConfig() {
+        final Set<String> configs = StreamsConfig.verifyTopologyOptimizationConfigs(StreamsConfig.OPTIMIZE);
+        assertEquals(3, configs.size());
+        assertTrue(configs.contains(StreamsConfig.REUSE_KTABLE_SOURCE_TOPICS));
+        assertTrue(configs.contains(StreamsConfig.MERGE_REPARTITION_TOPICS));
+        assertTrue(configs.contains(StreamsConfig.SINGLE_STORE_SELF_JOIN));
+    }
+
+    @Test
+    public void shouldNotEnableAnyOptimizationsWithNoOptimizationConfig() {
+        final Set<String> configs = StreamsConfig.verifyTopologyOptimizationConfigs(StreamsConfig.NO_OPTIMIZATION);
+        assertEquals(0, configs.size());
+    }
+
+    @Test
+    public void shouldReturnDefaultRackAwareAssignmentConfig() {
+        final String strategy = streamsConfig.getString(StreamsConfig.RACK_AWARE_ASSIGNMENT_STRATEGY_CONFIG);
+        assertEquals("none", strategy);
+    }
+
+    @Test
+    public void shouldtSetMinTrafficRackAwareAssignmentConfig() {
+        props.put(StreamsConfig.RACK_AWARE_ASSIGNMENT_STRATEGY_CONFIG, StreamsConfig.RACK_AWARE_ASSIGNMENT_STRATEGY_MIN_TRAFFIC);
+        assertEquals("min_traffic", new StreamsConfig(props).getString(StreamsConfig.RACK_AWARE_ASSIGNMENT_STRATEGY_CONFIG));
+    }
+
+    @Test
+    public void shouldThrowIfNotSetCorrectRackAwareAssignmentConfig() {
+        props.put(StreamsConfig.RACK_AWARE_ASSIGNMENT_STRATEGY_CONFIG, "invalid");
+        assertThrows(ConfigException.class, () -> new StreamsConfig(props));
+    }
+
+    @Test
+    public void shouldReturnDefaultRackAwareAssignmentTrafficCost() {
+        final Integer cost = streamsConfig.getInt(StreamsConfig.RACK_AWARE_ASSIGNMENT_TRAFFIC_COST_CONFIG);
+        assertNull(cost);
+    }
+
+    @Test
+    public void shouldReturnRackAwareAssignmentTrafficCost() {
+        props.put(StreamsConfig.RACK_AWARE_ASSIGNMENT_TRAFFIC_COST_CONFIG, "10");
+        assertEquals(Integer.valueOf(10), new StreamsConfig(props).getInt(RACK_AWARE_ASSIGNMENT_TRAFFIC_COST_CONFIG));
+    }
+
+    @Test
+    public void shouldReturnDefaultRackAwareAssignmentNonOverlapCost() {
+        final Integer cost = streamsConfig.getInt(StreamsConfig.RACK_AWARE_ASSIGNMENT_NON_OVERLAP_COST_CONFIG);
+        assertNull(cost);
+    }
+
+    @Test
+    public void shouldReturnRackAwareAssignmentNonOverlapCost() {
+        props.put(StreamsConfig.RACK_AWARE_ASSIGNMENT_NON_OVERLAP_COST_CONFIG, "10");
+        assertEquals(Integer.valueOf(10), new StreamsConfig(props).getInt(RACK_AWARE_ASSIGNMENT_NON_OVERLAP_COST_CONFIG));
+    }
+
+    @Test
+    public void shouldReturnDefaultClientSupplier() {
+        final KafkaClientSupplier supplier = streamsConfig.getKafkaClientSupplier();
+        assertTrue(supplier instanceof DefaultKafkaClientSupplier);
+    }
+
+    @Test
+    public void shouldThrowOnInvalidClientSupplier() {
+        props.put(StreamsConfig.DEFAULT_CLIENT_SUPPLIER_CONFIG, "invalid.class");
+        assertThrows(ConfigException.class, () -> new StreamsConfig(props));
+    }
+
+    @Test
+    public void shouldSupportAllUpgradeFromValues() {
+        for (final UpgradeFromValues upgradeFrom : UpgradeFromValues.values()) {
+            props.put(StreamsConfig.UPGRADE_FROM_CONFIG, upgradeFrom.toString());
+            try {
+                new StreamsConfig(props);
+            } catch (final Exception fatal) {
+                throw new AssertionError("StreamsConfig did not accept `upgrade.from` config value `" + upgradeFrom + "`");
+            }
+        }
     }
 
     static class MisconfiguredSerde implements Serde<Object> {

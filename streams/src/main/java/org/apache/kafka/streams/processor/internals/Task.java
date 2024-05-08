@@ -19,6 +19,8 @@ package org.apache.kafka.streams.processor.internals;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.utils.Time;
+import org.apache.kafka.streams.errors.TaskCorruptedException;
 import org.apache.kafka.streams.errors.LockException;
 import org.apache.kafka.streams.errors.StreamsException;
 import org.apache.kafka.streams.processor.StateStore;
@@ -102,6 +104,7 @@ public interface Task {
     // idempotent life-cycle methods
 
     /**
+     * @throws TaskCorruptedException if the state cannot be reused (with EOS) and needs to be reset
      * @throws LockException    could happen when multi-threads within the single instance, could retry
      * @throws StreamsException fatal error, should close the thread
      */
@@ -155,10 +158,9 @@ public interface Task {
     void revive();
 
     /**
-     * Attempt a clean close but do not close the underlying state
+     * Close the task except the state, so that the states can be later recycled
      */
-    void closeCleanAndRecycleState();
-
+    void prepareRecycle();
 
     // runtime methods (using in RUNNING state)
 
@@ -201,6 +203,8 @@ public interface Task {
 
     void clearTaskTimeout();
 
+    void recordRestoration(final Time time, final long numRecords, final boolean initRemaining);
+
     // task status inquiry
 
     TaskId id();
@@ -212,9 +216,11 @@ public interface Task {
     /**
      * @return any changelog partitions associated with this task
      */
-    Collection<TopicPartition> changelogPartitions();
+    Set<TopicPartition> changelogPartitions();
 
     State state();
+
+    ProcessorStateManager stateManager();
 
     default boolean needsInitializationOrRestoration() {
         return state() == State.CREATED || state() == State.RESTORING;

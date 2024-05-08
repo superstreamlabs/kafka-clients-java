@@ -16,6 +16,7 @@
  */
 package org.apache.kafka.connect.transforms;
 
+import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.SchemaBuilder;
 import org.apache.kafka.connect.data.Struct;
@@ -30,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ReplaceFieldTest {
-    private ReplaceField<SinkRecord> xform = new ReplaceField.Value<>();
+    private final ReplaceField<SinkRecord> xform = new ReplaceField.Value<>();
 
     @AfterEach
     public void teardown() {
@@ -168,5 +169,10 @@ public class ReplaceFieldTest {
         assertEquals(42, updatedValue.get("xyz"));
         assertEquals(true, updatedValue.get("bar"));
         assertEquals("etc", updatedValue.get("etc"));
+    }
+
+    @Test
+    public void testReplaceFieldVersionRetrievedFromAppInfoParser() {
+        assertEquals(AppInfoParser.getVersion(), xform.version());
     }
 }

@@ -95,9 +95,16 @@ public interface StateUpdater {
     void remove(final TaskId taskId);
 
     /**
+     * Wakes up the state updater if it is currently dormant, to check if a paused task should be resumed.
+     */
+    void signalResume();
+
+    /**
      * Drains the restored active tasks from the state updater.
      *
      * The returned active tasks are removed from the state updater.
+     *
+     * With a timeout of zero the method tries to drain the restored active tasks at least once.
      *
      * @param timeout duration how long the calling thread should wait for restored active tasks
      *
@@ -119,6 +126,14 @@ public interface StateUpdater {
     Set<Task> drainRemovedTasks();
 
     /**
+     * Checks if the state updater has any tasks that should be removed and returned to the StreamThread
+     * using `drainRemovedTasks`.
+     *
+     * @return true if a subsequent call to `drainRemovedTasks` would return a non-empty collection.
+     */
+    boolean hasRemovedTasks();
+
+    /**
      * Drains the failed tasks and the corresponding exceptions.
      *
      * The returned failed tasks are removed from the state updater
@@ -126,6 +141,14 @@ public interface StateUpdater {
      * @return list of failed tasks and the corresponding exceptions
      */
     List<ExceptionAndTasks> drainExceptionsAndFailedTasks();
+
+    /**
+     * Checks if the state updater has any failed tasks that should be returned to the StreamThread
+     * using `drainExceptionsAndFailedTasks`.
+     *
+     * @return true if a subsequent call to `drainExceptionsAndFailedTasks` would return a non-empty collection.
+     */
+    boolean hasExceptionsAndFailedTasks();
 
     /**
      * Gets all tasks that are managed by the state updater.
@@ -143,19 +166,34 @@ public interface StateUpdater {
     Set<Task> getTasks();
 
     /**
-     * Gets active tasks that are managed by the state updater.
+     * Gets all tasks that are currently being restored inside the state updater.
      *
-     * The state updater manages all active tasks that were added with the {@link StateUpdater#add(Task)} and that have
-     * not been removed from the state updater with one of the following methods:
+     * Tasks that have just being added into the state updater via {@link StateUpdater#add(Task)}
+     * or have restored completely or removed will not be returned; similarly tasks that have just being
+     * removed via {@link StateUpdater#remove(TaskId)} maybe returned still.
+     *
+     * @return set of all updating tasks inside the state updater
+     */
+    Set<Task> getUpdatingTasks();
+
+    /**
+     * Returns if the state updater restores active tasks.
+     *
+     * The state updater restores active tasks if at least one active task was added with {@link StateUpdater#add(Task)},
+     * and the task was not removed from the state updater with one of the following methods:
      * <ul>
      *   <li>{@link StateUpdater#drainRestoredActiveTasks(Duration)}</li>
      *   <li>{@link StateUpdater#drainRemovedTasks()}</li>
      *   <li>{@link StateUpdater#drainExceptionsAndFailedTasks()}</li>
      * </ul>
      *
-     * @return set of all tasks managed by the state updater
+     * @return {@code true} if the state updater restores active tasks, {@code false} otherwise
      */
-    Set<StreamTask> getActiveTasks();
+    // TODO: We would still return true if all active tasks to be restored
+    //       are paused, in order to keep consistent behavior compared with
+    //       state updater disabled. In the future we would modify this criterion
+    //       with state updater always enabled to allow mixed processing / restoration.
+    boolean restoresActiveTasks();
 
     /**
      * Gets standby tasks that are managed by the state updater.

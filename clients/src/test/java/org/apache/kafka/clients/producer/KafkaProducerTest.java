@@ -39,6 +39,7 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.ConfigException;
 import org.apache.kafka.common.config.SslConfigs;
+import org.apache.kafka.common.errors.ClusterAuthorizationException;
 import org.apache.kafka.common.errors.InterruptException;
 import org.apache.kafka.common.errors.InvalidTopicException;
 import org.apache.kafka.common.errors.RecordTooLargeException;
@@ -172,7 +173,7 @@ public class KafkaProducerTest {
                   KafkaClient kafkaClient,
                   ProducerInterceptors<K, V> interceptors,
                   Time time) {
-        return new KafkaProducer<K, V>(new ProducerConfig(ProducerConfig.appendSerializerToConfig(configs, keySerializer, valueSerializer)),
+        return new KafkaProducer<>(new ProducerConfig(ProducerConfig.appendSerializerToConfig(configs, keySerializer, valueSerializer)),
             keySerializer, valueSerializer, metadata, kafkaClient, interceptors, time);
     }
 
@@ -455,6 +456,28 @@ public class KafkaProducerTest {
         MockMetricsReporter mockMetricsReporter = (MockMetricsReporter) producer.metrics.reporters().get(0);
 
         assertEquals(producer.getClientId(), mockMetricsReporter.clientId);
+        assertEquals(2, producer.metrics.reporters().size());
+        producer.close();
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testDisableJmxReporter() {
+        Properties props = new Properties();
+        props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9999");
+        props.setProperty(ProducerConfig.AUTO_INCLUDE_JMX_REPORTER_CONFIG, "false");
+        KafkaProducer<String, String> producer = new KafkaProducer<>(props, new StringSerializer(), new StringSerializer());
+        assertTrue(producer.metrics.reporters().isEmpty());
+        producer.close();
+    }
+
+    @Test
+    public void testExplicitlyEnableJmxReporter() {
+        Properties props = new Properties();
+        props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9999");
+        props.setProperty(ProducerConfig.METRIC_REPORTER_CLASSES_CONFIG, "org.apache.kafka.common.metrics.JmxReporter");
+        KafkaProducer<String, String> producer = new KafkaProducer<>(props, new StringSerializer(), new StringSerializer());
+        assertEquals(1, producer.metrics.reporters().size());
         producer.close();
     }
 
@@ -547,7 +570,31 @@ public class KafkaProducerTest {
             MockProducerInterceptor.resetCounters();
         }
     }
+    @Test
+    public void testInterceptorConstructorConfigurationWithExceptionShouldCloseRemainingInstances() {
+        final int targetInterceptor = 3;
+        try {
+            Properties props = new Properties();
+            props.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9999");
+            props.setProperty(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, org.apache.kafka.test.MockProducerInterceptor.class.getName() + ", "
+                    +  org.apache.kafka.test.MockProducerInterceptor.class.getName() + ", "
+                    +  org.apache.kafka.test.MockProducerInterceptor.class.getName());
+            props.setProperty(MockProducerInterceptor.APPEND_STRING_PROP, "something");
 
+            MockProducerInterceptor.setThrowOnConfigExceptionThreshold(targetInterceptor);
+
+            assertThrows(KafkaException.class, () -> {
+                new KafkaProducer<>(
+                        props, new StringSerializer(), new StringSerializer());
+            });
+
+            assertEquals(3, MockProducerInterceptor.CONFIG_COUNT.get());
+            assertEquals(3, MockProducerInterceptor.CLOSE_COUNT.get());
+
+        } finally {
+            MockProducerInterceptor.resetCounters();
+        }
+    }
     @Test
     public void testPartitionerClose() {
         try {
@@ -1213,6 +1260,35 @@ public class KafkaProducerTest {
                 new StringSerializer(), metadata, client, null, time)) {
             producer.initTransactions();
         }
+    }
+
+    @Test
+    public void testClusterAuthorizationFailure() throws Exception {
+        int maxBlockMs = 500;
+
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, maxBlockMs);
+        configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9000");
+        configs.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        configs.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "some-txn");
+
+        Time time = new MockTime(1);
+        MetadataResponse initialUpdateResponse = RequestTestUtils.metadataUpdateWith(1, singletonMap("topic", 1));
+        ProducerMetadata metadata = newMetadata(500, Long.MAX_VALUE);
+
+        MockClient client = new MockClient(time, metadata);
+        client.updateMetadata(initialUpdateResponse);
+
+        client.prepareResponse(FindCoordinatorResponse.prepareResponse(Errors.NONE, "some-txn", NODE));
+        client.prepareResponse(initProducerIdResponse(1L, (short) 5, Errors.CLUSTER_AUTHORIZATION_FAILED));
+        Producer<String, String> producer = kafkaProducer(configs, new StringSerializer(),
+                new StringSerializer(), metadata, client, null, time);
+        assertThrows(ClusterAuthorizationException.class, producer::initTransactions);
+
+        // retry initTransactions after the ClusterAuthorizationException not being thrown
+        client.prepareResponse(initProducerIdResponse(1L, (short) 5, Errors.NONE));
+        TestUtils.retryOnExceptionWithTimeout(1000, 100, producer::initTransactions);
+        producer.close();
     }
 
     @Test
@@ -1901,7 +1977,7 @@ public class KafkaProducerTest {
     }
 
     @Test
-    public void testCallbackAndInterceptorHandleError() throws Exception {
+    public void testCallbackAndInterceptorHandleError() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9000");
         configs.put(ProducerConfig.MAX_BLOCK_MS_CONFIG, "1000");

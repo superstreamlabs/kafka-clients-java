@@ -25,7 +25,7 @@ public final class ProducerIdsDelta {
     private long nextProducerId;
 
     public ProducerIdsDelta(ProducerIdsImage image) {
-        this.nextProducerId = image.highestSeenProducerId();
+        this.nextProducerId = image.nextProducerId();
     }
 
     public void setNextProducerId(long highestSeenProducerId) {
@@ -50,5 +50,10 @@ public final class ProducerIdsDelta {
 
     public ProducerIdsImage apply() {
         return new ProducerIdsImage(nextProducerId);
+    }
+
+    @Override
+    public String toString() {
+        return "ProducerIdsDelta(nextProducerId=" + nextProducerId + ")";
     }
 }

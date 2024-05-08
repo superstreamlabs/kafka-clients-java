@@ -31,13 +31,14 @@ import org.apache.kafka.streams.processor.TaskId;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.processor.internals.ProcessorNode;
-import org.apache.kafka.streams.state.internals.InMemoryTimeOrderedKeyValueBuffer;
+import org.apache.kafka.streams.state.internals.InMemoryTimeOrderedKeyValueChangeBuffer;
 import org.apache.kafka.test.MockInternalNewProcessorContext;
 import org.apache.kafka.test.StreamsTestUtils;
 import org.apache.kafka.test.TestUtils;
-import org.easymock.EasyMock;
 import org.hamcrest.Matcher;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import java.time.Duration;
 import java.util.Map;
@@ -49,7 +50,9 @@ import static org.apache.kafka.streams.kstream.Suppressed.BufferConfig.maxRecord
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
 
+@RunWith(MockitoJUnitRunner.StrictStubs.class)
 public class KTableSuppressProcessorMetricsTest {
     private static final long ARBITRARY_LONG = 5L;
     private static final TaskId TASK_ID = new TaskId(0, 0);
@@ -126,14 +129,15 @@ public class KTableSuppressProcessorMetricsTest {
     public void shouldRecordMetricsWithBuiltInMetricsVersionLatest() {
         final String storeName = "test-store";
 
-        final StateStore buffer = new InMemoryTimeOrderedKeyValueBuffer.Builder<>(
+        final StateStore buffer = new InMemoryTimeOrderedKeyValueChangeBuffer.Builder<>(
             storeName, Serdes.String(),
             Serdes.Long()
         )
             .withLoggingDisabled()
             .build();
 
-        final KTableImpl<String, ?, Long> mock = EasyMock.mock(KTableImpl.class);
+        @SuppressWarnings("unchecked")
+        final KTableImpl<String, ?, Long> mock = mock(KTableImpl.class);
         final Processor<String, Change<Long>, String, Change<Long>> processor =
             new KTableSuppressProcessorSupplier<>(
                 (SuppressedInternal<String>) Suppressed.<String>untilTimeLimit(Duration.ofDays(100), maxRecords(1)),

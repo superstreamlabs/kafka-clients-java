@@ -113,7 +113,7 @@ public class TopologyMetadata {
         } else {
             builders.put(UNNAMED_TOPOLOGY, builder);
         }
-        this.taskExecutionMetadata = new TaskExecutionMetadata(builders.keySet(), pausedTopologies);
+        this.taskExecutionMetadata = new TaskExecutionMetadata(builders.keySet(), pausedTopologies, processingMode);
     }
 
     public TopologyMetadata(final ConcurrentNavigableMap<String, InternalTopologyBuilder> builders,
@@ -128,7 +128,7 @@ public class TopologyMetadata {
         if (builders.isEmpty()) {
             log.info("Created an empty KafkaStreams app with no topology");
         }
-        this.taskExecutionMetadata = new TaskExecutionMetadata(builders.keySet(), pausedTopologies);
+        this.taskExecutionMetadata = new TaskExecutionMetadata(builders.keySet(), pausedTopologies, processingMode);
     }
 
     // Need to (re)set the log here to pick up the `processId` part of the clientId in the prefix
@@ -584,7 +584,7 @@ public class TopologyMetadata {
         applyToEachBuilder(b -> b.addSubscribedTopicsFromMetadata(topics, logPrefix));
     }
 
-    void addSubscribedTopicsFromAssignment(final List<TopicPartition> partitions, final String logPrefix) {
+    void addSubscribedTopicsFromAssignment(final Set<TopicPartition> partitions, final String logPrefix) {
         applyToEachBuilder(b -> b.addSubscribedTopicsFromAssignment(partitions, logPrefix));
     }
 

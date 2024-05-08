@@ -17,12 +17,14 @@
 package kafka.server
 
 import kafka.api.{KafkaSasl, SaslSetup}
-import kafka.utils.{JaasTestUtils, TestUtils}
+import kafka.utils.{JaasTestUtils, TestUtils, TestInfoUtils}
 import org.apache.kafka.clients.admin.{Admin, AdminClientConfig}
 import org.apache.kafka.common.errors.DelegationTokenDisabledException
 import org.apache.kafka.common.security.auth.SecurityProtocol
 import org.junit.jupiter.api.Assertions.assertThrows
-import org.junit.jupiter.api.{AfterEach, BeforeEach, Test, TestInfo}
+import org.junit.jupiter.api.{AfterEach, BeforeEach, TestInfo}
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 import java.util
 import scala.concurrent.ExecutionException
@@ -33,7 +35,7 @@ class DelegationTokenRequestsWithDisableTokenFeatureTest extends BaseRequestTest
   private val kafkaServerSaslMechanisms = List("PLAIN")
   protected override val serverSaslProperties = Some(kafkaServerSaslProperties(kafkaServerSaslMechanisms, kafkaClientSaslMechanism))
   protected override val clientSaslProperties = Some(kafkaClientSaslProperties(kafkaClientSaslMechanism))
-  var adminClient: Admin = null
+  var adminClient: Admin = _
 
   override def brokerCount = 1
 
@@ -52,8 +54,9 @@ class DelegationTokenRequestsWithDisableTokenFeatureTest extends BaseRequestTest
     config
   }
 
-  @Test
-  def testDelegationTokenRequests(): Unit = {
+  @ParameterizedTest(name = TestInfoUtils.TestWithParameterizedQuorumName)
+  @ValueSource(strings = Array("kraft", "zk"))
+  def testDelegationTokenRequests(quorum: String): Unit = {
     adminClient = Admin.create(createAdminConfig)
 
     val createResult = adminClient.createDelegationToken()

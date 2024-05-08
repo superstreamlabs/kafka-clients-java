@@ -24,14 +24,17 @@ import org.apache.kafka.common.metadata.FenceBrokerRecord;
 import org.apache.kafka.common.metadata.UnfenceBrokerRecord;
 import org.apache.kafka.common.metadata.UnregisterBrokerRecord;
 import org.apache.kafka.common.security.auth.SecurityProtocol;
+import org.apache.kafka.image.writer.ImageWriterOptions;
+import org.apache.kafka.image.writer.RecordListWriter;
 import org.apache.kafka.metadata.BrokerRegistration;
 import org.apache.kafka.metadata.BrokerRegistrationInControlledShutdownChange;
 import org.apache.kafka.metadata.RecordTestUtils;
 import org.apache.kafka.metadata.VersionRange;
 import org.apache.kafka.server.common.ApiMessageAndVersion;
-import org.apache.kafka.server.common.MetadataVersion;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +52,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Timeout(value = 40)
 public class ClusterImageTest {
+    private static final Logger log = LoggerFactory.getLogger(ClusterImageTest.class);
+
     public final static ClusterImage IMAGE1;
 
     static final List<ApiMessageAndVersion> DELTA1_RECORDS;
@@ -122,31 +127,48 @@ public class ClusterImageTest {
     }
 
     @Test
-    public void testEmptyImageRoundTrip() throws Throwable {
-        testToImageAndBack(ClusterImage.EMPTY);
+    public void testEmptyImageRoundTrip() {
+        testToImage(ClusterImage.EMPTY);
     }
 
     @Test
-    public void testImage1RoundTrip() throws Throwable {
-        testToImageAndBack(IMAGE1);
+    public void testImage1RoundTrip() {
+        testToImage(IMAGE1);
     }
 
     @Test
-    public void testApplyDelta1() throws Throwable {
+    public void testApplyDelta1() {
         assertEquals(IMAGE2, DELTA1.apply());
+        // check image1 + delta1 = image2, since records for image1 + delta1 might differ from records from image2
+        List<ApiMessageAndVersion> records = getImageRecords(IMAGE1);
+        records.addAll(DELTA1_RECORDS);
+        testToImage(IMAGE2, records);
     }
 
     @Test
-    public void testImage2RoundTrip() throws Throwable {
-        testToImageAndBack(IMAGE2);
+    public void testImage2RoundTrip() {
+        testToImage(IMAGE2);
     }
 
-    private void testToImageAndBack(ClusterImage image) throws Throwable {
-        MockSnapshotConsumer writer = new MockSnapshotConsumer();
-        image.write(writer, MetadataVersion.latest());
-        ClusterDelta delta = new ClusterDelta(ClusterImage.EMPTY);
-        RecordTestUtils.replayAllBatches(delta, writer.batches());
-        ClusterImage nextImage = delta.apply();
-        assertEquals(image, nextImage);
+    private static void testToImage(ClusterImage image) {
+        testToImage(image, Optional.empty());
+    }
+
+    private static void testToImage(ClusterImage image, Optional<List<ApiMessageAndVersion>> fromRecords) {
+        testToImage(image, fromRecords.orElseGet(() -> getImageRecords(image)));
+    }
+
+    private static void testToImage(ClusterImage image, List<ApiMessageAndVersion> fromRecords) {
+        // test from empty image stopping each of the various intermediate images along the way
+        new RecordTestUtils.TestThroughAllIntermediateImagesLeadingToFinalImageHelper<>(
+            () -> ClusterImage.EMPTY,
+            ClusterDelta::new
+        ).test(image, fromRecords);
+    }
+
+    private static List<ApiMessageAndVersion> getImageRecords(ClusterImage image) {
+        RecordListWriter writer = new RecordListWriter();
+        image.write(writer, new ImageWriterOptions.Builder().build());
+        return writer.records();
     }
 }

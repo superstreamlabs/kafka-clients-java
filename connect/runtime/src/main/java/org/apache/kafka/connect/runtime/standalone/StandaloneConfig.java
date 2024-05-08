@@ -42,6 +42,6 @@ public class StandaloneConfig extends WorkerConfig {
     }
 
     public StandaloneConfig(Map<String, String> props) {
-        super(CONFIG, props);
+        super(CONFIG, props, "standalone");
     }
 }

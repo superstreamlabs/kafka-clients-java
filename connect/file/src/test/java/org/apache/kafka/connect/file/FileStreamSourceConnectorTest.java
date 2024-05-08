@@ -125,7 +125,7 @@ public class FileStreamSourceConnectorTest {
 
     @Test
     public void testValidConfigsAndDefaults() {
-        AbstractConfig config = new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, sourceProperties);
+        AbstractConfig config = new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, sourceProperties, "source-connector-test");
         assertEquals(SINGLE_TOPIC, config.getString(FileStreamSourceConnector.TOPIC_CONFIG));
         assertEquals(FileStreamSourceConnector.DEFAULT_TASK_BATCH_SIZE, config.getInt(FileStreamSourceConnector.TASK_BATCH_SIZE_CONFIG));
     }
@@ -133,18 +133,18 @@ public class FileStreamSourceConnectorTest {
     @Test
     public void testMissingTopic() {
         sourceProperties.remove(FileStreamSourceConnector.TOPIC_CONFIG);
-        assertThrows(ConfigException.class, () -> new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, sourceProperties));
+        assertThrows(ConfigException.class, () -> new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, sourceProperties, "source-connector-test"));
     }
 
     @Test
     public void testBlankTopic() {
         sourceProperties.put(FileStreamSourceConnector.TOPIC_CONFIG, "   ");
-        assertThrows(ConfigException.class, () -> new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, sourceProperties));
+        assertThrows(ConfigException.class, () -> new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, sourceProperties, "source-connector-test"));
     }
 
     @Test
     public void testInvalidBatchSize() {
         sourceProperties.put(FileStreamSourceConnector.TASK_BATCH_SIZE_CONFIG, "abcd");
-        assertThrows(ConfigException.class, () -> new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, sourceProperties));
+        assertThrows(ConfigException.class, () -> new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, sourceProperties, "source-connector-test"));
     }
 }

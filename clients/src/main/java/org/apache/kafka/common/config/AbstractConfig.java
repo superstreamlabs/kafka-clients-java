@@ -107,6 +107,7 @@ public class AbstractConfig {
      * @param doLog whether the configurations should be logged
      */
     // ** Added by Superstream
+    @SuppressWarnings("unchecked")
     public AbstractConfig(ConfigDef definition, Map<?, ?> originals, Map<String, ?> configProviderProps, boolean doLog, String type) {
         /* check that all the keys are really strings */
         for (Map.Entry<?, ?> entry : originals.entrySet())

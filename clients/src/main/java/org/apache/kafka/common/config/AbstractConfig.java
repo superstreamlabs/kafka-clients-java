@@ -106,15 +106,15 @@ public class AbstractConfig {
      *        the constructor to resolve any variables in {@code originals}; may be null or empty
      * @param doLog whether the configurations should be logged
      */
-    @SuppressWarnings("unchecked")
-    public AbstractConfig(ConfigDef definition, Map<?, ?> originals,  Map<String, ?> configProviderProps, boolean doLog) {
+    // ** Added by Superstream
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, Map<String, ?> configProviderProps, boolean doLog, String type) {
         /* check that all the keys are really strings */
         for (Map.Entry<?, ?> entry : originals.entrySet())
-            if (!(entry.getKey() instanceof String))
-                throw new ConfigException(entry.getKey().toString(), entry.getValue(), "Key must be a string.");
+        if (!(entry.getKey() instanceof String))
+            throw new ConfigException(entry.getKey().toString(), entry.getValue(), "Key must be a string.");
 
         // ** Added by Superstream
-        originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals);
+        originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals, type);
         // Added by Superstream **
         this.originals = resolveConfigVariables(configProviderProps, (Map<String, Object>) originals);
         this.values = definition.parse(this.originals);
@@ -125,8 +125,26 @@ public class AbstractConfig {
         definition.parse(this.values);
         this.definition = definition;
         if (doLog)
-            logAll();
+        logAll();
     }
+    // Added by Superstream **
+
+     /**
+     * Construct a configuration with a ConfigDef and the configuration properties,
+     * which can include properties for zero or more {@link ConfigProvider}
+     * that will be used to resolve variables in configuration property values.
+     *
+     * @param definition the definition of the configurations; may not be null
+     * @param originals the configuration properties plus any optional config provider properties;
+     * @param configProviderProps the map of properties of config providers which will be instantiated by
+     *        the constructor to resolve any variables in {@code originals}; may be null or empty
+     * @param doLog whether the configurations should be logged
+     */
+    @SuppressWarnings("unchecked")
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals,  Map<String, ?> configProviderProps, boolean doLog) {
+        this(definition, originals, configProviderProps, doLog, "");
+    }
+    
 
     /**
      * Construct a configuration with a ConfigDef and the configuration properties,
@@ -139,6 +157,20 @@ public class AbstractConfig {
     public AbstractConfig(ConfigDef definition, Map<?, ?> originals) {
         this(definition, originals, Collections.emptyMap(), true);
     }
+
+    // ** Added by Superstream
+    /**
+     * Construct a configuration with a ConfigDef and the configuration properties,
+     * which can include properties for zero or more {@link ConfigProvider}
+     * that will be used to resolve variables in configuration property values.
+     *
+     * @param definition the definition of the configurations; may not be null
+     * @param originals the configuration properties plus any optional config provider properties; may not be null
+     */
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, String type) {
+        this(definition, originals, Collections.emptyMap(), true, type);
+    }
+    // Added by Superstream **
 
     /**
      * Construct a configuration with a ConfigDef and the configuration properties,
@@ -153,6 +185,23 @@ public class AbstractConfig {
         this(definition, originals, Collections.emptyMap(), doLog);
 
     }
+
+
+    // ** Added by Superstream
+    /**
+     * Construct a configuration with a ConfigDef and the configuration properties,
+     * which can include properties for zero or more {@link ConfigProvider}
+     * that will be used to resolve variables in configuration property values.
+     *
+     * @param definition the definition of the configurations; may not be null
+     * @param originals the configuration properties plus any optional config provider properties; may not be null
+     * @param doLog whether the configurations should be logged
+     */
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog, String type) {
+        this(definition, originals, Collections.emptyMap(), doLog, type);
+
+    }
+    // Added by Superstream **
 
     /**
      * Called directly after user configs got parsed (and thus default values got set).

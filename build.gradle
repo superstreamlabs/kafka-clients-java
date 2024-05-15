@@ -1198,7 +1198,7 @@ project(':clients') {
     implementation libs.snappy
     implementation libs.slf4jApi
 
-    implementation 'ai.superstream:superstream-java:1.0.5-beta'
+    implementation 'ai.superstream:superstream-java:1.0.5-beta2'
 
     compileOnly libs.jacksonDatabind // for SASL/OAUTHBEARER bearer token parsing
     compileOnly libs.jacksonJDK8Datatypes

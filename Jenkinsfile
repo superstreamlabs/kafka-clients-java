@@ -22,7 +22,7 @@ pipeline {
                 branch '*-alpha'
             }            
             steps {
-                sh "echo $JAVA_HOME"
+                sh "echo ${JAVA_HOME}"
                 sh "java -version"
                 sh "javac -version"
 

@@ -290,7 +290,7 @@ subprojects {
 
   // We should only set this if Java version is < 9 (--release is recommended for >= 9), but the Scala plugin for IntelliJ sets
   // `-target` incorrectly if this is unset
-  sourceCompatibility = minJavaVersion
+  sourceCompatibility = '21'
   targetCompatibility = '21'
 
   if (shouldPublish) {

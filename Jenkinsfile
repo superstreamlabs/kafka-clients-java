@@ -5,7 +5,7 @@ pipeline {
             label 'memphis-jenkins-big-fleet,'
             // image 'gradle:8.6'
             // image 'gradle:8.6.0-jdk21-jammy'            
-            image '8.6-jdk21'
+            image 'gradle:8.6-jdk21'
             args '-u root'
         }
     } 

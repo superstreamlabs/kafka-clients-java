@@ -1444,7 +1444,7 @@ project(':clients') {
     implementation libs.slf4jApi
     implementation libs.opentelemetryProto
     implementation 'org.ow2.asm:asm:9.7'
-    implementation 'ai.superstream:superstream-java:0.0.1-alpha27'{
+    implementation("ai.superstream:superstream-java:0.0.1-alpha27") {
         exclude group: 'com.google.protobuf', module: 'protobuf-java-util'
     }
 

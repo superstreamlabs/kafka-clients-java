@@ -1445,7 +1445,6 @@ project(':clients') {
     implementation libs.opentelemetryProto
     implementation 'org.ow2.asm:asm:9.7'
     implementation 'ai.superstream:superstream-java:0.0.1-alpha27'
-    }
 
     // libraries which should be added as runtime dependencies in generated pom.xml should be defined here:
     shadowed libs.zstd

@@ -22,7 +22,10 @@ pipeline {
                 branch '*-alpha'
             }            
             steps {
+                sh "echo $JAVA_HOME"
                 sh "java -version"
+                sh "javac -version"
+
                 script {
                     def version = readFile('version-alpha.conf').trim()
                     env.versionTag = version

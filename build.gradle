@@ -55,6 +55,7 @@ ext {
   gradleVersion = versions.gradle
   minJavaVersion = 8
   buildVersionFileName = "kafka-version.properties"
+  asmAsmVersion = "9.6"
 
   defaultMaxHeapSize = "2g"
   defaultJvmArgs = ["-Xss4m", "-XX:+UseParallelGC"]
@@ -126,6 +127,8 @@ allprojects {
   dependencyUpdates {
     revision="release"
     resolutionStrategy {
+                force(group: "org.ow2.asm", name: "asm", version: asmAsmVersion)
+                force(group: "org.ow2.asm", name: "asm-commons", version: asmAsmVersion)      
       componentSelection { rules ->
         rules.all { ComponentSelection selection ->
           boolean rejected = ['snap', 'alpha', 'beta', 'rc', 'cr', 'm'].any { qualifier ->

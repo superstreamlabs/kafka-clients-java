@@ -4,8 +4,8 @@ pipeline {
         docker {
             label 'memphis-jenkins-big-fleet,'
             // image 'gradle:8.6'
-            image 'gradle:8.6.0-jdk21-jammy'            
-            // image 'gradle:8.6.0-jdk21-alpine'
+            // image 'gradle:8.6.0-jdk21-jammy'            
+            image '8.6-jdk21'
             args '-u root'
         }
     } 
@@ -31,7 +31,7 @@ pipeline {
                     env.versionTag = version
                     echo "Using version from version-alpha.conf: ${env.versionTag}" 
                     // sh "apk add curl"
-                    // setupGPG()     
+                    setupGPG()     
                     publishClients() 
                     uploadBundleAndCheckStatus()                         
                 }

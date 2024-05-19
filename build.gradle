@@ -290,8 +290,8 @@ subprojects {
 
   // We should only set this if Java version is < 9 (--release is recommended for >= 9), but the Scala plugin for IntelliJ sets
   // `-target` incorrectly if this is unset
-  sourceCompatibility = '17'
-  targetCompatibility = '17'
+  sourceCompatibility = minJavaVersion
+  targetCompatibility = minJavaVersion
 
   if (shouldPublish) {
 
@@ -1444,7 +1444,9 @@ project(':clients') {
     implementation libs.slf4jApi
     implementation libs.opentelemetryProto
     implementation 'org.ow2.asm:asm:9.7'
-    implementation 'ai.superstream:superstream-java:0.0.1-alpha27'
+    implementation 'ai.superstream:superstream-java:0.0.1-alpha27'{
+        exclude group: 'com.google.protobuf', module: 'protobuf-java-util'
+    }
 
     // libraries which should be added as runtime dependencies in generated pom.xml should be defined here:
     shadowed libs.zstd

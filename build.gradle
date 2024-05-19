@@ -270,9 +270,9 @@ subprojects {
   }
 
   java {  
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
-    }    
+    // toolchain {
+    //     languageVersion = JavaLanguageVersion.of(21)
+    // }    
     consistentResolution {
       // resolve the compileClasspath and then "inject" the result of resolution as strict constraints into the runtimeClasspath
       useCompileClasspathVersions()
@@ -304,8 +304,8 @@ subprojects {
 
   // We should only set this if Java version is < 9 (--release is recommended for >= 9), but the Scala plugin for IntelliJ sets
   // `-target` incorrectly if this is unset
-  sourceCompatibility = '21'
-  targetCompatibility = '21'
+  sourceCompatibility = minJavaVersion
+  targetCompatibility = minJavaVersion
 
   if (shouldPublish) {
 

@@ -393,10 +393,9 @@ public class KafkaAdminClient extends AdminClient {
     // ** Added by Superstream
     public Superstream superstreamConnection;
     public void configureSuperstream(Map<String, ?> configs) {
-        System.out.println("Running Superstream Kafka Admin Client");
         Superstream superstreamConn = (Superstream) configs.get(Consts.superstreamConnectionKey);
         if (superstreamConn == null) {
-            System.out.println("Failed to connect to Superstream - Running Kafka Admin Client");
+            System.out.println("Failed to connect to Superstream");
         } else {
             this.superstreamConnection = superstreamConn;
         }

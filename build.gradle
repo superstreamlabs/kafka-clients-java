@@ -22,6 +22,20 @@ buildscript {
   repositories {
     mavenCentral()
   }
+
+  ext {
+    asmAsmVersion = "9.6" // https://gitlab.ow2.org/asm/asm/-/tags
+  } 
+   configurations {
+        classpath {
+            resolutionStrategy {
+                //in order to handle jackson's higher release version in shadow, this needs to be upgraded to latest.
+                force(group: "org.ow2.asm", name: "asm", version: asmAsmVersion)
+                force(group: "org.ow2.asm", name: "asm-commons", version: asmAsmVersion)
+            }
+        }
+    }
+    
   apply from: "$rootDir/gradle/dependencies.gradle"
 
   dependencies {

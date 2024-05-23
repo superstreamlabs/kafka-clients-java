@@ -22,6 +22,20 @@ buildscript {
   repositories {
     mavenCentral()
   }
+
+  ext {
+    asmAsmVersion = "9.6" // https://gitlab.ow2.org/asm/asm/-/tags
+  } 
+   configurations {
+        classpath {
+            resolutionStrategy {
+                //in order to handle jackson's higher release version in shadow, this needs to be upgraded to latest.
+                force(group: "org.ow2.asm", name: "asm", version: asmAsmVersion)
+                force(group: "org.ow2.asm", name: "asm-commons", version: asmAsmVersion)
+            }
+        }
+    }
+
   apply from: "$rootDir/gradle/dependencies.gradle"
 
   dependencies {
@@ -292,10 +306,6 @@ subprojects {
         // To test locally, invoke gradlew with `-PmavenUrl=file:///some/local/path`
         maven {
           url = mavenUrl
-          credentials {
-            username = mavenUsername
-            password = mavenPassword
-          }
         }
       }
       publications {
@@ -316,8 +326,9 @@ subprojects {
 
             artifactId = archivesBaseName
             pom {
-              name = 'Apache Kafka'
-              url = 'https://kafka.apache.org'
+              name = 'Superstream Kafka'
+              description = 'Superstream Kafka Clients'
+              url = 'https://superstream.ai'
               licenses {
                 license {
                   name = 'The Apache License, Version 2.0'
@@ -325,6 +336,18 @@ subprojects {
                   distribution = 'repo'
                 }
               }
+              developers {
+                    developer {
+                        id = 'teamsuperstream'
+                        name = 'Team superstream'
+                        email = 'team@superstream.ai'
+                    }
+              } 
+              scm {
+                    connection = 'scm:git:git://github.com:superstreamlabs/superstream-kafka.git'
+                    developerConnection = 'scm:git:ssh://github.com:superstreamlabs/superstream-kafka.git'
+                    url = 'https://superstream.ai'
+                }                           
             }
           }
         }
@@ -1407,6 +1430,7 @@ project(':clients') {
     implementation libs.snappy
     implementation libs.slf4jApi
     implementation libs.opentelemetryProto
+    implementation 'ai.superstream:superstream-java:1.0.4'
 
     // libraries which should be added as runtime dependencies in generated pom.xml should be defined here:
     shadow libs.zstd

@@ -62,7 +62,7 @@ pipeline {
         }
         stage('Prod Release') {
             when {
-                branch '3.5.1'
+                branch '3.7.0'
             }            
             steps {
                 script {

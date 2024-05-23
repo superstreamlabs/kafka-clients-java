@@ -298,7 +298,7 @@ public class OAuthCompatibilityTool {
             ConfigDef cd = new ConfigDef();
             SaslConfigs.addClientSaslSupport(cd);
             SslConfigs.addClientSslSupport(cd);
-            AbstractConfig config = new AbstractConfig(cd, m, "oauth-compatibility-tool");
+            AbstractConfig config = new AbstractConfig(cd, m);
             return config.values();
         }
 

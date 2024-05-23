@@ -34,7 +34,6 @@ import org.apache.kafka.common.protocol.Errors;
 import org.apache.kafka.common.record.RecordVersion;
 
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -106,59 +105,6 @@ public class ApiVersionsResponse extends AbstractResponse {
         }
     }
 
-    public static ApiVersionsResponse defaultApiVersionsResponse(
-        ApiMessageType.ListenerType listenerType
-    ) {
-        return defaultApiVersionsResponse(0, listenerType);
-    }
-
-    public static ApiVersionsResponse defaultApiVersionsResponse(
-        int throttleTimeMs,
-        ApiMessageType.ListenerType listenerType
-    ) {
-        return createApiVersionsResponse(
-            throttleTimeMs,
-            filterApis(RecordVersion.current(), listenerType, true),
-            Features.emptySupportedFeatures(),
-            false
-        );
-    }
-
-    public static ApiVersionsResponse defaultApiVersionsResponse(
-        int throttleTimeMs,
-        ApiMessageType.ListenerType listenerType,
-        boolean enableUnstableLastVersion
-    ) {
-        return createApiVersionsResponse(
-            throttleTimeMs,
-            filterApis(RecordVersion.current(), listenerType, enableUnstableLastVersion),
-            Features.emptySupportedFeatures(),
-            false
-        );
-    }
-
-    public static ApiVersionsResponse createApiVersionsResponse(
-        int throttleTimeMs,
-        ApiVersionCollection apiVersions
-    ) {
-        return createApiVersionsResponse(throttleTimeMs, apiVersions, Features.emptySupportedFeatures(), false);
-    }
-
-    public static ApiVersionsResponse createApiVersionsResponse(
-        int throttleTimeMs,
-        ApiVersionCollection apiVersions,
-        Features<SupportedVersionRange> latestSupportedFeatures,
-        boolean zkMigrationEnabled
-    ) {
-        return createApiVersionsResponse(
-            throttleTimeMs,
-            apiVersions,
-            latestSupportedFeatures,
-            Collections.emptyMap(),
-            UNKNOWN_FINALIZED_FEATURES_EPOCH,
-            zkMigrationEnabled);
-    }
-
     public static ApiVersionsResponse createApiVersionsResponse(
         int throttleTimeMs,
         RecordVersion minRecordVersion,
@@ -168,7 +114,8 @@ public class ApiVersionsResponse extends AbstractResponse {
         NodeApiVersions controllerApiVersions,
         ListenerType listenerType,
         boolean enableUnstableLastVersion,
-        boolean zkMigrationEnabled
+        boolean zkMigrationEnabled,
+        boolean clientTelemetryEnabled
     ) {
         ApiVersionCollection apiKeys;
         if (controllerApiVersions != null) {
@@ -176,13 +123,15 @@ public class ApiVersionsResponse extends AbstractResponse {
                 listenerType,
                 minRecordVersion,
                 controllerApiVersions.allSupportedApiVersions(),
-                enableUnstableLastVersion
+                enableUnstableLastVersion,
+                clientTelemetryEnabled
             );
         } else {
             apiKeys = filterApis(
                 minRecordVersion,
                 listenerType,
-                enableUnstableLastVersion
+                enableUnstableLastVersion,
+                clientTelemetryEnabled
             );
         }
 
@@ -221,16 +170,21 @@ public class ApiVersionsResponse extends AbstractResponse {
         RecordVersion minRecordVersion,
         ApiMessageType.ListenerType listenerType
     ) {
-        return filterApis(minRecordVersion, listenerType, false);
+        return filterApis(minRecordVersion, listenerType, false, false);
     }
 
     public static ApiVersionCollection filterApis(
         RecordVersion minRecordVersion,
         ApiMessageType.ListenerType listenerType,
-        boolean enableUnstableLastVersion
+        boolean enableUnstableLastVersion,
+        boolean clientTelemetryEnabled
     ) {
         ApiVersionCollection apiKeys = new ApiVersionCollection();
         for (ApiKeys apiKey : ApiKeys.apisForListener(listenerType)) {
+            // Skip telemetry APIs if client telemetry is disabled.
+            if ((apiKey == ApiKeys.GET_TELEMETRY_SUBSCRIPTIONS || apiKey == ApiKeys.PUSH_TELEMETRY) && !clientTelemetryEnabled)
+                continue;
+
             if (apiKey.minRequiredInterBrokerMagic <= minRecordVersion.value) {
                 apiKey.toApiVersion(enableUnstableLastVersion).ifPresent(apiKeys::add);
             }
@@ -257,13 +211,15 @@ public class ApiVersionsResponse extends AbstractResponse {
      * @param minRecordVersion min inter broker magic
      * @param activeControllerApiVersions controller ApiVersions
      * @param enableUnstableLastVersion whether unstable versions should be advertised or not
+     * @param clientTelemetryEnabled whether client telemetry is enabled or not
      * @return commonly agreed ApiVersion collection
      */
     public static ApiVersionCollection intersectForwardableApis(
         final ApiMessageType.ListenerType listenerType,
         final RecordVersion minRecordVersion,
         final Map<ApiKeys, ApiVersion> activeControllerApiVersions,
-        boolean enableUnstableLastVersion
+        boolean enableUnstableLastVersion,
+        boolean clientTelemetryEnabled
     ) {
         ApiVersionCollection apiKeys = new ApiVersionCollection();
         for (ApiKeys apiKey : ApiKeys.apisForListener(listenerType)) {
@@ -273,6 +229,10 @@ public class ApiVersionsResponse extends AbstractResponse {
                     // Broker does not support this API key.
                     continue;
                 }
+
+                // Skip telemetry APIs if client telemetry is disabled.
+                if ((apiKey == ApiKeys.GET_TELEMETRY_SUBSCRIPTIONS || apiKey == ApiKeys.PUSH_TELEMETRY) && !clientTelemetryEnabled)
+                    continue;
 
                 final ApiVersion finalApiVersion;
                 if (!apiKey.forwardable) {

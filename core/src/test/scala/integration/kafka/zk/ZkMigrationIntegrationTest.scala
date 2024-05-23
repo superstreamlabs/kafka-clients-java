@@ -18,43 +18,75 @@ package kafka.zk
 
 import kafka.security.authorizer.AclEntry.{WildcardHost, WildcardPrincipalString}
 import kafka.server.{ConfigType, KafkaConfig}
-import kafka.test.ClusterInstance
-import kafka.test.annotation.{AutoStart, ClusterConfigProperty, ClusterTest, Type}
+import kafka.test.{ClusterConfig, ClusterGenerator, ClusterInstance}
+import kafka.test.annotation.{AutoStart, ClusterConfigProperty, ClusterTemplate, ClusterTest, Type}
 import kafka.test.junit.ClusterTestExtensions
 import kafka.test.junit.ZkClusterInvocationContext.ZkClusterInstance
 import kafka.testkit.{KafkaClusterTestKit, TestKitNodes}
 import kafka.utils.{PasswordEncoder, TestUtils}
+import org.apache.kafka.clients.ClientResponse
 import org.apache.kafka.clients.admin._
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.kafka.common.{TopicPartition, Uuid}
 import org.apache.kafka.common.acl.AclOperation.{DESCRIBE, READ, WRITE}
 import org.apache.kafka.common.acl.AclPermissionType.ALLOW
 import org.apache.kafka.common.acl.{AccessControlEntry, AclBinding}
 import org.apache.kafka.common.config.{ConfigResource, TopicConfig}
+import org.apache.kafka.common.errors.{TimeoutException, UnknownTopicOrPartitionException}
+import org.apache.kafka.common.message.AllocateProducerIdsRequestData
 import org.apache.kafka.common.quota.{ClientQuotaAlteration, ClientQuotaEntity}
+import org.apache.kafka.common.requests.{AllocateProducerIdsRequest, AllocateProducerIdsResponse}
 import org.apache.kafka.common.resource.PatternType.{LITERAL, PREFIXED}
 import org.apache.kafka.common.resource.ResourcePattern
 import org.apache.kafka.common.resource.ResourceType.TOPIC
 import org.apache.kafka.common.security.auth.KafkaPrincipal
 import org.apache.kafka.common.security.scram.internals.ScramCredentialUtils
-import org.apache.kafka.common.serialization.StringSerializer
 import org.apache.kafka.common.utils.SecurityUtils
 import org.apache.kafka.image.{MetadataDelta, MetadataImage, MetadataProvenance}
 import org.apache.kafka.metadata.authorizer.StandardAcl
 import org.apache.kafka.metadata.migration.ZkMigrationLeadershipState
 import org.apache.kafka.raft.RaftConfig
+import org.apache.kafka.server.ControllerRequestCompletionHandler
 import org.apache.kafka.server.common.{ApiMessageAndVersion, MetadataVersion, ProducerIdsBlock}
-import org.junit.jupiter.api.Assertions.{assertEquals, assertFalse, assertNotNull, assertTrue}
-import org.junit.jupiter.api.Timeout
+import org.junit.jupiter.api.Assertions.{assertEquals, assertFalse, assertNotEquals, assertNotNull, assertTrue, fail}
+import org.junit.jupiter.api.{Assumptions, Timeout}
 import org.junit.jupiter.api.extension.ExtendWith
 import org.slf4j.LoggerFactory
 
 import java.util
-import java.util.concurrent.TimeUnit
-import java.util.{Properties, UUID}
+import java.util.concurrent.{CompletableFuture, ExecutionException, TimeUnit}
+import java.util.{Collections, Optional, Properties, UUID}
 import scala.collection.Seq
 import scala.jdk.CollectionConverters._
 
+object ZkMigrationIntegrationTest {
+  def addZkBrokerProps(props: Properties): Unit = {
+    props.setProperty("inter.broker.listener.name", "EXTERNAL")
+    props.setProperty("listeners", "PLAINTEXT://localhost:0,EXTERNAL://localhost:0")
+    props.setProperty("advertised.listeners", "PLAINTEXT://localhost:0,EXTERNAL://localhost:0")
+    props.setProperty("listener.security.protocol.map", "EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT")
+  }
+
+  def zkClustersForAllMigrationVersions(clusterGenerator: ClusterGenerator): Unit = {
+    Seq(
+      MetadataVersion.IBP_3_4_IV0,
+      MetadataVersion.IBP_3_5_IV2,
+      MetadataVersion.IBP_3_6_IV2,
+      MetadataVersion.IBP_3_7_IV0,
+      MetadataVersion.IBP_3_7_IV1,
+      MetadataVersion.IBP_3_7_IV2,
+      MetadataVersion.IBP_3_7_IV4,
+      MetadataVersion.IBP_3_8_IV0
+    ).foreach { mv =>
+      val clusterConfig = ClusterConfig.defaultClusterBuilder()
+        .metadataVersion(mv)
+        .brokers(3)
+        .`type`(Type.ZK)
+        .build()
+      addZkBrokerProps(clusterConfig.serverProperties())
+      clusterGenerator.accept(clusterConfig)
+    }
+  }
+}
 
 @ExtendWith(value = Array(classOf[ClusterTestExtensions]))
 @Timeout(300)
@@ -152,10 +184,8 @@ class ZkMigrationIntegrationTest {
 
       // Enable migration configs and restart brokers
       log.info("Restart brokers in migration mode")
-      val clientProps = kraftCluster.controllerClientProperties()
-      val voters = clientProps.get(RaftConfig.QUORUM_VOTERS_CONFIG)
       zkCluster.config().serverProperties().put(KafkaConfig.MigrationEnabledProp, "true")
-      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, voters)
+      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, kraftCluster.quorumVotersConfig());
       zkCluster.config().serverProperties().put(KafkaConfig.ControllerListenerNamesProp, "CONTROLLER")
       zkCluster.config().serverProperties().put(KafkaConfig.ListenerSecurityProtocolMapProp, "CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT")
       zkCluster.rollingBrokerRestart() // This would throw if authorizers weren't allowed
@@ -163,7 +193,10 @@ class ZkMigrationIntegrationTest {
       readyFuture.get(30, TimeUnit.SECONDS)
 
       val zkClient = zkCluster.asInstanceOf[ZkClusterInstance].getUnderlying().zkClient
-      TestUtils.waitUntilTrue(() => zkClient.getControllerId.contains(3000), "Timed out waiting for KRaft controller to take over")
+      TestUtils.waitUntilTrue(
+        () => zkClient.getControllerId.contains(3000),
+        "Timed out waiting for KRaft controller to take over",
+        30000)
 
       def inDualWrite(): Boolean = {
         val migrationState = kraftCluster.controllers().get(3000).migrationSupport.get.migrationDriver.migrationState().get(10, TimeUnit.SECONDS)
@@ -242,6 +275,139 @@ class ZkMigrationIntegrationTest {
     migrationState = migrationClient.releaseControllerLeadership(migrationState)
   }
 
+  @ClusterTemplate("zkClustersForAllMigrationVersions")
+  def testMigrateTopicDeletions(zkCluster: ClusterInstance): Unit = {
+    // Create some topics in ZK mode
+    var admin = zkCluster.createAdminClient()
+    val newTopics = new util.ArrayList[NewTopic]()
+    newTopics.add(new NewTopic("test-topic-1", 10, 3.toShort))
+    newTopics.add(new NewTopic("test-topic-2", 10, 3.toShort))
+    newTopics.add(new NewTopic("test-topic-3", 10, 3.toShort))
+    val createTopicResult = admin.createTopics(newTopics)
+    createTopicResult.all().get(300, TimeUnit.SECONDS)
+    admin.close()
+    val zkClient = zkCluster.asInstanceOf[ZkClusterInstance].getUnderlying().zkClient
+
+    // Bootstrap the ZK cluster ID into KRaft
+    val clusterId = zkCluster.clusterId()
+    val kraftCluster = new KafkaClusterTestKit.Builder(
+      new TestKitNodes.Builder().
+        setBootstrapMetadataVersion(zkCluster.config().metadataVersion()).
+        setClusterId(Uuid.fromString(clusterId)).
+        setNumBrokerNodes(0).
+        setNumControllerNodes(1).build())
+      .setConfigProp(KafkaConfig.MigrationEnabledProp, "true")
+      .setConfigProp(KafkaConfig.ZkConnectProp, zkCluster.asInstanceOf[ZkClusterInstance].getUnderlying.zkConnect)
+      .build()
+    try {
+      kraftCluster.format()
+      kraftCluster.startup()
+      val readyFuture = kraftCluster.controllers().values().asScala.head.controller.waitForReadyBrokers(3)
+
+      // Enable migration configs and restart brokers
+      log.info("Restart brokers in migration mode")
+      zkCluster.config().serverProperties().put(KafkaConfig.MigrationEnabledProp, "true")
+      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, kraftCluster.quorumVotersConfig())
+      zkCluster.config().serverProperties().put(KafkaConfig.ControllerListenerNamesProp, "CONTROLLER")
+      zkCluster.config().serverProperties().put(KafkaConfig.ListenerSecurityProtocolMapProp, "CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT")
+      zkCluster.rollingBrokerRestart()
+
+      // Emulate a ZK topic deletion
+      zkClient.createDeleteTopicPath("test-topic-1")
+      zkClient.createDeleteTopicPath("test-topic-2")
+      zkClient.createDeleteTopicPath("test-topic-3")
+
+      zkCluster.waitForReadyBrokers()
+      readyFuture.get(60, TimeUnit.SECONDS)
+
+      // Only continue with the test if there are some pending deletions to verify. If there are not any pending
+      // deletions, this will mark the test as "skipped" instead of failed.
+      val topicDeletions = zkClient.getTopicDeletions
+      Assumptions.assumeTrue(topicDeletions.nonEmpty,
+        "This test needs pending topic deletions after a migration in order to verify the behavior")
+
+      // Wait for migration to begin
+      log.info("Waiting for ZK migration to complete")
+      TestUtils.waitUntilTrue(
+        () => zkClient.getOrCreateMigrationState(ZkMigrationLeadershipState.EMPTY).initialZkMigrationComplete(),
+        "Timed out waiting for migration to complete",
+        30000)
+
+      // At this point, some of the topics may have been deleted by ZK controller and the rest will be
+      // implicitly deleted by the KRaft controller and remove from the ZK brokers as stray partitions
+      def topicsAllDeleted(admin: Admin): Boolean = {
+        val topics = admin.listTopics().names().get(60, TimeUnit.SECONDS)
+        topics.retainAll(util.Arrays.asList(
+          "test-topic-1", "test-topic-2", "test-topic-3"
+        ))
+        topics.isEmpty
+      }
+
+      admin = zkCluster.createAdminClient()
+      log.info("Waiting for topics to be deleted")
+      TestUtils.waitUntilTrue(
+        () => topicsAllDeleted(admin),
+        "Timed out waiting for topics to be deleted",
+        30000,
+        1000)
+
+      val newTopics = new util.ArrayList[NewTopic]()
+      newTopics.add(new NewTopic("test-topic-1", 2, 3.toShort))
+      newTopics.add(new NewTopic("test-topic-2", 1, 3.toShort))
+      newTopics.add(new NewTopic("test-topic-3", 10, 3.toShort))
+      val createTopicResult = admin.createTopics(newTopics)
+      createTopicResult.all().get(60, TimeUnit.SECONDS)
+
+      def topicsAllRecreated(admin: Admin): Boolean = {
+        val topics = admin.listTopics().names().get(60, TimeUnit.SECONDS)
+        topics.retainAll(util.Arrays.asList(
+          "test-topic-1", "test-topic-2", "test-topic-3"
+        ))
+        topics.size() == 3
+      }
+
+      log.info("Waiting for topics to be re-created")
+      TestUtils.waitUntilTrue(
+        () => topicsAllRecreated(admin),
+        "Timed out waiting for topics to be created",
+        30000,
+        1000)
+
+      TestUtils.retry(300000) {
+        // Need a retry here since topic metadata may be inconsistent between brokers
+        val topicDescriptions = try {
+          admin.describeTopics(util.Arrays.asList(
+            "test-topic-1", "test-topic-2", "test-topic-3"
+          )).topicNameValues().asScala.map { case (name, description) =>
+            name -> description.get(60, TimeUnit.SECONDS)
+          }.toMap
+        } catch {
+          case e: ExecutionException if e.getCause.isInstanceOf[UnknownTopicOrPartitionException] => Map.empty[String, TopicDescription]
+          case t: Throwable => fail("Error describing topics", t.getCause)
+        }
+
+        assertEquals(2, topicDescriptions("test-topic-1").partitions().size())
+        assertEquals(1, topicDescriptions("test-topic-2").partitions().size())
+        assertEquals(10, topicDescriptions("test-topic-3").partitions().size())
+        topicDescriptions.foreach { case (topic, description) =>
+          description.partitions().forEach(partition => {
+            assertEquals(3, partition.replicas().size(), s"Unexpected number of replicas for ${topic}-${partition.partition()}")
+            assertEquals(3, partition.isr().size(), s"Unexpected ISR for ${topic}-${partition.partition()}")
+          })
+        }
+
+        val absentTopics = admin.listTopics().names().get(60, TimeUnit.SECONDS).asScala
+        assertTrue(absentTopics.contains("test-topic-1"))
+        assertTrue(absentTopics.contains("test-topic-2"))
+        assertTrue(absentTopics.contains("test-topic-3"))
+      }
+
+      admin.close()
+    } finally {
+      shutdownInSequence(zkCluster, kraftCluster)
+    }
+  }
+
   // SCRAM and Quota are intermixed. Test SCRAM Only here
   @ClusterTest(clusterType = Type.ZK, brokers = 3, metadataVersion = MetadataVersion.IBP_3_5_IV2, serverProperties = Array(
     new ClusterConfigProperty(key = "inter.broker.listener.name", value = "EXTERNAL"),
@@ -274,10 +440,8 @@ class ZkMigrationIntegrationTest {
 
       // Enable migration configs and restart brokers
       log.info("Restart brokers in migration mode")
-      val clientProps = kraftCluster.controllerClientProperties()
-      val voters = clientProps.get(RaftConfig.QUORUM_VOTERS_CONFIG)
       zkCluster.config().serverProperties().put(KafkaConfig.MigrationEnabledProp, "true")
-      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, voters)
+      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, kraftCluster.quorumVotersConfig())
       zkCluster.config().serverProperties().put(KafkaConfig.ControllerListenerNamesProp, "CONTROLLER")
       zkCluster.config().serverProperties().put(KafkaConfig.ListenerSecurityProtocolMapProp, "CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT")
       zkCluster.rollingBrokerRestart()
@@ -286,7 +450,10 @@ class ZkMigrationIntegrationTest {
 
       // Wait for migration to begin
       log.info("Waiting for ZK migration to begin")
-      TestUtils.waitUntilTrue(() => zkClient.getControllerId.contains(3000), "Timed out waiting for KRaft controller to take over")
+      TestUtils.waitUntilTrue(
+        () => zkClient.getControllerId.contains(3000),
+        "Timed out waiting for KRaft controller to take over",
+        30000)
 
       // Alter the metadata
       log.info("Updating metadata with AdminClient")
@@ -302,12 +469,7 @@ class ZkMigrationIntegrationTest {
   }
 
   // SCRAM and Quota are intermixed. Test Quota Only here
-  @ClusterTest(clusterType = Type.ZK, brokers = 3, metadataVersion = MetadataVersion.IBP_3_4_IV0, serverProperties = Array(
-    new ClusterConfigProperty(key = "inter.broker.listener.name", value = "EXTERNAL"),
-    new ClusterConfigProperty(key = "listeners", value = "PLAINTEXT://localhost:0,EXTERNAL://localhost:0"),
-    new ClusterConfigProperty(key = "advertised.listeners", value = "PLAINTEXT://localhost:0,EXTERNAL://localhost:0"),
-    new ClusterConfigProperty(key = "listener.security.protocol.map", value = "EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT"),
-  ))
+  @ClusterTemplate("zkClustersForAllMigrationVersions")
   def testDualWrite(zkCluster: ClusterInstance): Unit = {
     // Create a topic in ZK mode
     var admin = zkCluster.createAdminClient()
@@ -328,7 +490,7 @@ class ZkMigrationIntegrationTest {
     val clusterId = zkCluster.clusterId()
     val kraftCluster = new KafkaClusterTestKit.Builder(
       new TestKitNodes.Builder().
-        setBootstrapMetadataVersion(MetadataVersion.IBP_3_4_IV0).
+        setBootstrapMetadataVersion(zkCluster.config().metadataVersion()).
         setClusterId(Uuid.fromString(clusterId)).
         setNumBrokerNodes(0).
         setNumControllerNodes(1).build())
@@ -340,16 +502,13 @@ class ZkMigrationIntegrationTest {
       kraftCluster.startup()
       val readyFuture = kraftCluster.controllers().values().asScala.head.controller.waitForReadyBrokers(3)
 
-      // Allocate a transactional producer ID while in ZK mode
-      allocateProducerId(zkCluster.bootstrapServers())
-      val producerIdBlock = readProducerIdBlock(zkClient)
+      // Allocate a block of producer IDs while in ZK mode
+      val nextProducerId = sendAllocateProducerIds(zkCluster.asInstanceOf[ZkClusterInstance]).get(30, TimeUnit.SECONDS)
 
       // Enable migration configs and restart brokers
       log.info("Restart brokers in migration mode")
-      val clientProps = kraftCluster.controllerClientProperties()
-      val voters = clientProps.get(RaftConfig.QUORUM_VOTERS_CONFIG)
       zkCluster.config().serverProperties().put(KafkaConfig.MigrationEnabledProp, "true")
-      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, voters)
+      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, kraftCluster.quorumVotersConfig())
       zkCluster.config().serverProperties().put(KafkaConfig.ControllerListenerNamesProp, "CONTROLLER")
       zkCluster.config().serverProperties().put(KafkaConfig.ListenerSecurityProtocolMapProp, "CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT")
       zkCluster.rollingBrokerRestart()
@@ -358,7 +517,10 @@ class ZkMigrationIntegrationTest {
 
       // Wait for migration to begin
       log.info("Waiting for ZK migration to begin")
-      TestUtils.waitUntilTrue(() => zkClient.getControllerId.contains(3000), "Timed out waiting for KRaft controller to take over")
+      TestUtils.waitUntilTrue(
+        () => zkClient.getControllerId.contains(3000),
+        "Timed out waiting for KRaft controller to take over",
+        30000)
 
       // Alter the metadata
       log.info("Updating metadata with AdminClient")
@@ -370,8 +532,8 @@ class ZkMigrationIntegrationTest {
       log.info("Verifying metadata changes with ZK")
       verifyTopicConfigs(zkClient)
       verifyClientQuotas(zkClient)
-      allocateProducerId(zkCluster.bootstrapServers())
-      verifyProducerId(producerIdBlock, zkClient)
+      val nextKRaftProducerId = sendAllocateProducerIds(zkCluster.asInstanceOf[ZkClusterInstance]).get(30, TimeUnit.SECONDS)
+      assertNotEquals(nextProducerId, nextKRaftProducerId)
 
     } finally {
       shutdownInSequence(zkCluster, kraftCluster)
@@ -410,10 +572,8 @@ class ZkMigrationIntegrationTest {
 
       // Enable migration configs and restart brokers
       log.info("Restart brokers in migration mode")
-      val clientProps = kraftCluster.controllerClientProperties()
-      val voters = clientProps.get(RaftConfig.QUORUM_VOTERS_CONFIG)
       zkCluster.config().serverProperties().put(KafkaConfig.MigrationEnabledProp, "true")
-      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, voters)
+      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, kraftCluster.quorumVotersConfig())
       zkCluster.config().serverProperties().put(KafkaConfig.ControllerListenerNamesProp, "CONTROLLER")
       zkCluster.config().serverProperties().put(KafkaConfig.ListenerSecurityProtocolMapProp, "CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT")
       zkCluster.rollingBrokerRestart()
@@ -422,7 +582,10 @@ class ZkMigrationIntegrationTest {
 
       // Wait for migration to begin
       log.info("Waiting for ZK migration to begin")
-      TestUtils.waitUntilTrue(() => zkClient.getControllerId.contains(3000), "Timed out waiting for KRaft controller to take over")
+      TestUtils.waitUntilTrue(
+        () => zkClient.getControllerId.contains(3000),
+        "Timed out waiting for KRaft controller to take over",
+        30000)
 
       // Alter the metadata
       log.info("Updating metadata with AdminClient")
@@ -469,10 +632,8 @@ class ZkMigrationIntegrationTest {
 
       // Enable migration configs and restart brokers
       log.info("Restart brokers in migration mode")
-      val clientProps = kraftCluster.controllerClientProperties()
-      val voters = clientProps.get(RaftConfig.QUORUM_VOTERS_CONFIG)
       zkCluster.config().serverProperties().put(KafkaConfig.MigrationEnabledProp, "true")
-      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, voters)
+      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, kraftCluster.quorumVotersConfig())
       zkCluster.config().serverProperties().put(KafkaConfig.ControllerListenerNamesProp, "CONTROLLER")
       zkCluster.config().serverProperties().put(KafkaConfig.ListenerSecurityProtocolMapProp, "CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT")
       zkCluster.rollingBrokerRestart()
@@ -481,7 +642,10 @@ class ZkMigrationIntegrationTest {
 
       // Wait for migration to begin
       log.info("Waiting for ZK migration to begin")
-      TestUtils.waitUntilTrue(() => zkClient.getControllerId.contains(3000), "Timed out waiting for KRaft controller to take over")
+      TestUtils.waitUntilTrue(
+        () => zkClient.getControllerId.contains(3000),
+        "Timed out waiting for KRaft controller to take over",
+        30000)
 
       // Alter the metadata
       log.info("Create new topic with AdminClient")
@@ -512,6 +676,86 @@ class ZkMigrationIntegrationTest {
     }
   }
 
+  @ClusterTest(clusterType = Type.ZK, brokers = 4, metadataVersion = MetadataVersion.IBP_3_7_IV0, serverProperties = Array(
+    new ClusterConfigProperty(key = "inter.broker.listener.name", value = "EXTERNAL"),
+    new ClusterConfigProperty(key = "listeners", value = "PLAINTEXT://localhost:0,EXTERNAL://localhost:0"),
+    new ClusterConfigProperty(key = "advertised.listeners", value = "PLAINTEXT://localhost:0,EXTERNAL://localhost:0"),
+    new ClusterConfigProperty(key = "listener.security.protocol.map", value = "EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT"),
+  ))
+  def testPartitionReassignmentInHybridMode(zkCluster: ClusterInstance): Unit = {
+    // Create a topic in ZK mode
+    val topicName = "test"
+    var admin = zkCluster.createAdminClient()
+    val zkClient = zkCluster.asInstanceOf[ZkClusterInstance].getUnderlying().zkClient
+
+    // Bootstrap the ZK cluster ID into KRaft
+    val clusterId = zkCluster.clusterId()
+    val kraftCluster = new KafkaClusterTestKit.Builder(
+      new TestKitNodes.Builder().
+        setBootstrapMetadataVersion(MetadataVersion.IBP_3_7_IV0).
+        setClusterId(Uuid.fromString(clusterId)).
+        setNumBrokerNodes(0).
+        setNumControllerNodes(1).build())
+      .setConfigProp(KafkaConfig.MigrationEnabledProp, "true")
+      .setConfigProp(KafkaConfig.ZkConnectProp, zkCluster.asInstanceOf[ZkClusterInstance].getUnderlying.zkConnect)
+      .build()
+    try {
+      kraftCluster.format()
+      kraftCluster.startup()
+      val readyFuture = kraftCluster.controllers().values().asScala.head.controller.waitForReadyBrokers(3)
+
+      // Enable migration configs and restart brokers
+      log.info("Restart brokers in migration mode")
+      zkCluster.config().serverProperties().put(KafkaConfig.MigrationEnabledProp, "true")
+      zkCluster.config().serverProperties().put(RaftConfig.QUORUM_VOTERS_CONFIG, kraftCluster.quorumVotersConfig())
+      zkCluster.config().serverProperties().put(KafkaConfig.ControllerListenerNamesProp, "CONTROLLER")
+      zkCluster.config().serverProperties().put(KafkaConfig.ListenerSecurityProtocolMapProp, "CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT")
+      zkCluster.rollingBrokerRestart()
+      zkCluster.waitForReadyBrokers()
+      readyFuture.get(30, TimeUnit.SECONDS)
+
+      // Wait for migration to begin
+      log.info("Waiting for ZK migration to begin")
+      TestUtils.waitUntilTrue(
+        () => zkClient.getControllerId.contains(3000),
+        "Timed out waiting for KRaft controller to take over",
+        30000)
+
+      // Create a topic with replicas on brokers 0, 1, 2
+      log.info("Create new topic with AdminClient")
+      admin = zkCluster.createAdminClient()
+      val newTopics = new util.ArrayList[NewTopic]()
+      val replicaAssignment = Collections.singletonMap(Integer.valueOf(0), Seq(0, 1, 2).map(int2Integer).asJava)
+      newTopics.add(new NewTopic(topicName, replicaAssignment))
+      val createTopicResult = admin.createTopics(newTopics)
+      createTopicResult.all().get(60, TimeUnit.SECONDS)
+
+      val topicPartition = new TopicPartition(topicName, 0)
+
+      // Verify the changes made to KRaft are seen in ZK
+      verifyTopicPartitionMetadata(topicName, Seq(topicPartition), zkClient)
+
+      // Reassign replicas to brokers 1, 2, 3 and wait for reassignment to complete
+      admin.alterPartitionReassignments(Collections.singletonMap(topicPartition,
+        Optional.of(new NewPartitionReassignment(Seq(1, 2, 3).map(int2Integer).asJava)))).all().get()
+
+      TestUtils.waitUntilTrue(() => {
+        val listPartitionReassignmentsResult = admin.listPartitionReassignments().reassignments().get()
+        listPartitionReassignmentsResult.isEmpty
+      }, "Timed out waiting for reassignments to complete.")
+
+      // Verify that the partition is removed from broker 0
+      TestUtils.waitUntilTrue(() => {
+        val brokers = zkCluster.asInstanceOf[ZkClusterInstance].getUnderlying.brokers
+        assertTrue(brokers.size == 4)
+        assertTrue(brokers.head.config.brokerId == 0)
+        brokers.head.replicaManager.onlinePartition(topicPartition).isEmpty
+      }, "Timed out waiting for removed replica reassignment to be marked offline")
+    } finally {
+      shutdownInSequence(zkCluster, kraftCluster)
+    }
+  }
+
   def verifyTopicPartitionMetadata(topicName: String, partitions: Seq[TopicPartition], zkClient: KafkaZkClient): Unit = {
     val (topicIdReplicaAssignment, success) = TestUtils.computeUntilTrue(
       zkClient.getReplicaAssignmentAndTopicIdForTopics(Set(topicName)).headOption) {
@@ -536,17 +780,26 @@ class ZkMigrationIntegrationTest {
     }
   }
 
-  def allocateProducerId(bootstrapServers: String): Unit = {
-    val props = new Properties()
-    props.put("bootstrap.servers", bootstrapServers)
-    props.put("transactional.id", "some-transaction-id")
-    val producer = new KafkaProducer[String, String](props, new StringSerializer(), new StringSerializer())
-    producer.initTransactions()
-    producer.beginTransaction()
-    producer.send(new ProducerRecord[String, String]("test", "", "one"))
-    producer.commitTransaction()
-    producer.flush()
-    producer.close()
+  def sendAllocateProducerIds(zkClusterInstance: ZkClusterInstance): CompletableFuture[Long] = {
+    val channel = zkClusterInstance.getUnderlying.brokers.head.clientToControllerChannelManager
+    val brokerId = zkClusterInstance.getUnderlying.brokers.head.config.brokerId
+    val brokerEpoch = zkClusterInstance.getUnderlying.brokers.head.replicaManager.brokerEpochSupplier.apply()
+    val request = new AllocateProducerIdsRequest.Builder(new AllocateProducerIdsRequestData()
+      .setBrokerId(brokerId)
+      .setBrokerEpoch(brokerEpoch))
+
+    val producerIdStart = new CompletableFuture[Long]()
+    channel.sendRequest(request, new ControllerRequestCompletionHandler() {
+        override def onTimeout(): Unit = {
+          producerIdStart.completeExceptionally(new TimeoutException("Request timed out"))
+        }
+
+        override def onComplete(response: ClientResponse): Unit = {
+          val body = response.responseBody().asInstanceOf[AllocateProducerIdsResponse]
+          producerIdStart.complete(body.data().producerIdStart())
+        }
+      })
+    producerIdStart
   }
 
   def readProducerIdBlock(zkClient: KafkaZkClient): ProducerIdsBlock = {
@@ -620,13 +873,6 @@ class ZkMigrationIntegrationTest {
       assertNotNull(propertyValue2)
       val scramCredentials2 = ScramCredentialUtils.credentialFromString(propertyValue2)
       assertEquals(8192, scramCredentials2.iterations)
-    }
-  }
-
-  def verifyProducerId(firstProducerIdBlock: ProducerIdsBlock, zkClient: KafkaZkClient): Unit = {
-    TestUtils.retry(10000) {
-      val producerIdBlock = readProducerIdBlock(zkClient)
-      assertTrue(firstProducerIdBlock.firstProducerId() < producerIdBlock.firstProducerId())
     }
   }
 

@@ -187,7 +187,7 @@ public abstract class OAuthBearerTest {
     protected Map<String, ?> getSaslConfigs(Map<String, ?> configs) {
         ConfigDef configDef = new ConfigDef();
         configDef.withClientSaslSupport();
-        AbstractConfig sslClientConfig = new AbstractConfig(configDef, configs, "sasl");
+        AbstractConfig sslClientConfig = new AbstractConfig(configDef, configs);
         return sslClientConfig.values();
     }
 

@@ -21,12 +21,15 @@ import org.apache.kafka.connect.runtime.distributed.RebalanceNeededException;
 import org.apache.kafka.connect.runtime.distributed.RequestTargetException;
 import org.apache.kafka.connect.runtime.rest.errors.ConnectRestException;
 import org.apache.kafka.connect.util.FutureCallback;
+import org.apache.kafka.connect.util.Stage;
+import org.apache.kafka.connect.util.StagedTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -38,7 +41,7 @@ public class HerderRequestHandler {
 
     private final RestClient restClient;
 
-    private long requestTimeoutMs;
+    private volatile long requestTimeoutMs;
 
     public HerderRequestHandler(RestClient restClient, long requestTimeoutMs) {
         this.restClient = restClient;
@@ -64,6 +67,22 @@ public class HerderRequestHandler {
             return cb.get(requestTimeoutMs, TimeUnit.MILLISECONDS);
         } catch (ExecutionException e) {
             throw e.getCause();
+        } catch (StagedTimeoutException e) {
+            String message;
+            Stage stage = e.stage();
+            if (stage.completed() != null) {
+                message = "Request timed out. The last operation the worker completed was "
+                        + stage.description() + ", which began at "
+                        + Instant.ofEpochMilli(stage.started()) + " and completed at "
+                        + Instant.ofEpochMilli(stage.completed());
+            } else {
+                message = "Request timed out. The worker is currently "
+                        + stage.description() + ", which began at "
+                        + Instant.ofEpochMilli(stage.started());
+            }
+            // This timeout is for the operation itself. None of the timeout error codes are relevant, so internal server
+            // error is the best option
+            throw new ConnectRestException(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), message);
         } catch (TimeoutException e) {
             // This timeout is for the operation itself. None of the timeout error codes are relevant, so internal server
             // error is the best option
@@ -78,14 +97,14 @@ public class HerderRequestHandler {
      * request to the indicated target.
      */
     public <T, U> T completeOrForwardRequest(FutureCallback<T> cb,
-                                                    String path,
-                                                    String method,
-                                                    HttpHeaders headers,
-                                                    Map<String, String> queryParameters,
-                                                    Object body,
-                                                    TypeReference<U> resultType,
-                                                    Translator<T, U> translator,
-                                                    Boolean forward) throws Throwable {
+                                             String path,
+                                             String method,
+                                             HttpHeaders headers,
+                                             Map<String, String> queryParameters,
+                                             Object body,
+                                             TypeReference<U> resultType,
+                                             Translator<T, U> translator,
+                                             Boolean forward) throws Throwable {
         try {
             return completeRequest(cb);
         } catch (RequestTargetException e) {
@@ -111,6 +130,8 @@ public class HerderRequestHandler {
                 log.debug("Forwarding request {} {} {}", forwardUrl, method, body);
                 return translator.translate(restClient.httpRequest(forwardUrl, method, headers, body, resultType));
             } else {
+                log.error("Request '{} {}' failed because it couldn't find the target Connect worker within two hops (between workers).",
+                        method, path);
                 // we should find the right target for the query within two hops, so if
                 // we don't, it probably means that a rebalance has taken place.
                 throw new ConnectRestException(Response.Status.CONFLICT.getStatusCode(),
@@ -127,13 +148,8 @@ public class HerderRequestHandler {
         return completeOrForwardRequest(cb, path, method, headers, null, body, resultType, translator, forward);
     }
 
-    public <T> T completeOrForwardRequest(FutureCallback<T> cb, String path, String method, HttpHeaders headers, Object body,
-                                                 TypeReference<T> resultType, Boolean forward) throws Throwable {
-        return completeOrForwardRequest(cb, path, method, headers, body, resultType, new IdentityTranslator<>(), forward);
-    }
-
     public <T> T completeOrForwardRequest(FutureCallback<T> cb, String path, String method, HttpHeaders headers,
-                                                 Object body, Boolean forward) throws Throwable {
+                                          Object body, Boolean forward) throws Throwable {
         return completeOrForwardRequest(cb, path, method, headers, body, null, new IdentityTranslator<>(), forward);
     }
 

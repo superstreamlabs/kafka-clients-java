@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Assertions._
 import org.junit.jupiter.api.Test
 
 import java.io.File
-import java.util.{Collections, OptionalInt}
+import java.util.{Collections, OptionalInt, Optional}
 import scala.collection.Seq
 import scala.jdk.CollectionConverters._
 
@@ -38,7 +38,7 @@ class LeaderEpochFileCacheTest {
   val tp = new TopicPartition("TestTopic", 5)
   private val checkpoint: LeaderEpochCheckpoint = new LeaderEpochCheckpoint {
     private var epochs: Seq[EpochEntry] = Seq()
-    override def write(epochs: java.util.Collection[EpochEntry]): Unit = this.epochs = epochs.asScala.toSeq
+    override def write(epochs: java.util.Collection[EpochEntry], ignored: Boolean): Unit = this.epochs = epochs.asScala.toSeq
     override def read(): java.util.List[EpochEntry] = this.epochs.asJava
   }
 
@@ -92,7 +92,7 @@ class LeaderEpochFileCacheTest {
     cache.assign(2, 11)
     cache.assign(3, 12)
 
-    //When (say a bootstraping follower) sends request for UNDEFINED_EPOCH
+    //When (say a bootstrapping follower) sends request for UNDEFINED_EPOCH
     val epochAndOffsetFor = toTuple(cache.endOffsetFor(UNDEFINED_EPOCH, 0L))
 
     //Then
@@ -602,6 +602,23 @@ class LeaderEpochFileCacheTest {
 
     cache.truncateFromEnd(18)
     assertEquals(OptionalInt.of(2), cache.previousEpoch(cache.latestEpoch.getAsInt))
+  }
+
+  @Test
+  def testFindPreviousEntry(): Unit = {
+    assertEquals(Optional.empty(), cache.previousEntry(2))
+
+    cache.assign(2, 10)
+    assertEquals(Optional.empty(), cache.previousEntry(2))
+
+    cache.assign(4, 15)
+    assertEquals(Optional.of(new EpochEntry(2, 10)), cache.previousEntry(4))
+
+    cache.assign(10, 20)
+    assertEquals(Optional.of(new EpochEntry(4, 15)), cache.previousEntry(10))
+
+    cache.truncateFromEnd(18)
+    assertEquals(Optional.of(new EpochEntry(2, 10)), cache.previousEntry(cache.latestEpoch.getAsInt))
   }
 
   @Test

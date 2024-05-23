@@ -127,7 +127,7 @@ class KafkaServerTest extends QuorumTestHarness {
   @Test
   def testAlterIsrManager(): Unit = {
     val props = TestUtils.createBrokerConfigs(1, zkConnect).head
-    props.put(KafkaConfig.InterBrokerProtocolVersionProp, MetadataVersion.latest.toString)
+    props.put(KafkaConfig.InterBrokerProtocolVersionProp, MetadataVersion.latestTesting.toString)
 
     val server = TestUtils.createServer(KafkaConfig.fromProps(props))
     server.replicaManager.alterPartitionManager match {
@@ -147,7 +147,7 @@ class KafkaServerTest extends QuorumTestHarness {
       "org.apache.kafka.server.log.remote.storage.NoOpRemoteStorageManager")
 
     val server = TestUtils.createServer(KafkaConfig.fromProps(props))
-    server.remoteLogManager match {
+    server.remoteLogManagerOpt match {
       case Some(_) =>
       case None => fail("RemoteLogManager should be initialized")
     }

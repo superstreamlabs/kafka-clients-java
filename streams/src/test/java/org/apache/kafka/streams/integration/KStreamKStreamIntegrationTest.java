@@ -17,12 +17,12 @@
 
 package org.apache.kafka.streams.integration;
 
-import kafka.utils.MockTime;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.apache.kafka.server.util.MockTime;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -117,6 +117,7 @@ public class KStreamKStreamIntegrationTest {
         expected.add(new KeyValue<>("Key-2", "value1=left-2a,value2=null"));
         expected.add(new KeyValue<>("Key-3", "value1=left-3a,value2=null"));
         expected.add(new KeyValue<>("Key-4", "value1=left-4a,value2=null"));
+        expected.add(new KeyValue<>(null, "value1=left-5a,value2=null"));
 
         verifyKStreamKStreamOuterJoin(expected);
     }
@@ -135,7 +136,8 @@ public class KStreamKStreamIntegrationTest {
                 new KeyValue<>("Key-1", "left-1a"),
                 new KeyValue<>("Key-2", "left-2a"),
                 new KeyValue<>("Key-3", "left-3a"),
-                new KeyValue<>("Key-4", "left-4a")
+                new KeyValue<>("Key-4", "left-4a"),
+                new KeyValue<>(null, "left-5a")
         );
 
         final List<KeyValue<String, String>> left2 = asList(

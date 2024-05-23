@@ -522,7 +522,9 @@ public class TopologyTestDriver implements Closeable {
                 stateManager,
                 recordCollector,
                 context,
-                logContext);
+                logContext,
+                false
+                );
             task.initializeIfNeeded();
             task.completeRestoration(noOpResetter -> { });
             task.processorContext().setRecordContext(null);
@@ -596,6 +598,8 @@ public class TopologyTestDriver implements Closeable {
         // If the topology only has global tasks, then `task` would be null.
         // For this method, it just means there's nothing to do.
         if (task != null) {
+            task.resumePollingForPartitionsWithAvailableSpace();
+            task.updateLags();
             while (task.hasRecordsQueued() && task.isProcessable(mockWallClockTime.milliseconds())) {
                 // Process the record ...
                 task.process(mockWallClockTime.milliseconds());
@@ -1393,7 +1397,7 @@ public class TopologyTestDriver implements Closeable {
                                   final KafkaClientSupplier clientSupplier,
                                   final LogContext logContext,
                                   final Time time) {
-            super(config, "TopologyTestDriver-StreamThread-1", clientSupplier, new TaskId(0, 0), UUID.randomUUID(), logContext, time, "test-driver-producer");
+            super(config, "TopologyTestDriver-StreamThread-1", clientSupplier, new TaskId(0, 0), UUID.randomUUID(), logContext, time);
         }
 
         @Override

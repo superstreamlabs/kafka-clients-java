@@ -72,7 +72,7 @@ public class FileStreamSourceTask extends SourceTask {
 
     @Override
     public void start(Map<String, String> props) {
-        AbstractConfig config = new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, props, "source-task");
+        AbstractConfig config = new AbstractConfig(FileStreamSourceConnector.CONFIG_DEF, props);
         filename = config.getString(FileStreamSourceConnector.FILE_CONFIG);
         if (filename == null || filename.isEmpty()) {
             stream = System.in;

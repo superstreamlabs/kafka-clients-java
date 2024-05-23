@@ -1,32 +1,15 @@
-# Superstream-Kafka
-
-## Configuration for Superstream SDK
-To leverage the full capabilities of the Superstream SDK, it is essential to set the following environment variables before initializing the SDK. Without these variables, the SDK will function as a standard Kafka SDK.
-
-### SUPERSTREAM_HOST - REQUIRED!
-Specify the host URL of the SuperStream service to connect to the appropriate Superstream environment.
-
-### SUPERSTREAM_TOKEN - REQUIRED!
-This authentication token is required to securely access the Superstream services.
-
-### SUPERSTREAM_LEARNING_FACTOR - Default 20
-This variable adjusts the learning algorithms used within the SDK to optimize data streaming performance.
-
-### SUPERSTREAM_REDUCTION_ENABLED - Default false
-Set this variable to enable data reduction features.
-
-#### Ensure that these environment variables are properly configured in your system to fully utilize the enhanced features offered by Superstream SDK.
-
 Apache Kafka
 =================
 See our [web site](https://kafka.apache.org) for details on the project.
 
 You need to have [Java](http://www.oracle.com/technetwork/java/javase/downloads/index.html) installed.
 
-We build and test Apache Kafka with Java 8, 11 and 17. We set the `release` parameter in javac and scalac
+We build and test Apache Kafka with Java 8, 11, 17 and 21. We set the `release` parameter in javac and scalac
 to `8` to ensure the generated binaries are compatible with Java 8 or higher (independently of the Java version
-used for compilation). Java 8 support has been deprecated since Apache Kafka 3.0 and will be removed in Apache
-Kafka 4.0 (see [KIP-750](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=181308223) for more details).
+used for compilation). Java 8 support project-wide has been deprecated since Apache Kafka 3.0, Java 11 support for
+the broker and tools has been deprecated since Apache Kafka 3.7 and removal of both is planned for Apache Kafka 4.0 (
+see [KIP-750](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=181308223) and
+[KIP-1013](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=284789510) for more details).
 
 Scala 2.12 and 2.13 are supported and 2.13 is used by default. Scala 2.12 support has been deprecated since
 Apache Kafka 3.0 and will be removed in Apache Kafka 4.0 (see [KIP-751](https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=181308218)
@@ -307,4 +290,4 @@ See [vagrant/README.md](vagrant/README.md).
 Apache Kafka is interested in building the community; we would welcome any thoughts or [patches](https://issues.apache.org/jira/browse/KAFKA). You can reach us [on the Apache mailing lists](http://kafka.apache.org/contact.html).
 
 To contribute follow the instructions here:
- * https://kafka.apache.org/contributing.html
+ * https://kafka.apache.org/contributing.html 

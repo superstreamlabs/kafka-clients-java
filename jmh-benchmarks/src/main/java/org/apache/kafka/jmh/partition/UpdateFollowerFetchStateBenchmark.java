@@ -74,7 +74,7 @@ public class UpdateFollowerFetchStateBenchmark {
     private Option<Uuid> topicId = OptionConverters.toScala(Optional.of(Uuid.randomUuid()));
     private File logDir = new File(System.getProperty("java.io.tmpdir"), topicPartition.toString());
     private KafkaScheduler scheduler = new KafkaScheduler(1, true, "scheduler");
-    private BrokerTopicStats brokerTopicStats = new BrokerTopicStats();
+    private BrokerTopicStats brokerTopicStats = new BrokerTopicStats(Optional.empty());
     private LogDirFailureChannel logDirFailureChannel = Mockito.mock(LogDirFailureChannel.class);
     private long nextOffset = 0;
     private LogManager logManager;
@@ -97,8 +97,8 @@ public class UpdateFollowerFetchStateBenchmark {
             setFlushRecoveryOffsetCheckpointMs(10000L).
             setFlushStartOffsetCheckpointMs(10000L).
             setRetentionCheckMs(1000L).
-            setMaxProducerIdExpirationMs(60000).
-            setInterBrokerProtocolVersion(MetadataVersion.latest()).
+            setProducerStateManagerConfig(60000, false).
+            setInterBrokerProtocolVersion(MetadataVersion.latestTesting()).
             setScheduler(scheduler).
             setBrokerTopicStats(brokerTopicStats).
             setLogDirFailureChannel(logDirFailureChannel).
@@ -125,10 +125,10 @@ public class UpdateFollowerFetchStateBenchmark {
         AlterPartitionListener alterPartitionListener = Mockito.mock(AlterPartitionListener.class);
         AlterPartitionManager alterPartitionManager = Mockito.mock(AlterPartitionManager.class);
         partition = new Partition(topicPartition, 100,
-                MetadataVersion.latest(), 0, () -> -1, Time.SYSTEM,
+                MetadataVersion.latestTesting(), 0, () -> -1, Time.SYSTEM,
                 alterPartitionListener, delayedOperations,
                 Mockito.mock(MetadataCache.class), logManager, alterPartitionManager);
-        partition.makeLeader(partitionState, offsetCheckpoints, topicId);
+        partition.makeLeader(partitionState, offsetCheckpoints, topicId, Option.empty());
         replica1 = partition.getReplica(1).get();
         replica2 = partition.getReplica(2).get();
     }
@@ -147,7 +147,7 @@ public class UpdateFollowerFetchStateBenchmark {
 
     @TearDown(Level.Trial)
     public void tearDown() throws InterruptedException {
-        logManager.shutdown();
+        logManager.shutdown(-1L);
         scheduler.shutdown();
     }
 

@@ -16,14 +16,14 @@
  */
 package org.apache.kafka.clients.admin;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.kafka.clients.HostResolver;
 import org.apache.kafka.clients.admin.CreateTopicsResult.TopicMetadataAndConfig;
-import org.apache.kafka.clients.admin.internals.MetadataOperationContext;
 import org.apache.kafka.clients.admin.internals.CoordinatorKey;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.KafkaException;
@@ -103,6 +103,16 @@ public class AdminClientTestUtils {
         return new AlterConfigsResult(futures);
     }
 
+    /** Helper to create a DescribeConfigsResult instance for a given ConfigResource.
+     * DescribeConfigsResult's constructor is only accessible from within the
+     * admin package.
+     */
+    public static DescribeConfigsResult describeConfigsResult(ConfigResource cr, Config config) {
+        KafkaFutureImpl<Config> future = new KafkaFutureImpl<>();
+        future.complete(config);
+        return new DescribeConfigsResult(Collections.singletonMap(cr, future));
+    }
+
     /**
      * Helper to create a CreatePartitionsResult instance for a given Throwable.
      * CreatePartitionsResult's constructor is only accessible from within the
@@ -143,15 +153,17 @@ public class AdminClientTestUtils {
         return new ListConsumerGroupOffsetsResult(Collections.singletonMap(CoordinatorKey.byGroupId(group), future));
     }
 
-    /**
-     * Used for benchmark. KafkaAdminClient.getListOffsetsCalls is only accessible
-     * from within the admin package.
-     */
-    public static List<KafkaAdminClient.Call> getListOffsetsCalls(KafkaAdminClient adminClient, 
-                                                                  MetadataOperationContext<ListOffsetsResult.ListOffsetsResultInfo, ListOffsetsOptions> context,
-                                                                  Map<TopicPartition, OffsetSpec> topicPartitionOffsets,
-                                                                  Map<TopicPartition, KafkaFutureImpl<ListOffsetsResult.ListOffsetsResultInfo>> futures) {
-        return adminClient.getListOffsetsCalls(context, topicPartitionOffsets, futures); 
+    public static ListClientMetricsResourcesResult listClientMetricsResourcesResult(String... names) {
+        return new ListClientMetricsResourcesResult(
+                KafkaFuture.completedFuture(Arrays.stream(names)
+                        .map(name -> new ClientMetricsResourceListing(name))
+                        .collect(Collectors.toList())));
+    }
+
+    public static ListClientMetricsResourcesResult listClientMetricsResourcesResult(KafkaException exception) {
+        final KafkaFutureImpl<Collection<ClientMetricsResourceListing>> future = new KafkaFutureImpl<>();
+        future.completeExceptionally(exception);
+        return new ListClientMetricsResourcesResult(future);
     }
 
     /**

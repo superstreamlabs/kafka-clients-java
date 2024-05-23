@@ -18,6 +18,7 @@
 package org.apache.kafka.controller.metrics;
 
 import com.yammer.metrics.core.MetricsRegistry;
+import org.apache.kafka.common.DirectoryId;
 import org.apache.kafka.common.Uuid;
 import org.apache.kafka.image.TopicImage;
 import org.apache.kafka.image.TopicsImage;
@@ -71,15 +72,15 @@ public class ControllerMetricsTestUtils {
                 leader = -1;
                 break;
         }
-        return new PartitionRegistration(
-                new int[] {0, 1, 2},
-                new int[] {0, 1, 2},
-                new int[] {},
-                new int[] {},
-                leader,
-                LeaderRecoveryState.RECOVERED,
-                100,
-                200);
+        return new PartitionRegistration.Builder().
+            setReplicas(new int[] {0, 1, 2}).
+            setDirectories(DirectoryId.migratingArray(3)).
+            setIsr(new int[] {0, 1, 2}).
+            setLeader(leader).
+            setLeaderRecoveryState(LeaderRecoveryState.RECOVERED).
+            setLeaderEpoch(100).
+            setPartitionEpoch(200).
+            build();
     }
 
     public static TopicImage fakeTopicImage(
@@ -99,12 +100,10 @@ public class ControllerMetricsTestUtils {
     public static TopicsImage fakeTopicsImage(
         TopicImage... topics
     ) {
-        Map<Uuid, TopicImage> topicsById = new HashMap<>();
-        Map<String, TopicImage> topicsByName = new HashMap<>();
+        TopicsImage image = TopicsImage.EMPTY;
         for (TopicImage topic : topics) {
-            topicsById.put(topic.id(), topic);
-            topicsByName.put(topic.name(), topic);
+            image = image.including(topic);
         }
-        return new TopicsImage(topicsById, topicsByName);
+        return image;
     }
 }

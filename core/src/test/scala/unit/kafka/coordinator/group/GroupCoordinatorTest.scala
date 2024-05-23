@@ -21,7 +21,6 @@ import java.util.{Optional, OptionalInt}
 import kafka.common.OffsetAndMetadata
 import kafka.server.{DelayedOperationPurgatory, HostedPartition, KafkaConfig, ReplicaManager, RequestLocal}
 import kafka.utils._
-import kafka.utils.timer.MockTimer
 import org.apache.kafka.common.{TopicIdPartition, TopicPartition, Uuid}
 import org.apache.kafka.common.protocol.Errors
 import org.apache.kafka.common.record.{MemoryRecords, RecordBatch}
@@ -37,8 +36,9 @@ import org.apache.kafka.clients.consumer.internals.ConsumerProtocol
 import org.apache.kafka.common.internals.Topic
 import org.apache.kafka.common.metrics.Metrics
 import org.apache.kafka.common.message.LeaveGroupRequestData.MemberIdentity
-import org.apache.kafka.server.util.KafkaScheduler
-import org.apache.kafka.storage.internals.log.AppendOrigin
+import org.apache.kafka.server.util.timer.MockTimer
+import org.apache.kafka.server.util.{KafkaScheduler, MockTime}
+import org.apache.kafka.storage.internals.log.VerificationGuard
 import org.junit.jupiter.api.Assertions._
 import org.junit.jupiter.api.{AfterEach, BeforeEach, Test}
 import org.junit.jupiter.params.ParameterizedTest
@@ -2263,13 +2263,13 @@ class GroupCoordinatorTest {
 
     assertEquals(Errors.NONE, await(leaderResult, 1).error)
 
-    // Leader should be able to heartbeart
+    // Leader should be able to heartbeat
     verifyHeartbeat(results.head, Errors.NONE)
 
     // Advance part the rebalance timeout to trigger the delayed operation.
     timer.advanceClock(DefaultRebalanceTimeout / 2 + 1)
 
-    // Leader should be able to heartbeart
+    // Leader should be able to heartbeat
     verifyHeartbeat(results.head, Errors.REBALANCE_IN_PROGRESS)
 
     // Followers should have been removed.
@@ -2347,7 +2347,7 @@ class GroupCoordinatorTest {
     val followerErrors = followerResults.map(await(_, 1).error)
     assertEquals(Set(Errors.NONE), followerErrors.toSet)
 
-    // Advance past the rebalance timeout to expire the Sync timout. All
+    // Advance past the rebalance timeout to expire the Sync timeout. All
     // members should remain and the group should not rebalance.
     timer.advanceClock(DefaultRebalanceTimeout / 2 + 1)
 
@@ -3782,6 +3782,47 @@ class GroupCoordinatorTest {
     assertTrue(groupCoordinator.tryCompleteHeartbeat(group, leaderMemberId, false, () => true))
   }
 
+  @Test
+  def testVerificationErrorsForTxnOffsetCommits(): Unit = {
+    val tip1 = new TopicIdPartition(Uuid.randomUuid(), 0, "topic-1")
+    val offset1 = offsetAndMetadata(0)
+    val tip2 = new TopicIdPartition(Uuid.randomUuid(), 0, "topic-2")
+    val offset2 = offsetAndMetadata(0)
+    val producerId = 1000L
+    val producerEpoch: Short = 2
+
+    def verifyErrors(error: Errors, expectedError: Errors): Unit = {
+      val commitOffsetResult = commitTransactionalOffsets(groupId,
+        producerId,
+        producerEpoch,
+        Map(tip1 -> offset1, tip2 -> offset2),
+        verificationError = error)
+      assertEquals(expectedError, commitOffsetResult(tip1))
+      assertEquals(expectedError, commitOffsetResult(tip2))
+    }
+
+    verifyErrors(Errors.INVALID_PRODUCER_ID_MAPPING, Errors.INVALID_PRODUCER_ID_MAPPING)
+    verifyErrors(Errors.INVALID_TXN_STATE, Errors.INVALID_TXN_STATE)
+    verifyErrors(Errors.NOT_ENOUGH_REPLICAS, Errors.COORDINATOR_NOT_AVAILABLE)
+    verifyErrors(Errors.NOT_LEADER_OR_FOLLOWER, Errors.NOT_COORDINATOR)
+    verifyErrors(Errors.KAFKA_STORAGE_ERROR, Errors.NOT_COORDINATOR)
+  }
+
+  @Test
+  def testTxnOffsetMetadataTooLarge(): Unit = {
+    val tip = new TopicIdPartition(Uuid.randomUuid(), 0, "foo")
+    val offset = 37
+    val producerId = 100L
+    val producerEpoch: Short = 3
+
+    val offsets = Map(
+      tip -> OffsetAndMetadata(offset, "s" * (OffsetConfig.DefaultMaxMetadataSize + 1), 0)
+    )
+
+    val commitOffsetResult = commitTransactionalOffsets(groupId, producerId, producerEpoch, offsets)
+    assertEquals(Map(tip -> Errors.OFFSET_METADATA_TOO_LARGE), commitOffsetResult)
+  }
+
   private def getGroup(groupId: String): GroupMetadata = {
     val groupOpt = groupCoordinator.groupManager.getGroup(groupId)
     assertTrue(groupOpt.isDefined)
@@ -3855,15 +3896,13 @@ class GroupCoordinatorTest {
 
     val capturedArgument: ArgumentCaptor[scala.collection.Map[TopicPartition, PartitionResponse] => Unit] = ArgumentCaptor.forClass(classOf[scala.collection.Map[TopicPartition, PartitionResponse] => Unit])
 
-    when(replicaManager.appendRecords(anyLong,
+    when(replicaManager.appendForGroup(anyLong,
       anyShort(),
-      internalTopicsAllowed = ArgumentMatchers.eq(true),
-      origin = ArgumentMatchers.eq(AppendOrigin.COORDINATOR),
       any[Map[TopicPartition, MemoryRecords]],
       capturedArgument.capture(),
       any[Option[ReentrantLock]],
-      any(),
-      any()
+      any(classOf[RequestLocal]),
+      any[Map[TopicPartition, VerificationGuard]]
     )).thenAnswer(_ => {
       capturedArgument.getValue.apply(
         Map(new TopicPartition(Topic.GROUP_METADATA_TOPIC_NAME, groupPartitionId) ->
@@ -3889,15 +3928,14 @@ class GroupCoordinatorTest {
 
     val capturedArgument: ArgumentCaptor[scala.collection.Map[TopicPartition, PartitionResponse] => Unit] = ArgumentCaptor.forClass(classOf[scala.collection.Map[TopicPartition, PartitionResponse] => Unit])
 
-    when(replicaManager.appendRecords(anyLong,
+    when(replicaManager.appendForGroup(anyLong,
       anyShort(),
-      internalTopicsAllowed = ArgumentMatchers.eq(true),
-      origin = ArgumentMatchers.eq(AppendOrigin.COORDINATOR),
       any[Map[TopicPartition, MemoryRecords]],
       capturedArgument.capture(),
       any[Option[ReentrantLock]],
-      any(),
-      any())).thenAnswer(_ => {
+      any(classOf[RequestLocal]),
+      any[Map[TopicPartition, VerificationGuard]]
+    )).thenAnswer(_ => {
         capturedArgument.getValue.apply(
           Map(new TopicPartition(Topic.GROUP_METADATA_TOPIC_NAME, groupPartitionId) ->
             new PartitionResponse(Errors.NONE, 0L, RecordBatch.NO_TIMESTAMP, 0L)
@@ -4033,16 +4071,14 @@ class GroupCoordinatorTest {
 
     val capturedArgument: ArgumentCaptor[scala.collection.Map[TopicPartition, PartitionResponse] => Unit] = ArgumentCaptor.forClass(classOf[scala.collection.Map[TopicPartition, PartitionResponse] => Unit])
 
-    when(replicaManager.appendRecords(anyLong,
+    when(replicaManager.appendForGroup(anyLong,
       anyShort(),
-      internalTopicsAllowed = ArgumentMatchers.eq(true),
-      origin = ArgumentMatchers.eq(AppendOrigin.COORDINATOR),
       any[Map[TopicPartition, MemoryRecords]],
       capturedArgument.capture(),
       any[Option[ReentrantLock]],
-      any(),
-      any())
-    ).thenAnswer(_ => {
+      any(classOf[RequestLocal]),
+      any[Map[TopicPartition, VerificationGuard]]
+    )).thenAnswer(_ => {
       capturedArgument.getValue.apply(
         Map(new TopicPartition(Topic.GROUP_METADATA_TOPIC_NAME, groupPartitionId) ->
           new PartitionResponse(Errors.NONE, 0L, RecordBatch.NO_TIMESTAMP, 0L)
@@ -4061,30 +4097,39 @@ class GroupCoordinatorTest {
                                          offsets: Map[TopicIdPartition, OffsetAndMetadata],
                                          memberId: String = JoinGroupRequest.UNKNOWN_MEMBER_ID,
                                          groupInstanceId: Option[String] = Option.empty,
-                                         generationId: Int = JoinGroupRequest.UNKNOWN_GENERATION_ID) : CommitOffsetCallbackParams = {
+                                         generationId: Int = JoinGroupRequest.UNKNOWN_GENERATION_ID,
+                                         verificationError: Errors = Errors.NONE) : CommitOffsetCallbackParams = {
     val (responseFuture, responseCallback) = setupCommitOffsetsCallback
 
     val capturedArgument: ArgumentCaptor[scala.collection.Map[TopicPartition, PartitionResponse] => Unit] = ArgumentCaptor.forClass(classOf[scala.collection.Map[TopicPartition, PartitionResponse] => Unit])
 
-    when(replicaManager.appendRecords(anyLong,
+    // Since transactional ID is only used for verification, we can use a dummy value. Ensure it passes through.
+    val transactionalId = "dummy-txn-id"
+    val offsetTopicPartition = new TopicPartition(Topic.GROUP_METADATA_TOPIC_NAME, groupCoordinator.partitionFor(groupId))
+
+    val postVerificationCallback: ArgumentCaptor[(Errors, RequestLocal, VerificationGuard) => Unit] = ArgumentCaptor.forClass(classOf[(Errors, RequestLocal, VerificationGuard) => Unit])
+
+    when(replicaManager.maybeStartTransactionVerificationForPartition(ArgumentMatchers.eq(offsetTopicPartition), ArgumentMatchers.eq(transactionalId),
+      ArgumentMatchers.eq(producerId), ArgumentMatchers.eq(producerEpoch), any(), any(), postVerificationCallback.capture())).thenAnswer(
+      _ => postVerificationCallback.getValue()(verificationError, RequestLocal.NoCaching, VerificationGuard.SENTINEL)
+    )
+    when(replicaManager.appendForGroup(anyLong,
       anyShort(),
-      internalTopicsAllowed = ArgumentMatchers.eq(true),
-      origin = ArgumentMatchers.eq(AppendOrigin.COORDINATOR),
       any[Map[TopicPartition, MemoryRecords]],
       capturedArgument.capture(),
       any[Option[ReentrantLock]],
-      any(),
-      any())
-    ).thenAnswer(_ => {
+      any(classOf[RequestLocal]),
+      any[Map[TopicPartition, VerificationGuard]]
+    )).thenAnswer(_ => {
       capturedArgument.getValue.apply(
-        Map(new TopicPartition(Topic.GROUP_METADATA_TOPIC_NAME, groupCoordinator.partitionFor(groupId)) ->
+        Map(offsetTopicPartition ->
           new PartitionResponse(Errors.NONE, 0L, RecordBatch.NO_TIMESTAMP, 0L)
         )
       )
     })
     when(replicaManager.getMagic(any[TopicPartition])).thenReturn(Some(RecordBatch.MAGIC_VALUE_V2))
 
-    groupCoordinator.handleTxnCommitOffsets(groupId, producerId, producerEpoch,
+    groupCoordinator.handleTxnCommitOffsets(groupId, transactionalId, producerId, producerEpoch,
       memberId, groupInstanceId, generationId, offsets, responseCallback)
     val result = Await.result(responseFuture, Duration(40, TimeUnit.MILLISECONDS))
     result

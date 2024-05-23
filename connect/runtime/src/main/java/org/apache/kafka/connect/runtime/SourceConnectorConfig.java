@@ -117,10 +117,6 @@ public class SourceConnectorConfig extends ConnectorConfig {
             super(plugins, configDef, props);
         }
 
-        @Override
-        public Object get(String key) {
-            return super.get(key);
-        }
     }
 
     private final TransactionBoundary transactionBoundary;
@@ -251,13 +247,14 @@ public class SourceConnectorConfig extends ConnectorConfig {
         return newDef;
     }
 
+    @SuppressWarnings("this-escape")
     public SourceConnectorConfig(Plugins plugins, Map<String, String> props, boolean createTopics) {
         super(plugins, configDef(), props);
         if (createTopics && props.entrySet().stream().anyMatch(e -> e.getKey().startsWith(TOPIC_CREATION_PREFIX))) {
             ConfigDef defaultConfigDef = embedDefaultGroup(configDef());
             // This config is only used to set default values for partitions and replication
             // factor from the default group and otherwise it remains unused
-            AbstractConfig defaultGroup = new AbstractConfig(defaultConfigDef, props, false, "source-connector");
+            AbstractConfig defaultGroup = new AbstractConfig(defaultConfigDef, props, false);
 
             // If the user has added regex of include or exclude patterns in the default group,
             // they should be ignored.

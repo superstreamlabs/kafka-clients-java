@@ -15,6 +15,9 @@ This variable adjusts the learning algorithms used within the SDK to optimize da
 ### SUPERSTREAM_REDUCTION_ENABLED - Default false
 Set this variable to enable data reduction features.
 
+### SUPERSTREAM_TAGS - Default is empty string
+Set this variable to tag the client, this is a string - comma-separated list of tags.
+
 #### Ensure that these environment variables are properly configured in your system to fully utilize the enhanced features offered by Superstream SDK.
 
 Apache Kafka

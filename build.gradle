@@ -35,7 +35,7 @@ buildscript {
             }
         }
     }
-    
+
   apply from: "$rootDir/gradle/dependencies.gradle"
 
   dependencies {
@@ -326,8 +326,9 @@ subprojects {
 
             artifactId = archivesBaseName
             pom {
-              name = 'Apache Kafka'
-              url = 'https://kafka.apache.org'
+              name = 'Superstream Kafka'
+              description = 'Superstream Kafka Clients'
+              url = 'https://superstream.ai'
               licenses {
                 license {
                   name = 'The Apache License, Version 2.0'

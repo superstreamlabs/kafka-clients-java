@@ -51,7 +51,7 @@ public class FileStreamSinkConnector extends SinkConnector {
     @Override
     public void start(Map<String, String> props) {
         this.props = props;
-        AbstractConfig config = new AbstractConfig(CONFIG_DEF, props);
+        AbstractConfig config = new AbstractConfig(CONFIG_DEF, props, "sink-connector");
         String filename = config.getString(FILE_CONFIG);
         filename = (filename == null || filename.isEmpty()) ? "standard output" : filename;
         log.info("Starting file sink connector writing to {}", filename);

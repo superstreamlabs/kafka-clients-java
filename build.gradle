@@ -344,8 +344,8 @@ subprojects {
                     }
               } 
               scm {
-                    connection = 'scm:git:git://github.com:superstreamlabs/superstream-kafka.git'
-                    developerConnection = 'scm:git:ssh://github.com:superstreamlabs/superstream-kafka.git'
+                    connection = 'scm:git:git://github.com:superstreamlabs/apache-kafka-java-sdk.git'
+                    developerConnection = 'scm:git:ssh://github.com:superstreamlabs/apache-kafka-java-sdk.git'
                     url = 'https://superstream.ai'
                 }                           
             }

@@ -63,8 +63,8 @@ public abstract class OAuthBearerTest {
     protected ObjectMapper mapper = new ObjectMapper();
 
     protected void assertThrowsWithMessage(Class<? extends Exception> clazz,
-        Executable executable,
-        String substring) {
+                                           Executable executable,
+                                           String substring) {
         boolean failed = false;
 
         try {
@@ -82,21 +82,21 @@ public abstract class OAuthBearerTest {
 
     protected void assertErrorMessageContains(String actual, String expectedSubstring) {
         assertTrue(actual.contains(expectedSubstring),
-            String.format("Expected exception message (\"%s\") to contain substring (\"%s\")",
-                actual,
-                expectedSubstring));
+                String.format("Expected exception message (\"%s\") to contain substring (\"%s\")",
+                        actual,
+                        expectedSubstring));
     }
 
     protected void configureHandler(AuthenticateCallbackHandler handler,
-        Map<String, ?> configs,
-        Map<String, Object> jaasConfig) {
+                                    Map<String, ?> configs,
+                                    Map<String, Object> jaasConfig) {
         TestJaasConfig config = new TestJaasConfig();
         config.createOrUpdateEntry("KafkaClient", OAuthBearerLoginModule.class.getName(), jaasConfig);
         AppConfigurationEntry kafkaClient = config.getAppConfigurationEntry("KafkaClient")[0];
 
         handler.configure(configs,
-            OAuthBearerLoginModule.OAUTHBEARER_MECHANISM,
-            Collections.singletonList(kafkaClient));
+                OAuthBearerLoginModule.OAUTHBEARER_MECHANISM,
+                Collections.singletonList(kafkaClient));
     }
 
     protected String createBase64JsonJwtSection(Consumer<ObjectNode> c) {
@@ -169,10 +169,10 @@ public abstract class OAuthBearerTest {
     }
 
     protected File createTempFile(File tmpDir,
-        String prefix,
-        String suffix,
-        String contents)
-        throws IOException {
+                                  String prefix,
+                                  String suffix,
+                                  String contents)
+            throws IOException {
         File file = File.createTempFile(prefix, suffix, tmpDir);
         log.debug("Created new temp file {}", file);
         file.deleteOnExit();
@@ -207,14 +207,14 @@ public abstract class OAuthBearerTest {
 
     protected PublicJsonWebKey createEcJwk() throws JoseException {
         PublicJsonWebKey jwk = PublicJsonWebKey.Factory.newPublicJwk("{" +
-            "  \"kty\": \"EC\"," +
-            "  \"d\": \"Tk7qzHNnSBMioAU7NwZ9JugFWmWbUCyzeBRjVcTp_so\"," +
-            "  \"use\": \"sig\"," +
-            "  \"crv\": \"P-256\"," +
-            "  \"kid\": \"key-1\"," +
-            "  \"x\": \"qqeGjWmYZU5M5bBrRw1zqZcbPunoFVxsfaa9JdA0R5I\"," +
-            "  \"y\": \"wnoj0YjheNP80XYh1SEvz1-wnKByEoHvb6KrDcjMuWc\"" +
-            "}");
+                "  \"kty\": \"EC\"," +
+                "  \"d\": \"Tk7qzHNnSBMioAU7NwZ9JugFWmWbUCyzeBRjVcTp_so\"," +
+                "  \"use\": \"sig\"," +
+                "  \"crv\": \"P-256\"," +
+                "  \"kid\": \"key-1\"," +
+                "  \"x\": \"qqeGjWmYZU5M5bBrRw1zqZcbPunoFVxsfaa9JdA0R5I\"," +
+                "  \"y\": \"wnoj0YjheNP80XYh1SEvz1-wnKByEoHvb6KrDcjMuWc\"" +
+                "}");
         jwk.setKeyId("key-1");
         return jwk;
     }

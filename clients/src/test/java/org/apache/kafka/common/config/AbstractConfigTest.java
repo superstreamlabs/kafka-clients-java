@@ -236,7 +236,7 @@ public class AbstractConfigTest {
 
         config.getConfiguredInstances(TestConfig.METRIC_REPORTER_CLASSES_CONFIG, MetricsReporter.class);
         assertFalse(config.unused().contains(ConfiguredFakeMetricsReporter.EXTRA_CONFIG),
-            ConfiguredFakeMetricsReporter.EXTRA_CONFIG + " should be marked as used");
+                ConfiguredFakeMetricsReporter.EXTRA_CONFIG + " should be marked as used");
     }
 
     private void testValidInputs(String configValue) {
@@ -335,15 +335,15 @@ public class AbstractConfigTest {
 
             // Properties specified as classNames should fail to load classes
             assertThrows(ConfigException.class, () -> new ClassTestConfig(ClassTestConfig.RESTRICTED_CLASS.getName(), null),
-                "Config created with class property that cannot be loaded");
+                    "Config created with class property that cannot be loaded");
 
             ClassTestConfig config = new ClassTestConfig(null, Arrays.asList(ClassTestConfig.VISIBLE_CLASS.getName(), ClassTestConfig.RESTRICTED_CLASS.getName()));
             assertThrows(KafkaException.class, () -> config.getConfiguredInstances("list.prop", MetricsReporter.class),
-                "Should have failed to load class");
+                    "Should have failed to load class");
 
             ClassTestConfig config2 = new ClassTestConfig(null, ClassTestConfig.VISIBLE_CLASS.getName() + "," + ClassTestConfig.RESTRICTED_CLASS.getName());
             assertThrows(KafkaException.class, () -> config2.getConfiguredInstances("list.prop", MetricsReporter.class),
-                "Should have failed to load class");
+                    "Should have failed to load class");
         } finally {
             Thread.currentThread().setContextClassLoader(originClassLoader);
         }
@@ -354,7 +354,7 @@ public class AbstractConfigTest {
         for (Map.Entry<?, ?> entry : props.entrySet()) {
             if (!(entry.getKey() instanceof String))
                 throw new ConfigException(entry.getKey().toString(), entry.getValue(),
-                    "Key must be a string.");
+                        "Key must be a string.");
         }
         return (Map<String, ?>) props;
     }
@@ -451,7 +451,7 @@ public class AbstractConfigTest {
         Properties props = new Properties();
         props.put("config.providers", "file");
         props.put("config.providers.file.class",
-            "org.apache.kafka.common.config.provider.InvalidConfigProvider");
+                "org.apache.kafka.common.config.provider.InvalidConfigProvider");
         props.put("testKey", "${test:/foo/bar/testpath:testKey}");
         try {
             new TestIndirectConfigResolution(props);
@@ -523,7 +523,7 @@ public class AbstractConfigTest {
 
         assertEquals(
                 TestIndirectConfigResolution.INDIRECT_CONFIGS_DOC,
-                    config.documentationOf(TestIndirectConfigResolution.INDIRECT_CONFIGS)
+                config.documentationOf(TestIndirectConfigResolution.INDIRECT_CONFIGS)
         );
     }
 
@@ -567,7 +567,7 @@ public class AbstractConfigTest {
         private static final ConfigDef CONFIG;
         static {
             CONFIG = new ConfigDef().define("class.prop", Type.CLASS, DEFAULT_CLASS, Importance.HIGH, "docs")
-                                    .define("list.prop", Type.LIST, Collections.singletonList(DEFAULT_CLASS), Importance.HIGH, "docs");
+                    .define("list.prop", Type.LIST, Collections.singletonList(DEFAULT_CLASS), Importance.HIGH, "docs");
         }
 
         public ClassTestConfig() {
@@ -614,10 +614,10 @@ public class AbstractConfigTest {
         private static final String METRIC_REPORTER_CLASSES_DOC = "A list of classes to use as metrics reporters.";
         static {
             CONFIG = new ConfigDef().define(METRIC_REPORTER_CLASSES_CONFIG,
-                                            Type.LIST,
-                                            "",
-                                            Importance.LOW,
-                                            METRIC_REPORTER_CLASSES_DOC);
+                    Type.LIST,
+                    "",
+                    Importance.LOW,
+                    METRIC_REPORTER_CLASSES_DOC);
         }
 
         public TestConfig(Map<?, ?> props) {
@@ -627,7 +627,68 @@ public class AbstractConfigTest {
 
     public static class ConfiguredFakeMetricsReporter extends FakeMetricsReporter {
         public static final String EXTRA_CONFIG = "metric.extra_config";
-        @Override
+        @Override/*
+         * Licensed to the Apache Software Foundation (ASF) under one or more
+         * contributor license agreements. See the NOTICE file distributed with
+         * this work for additional information regarding copyright ownership.
+         * The ASF licenses this file to You under the Apache License, Version 2.0
+         * (the "License"); you may not use this file except in compliance with
+         * the License. You may obtain a copy of the License at
+         *
+         *    http://www.apache.org/licenses/LICENSE-2.0
+         *
+         * Unless required by applicable law or agreed to in writing, software
+         * distributed under the License is distributed on an "AS IS" BASIS,
+         * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+         * See the License for the specific language governing permissions and
+         * limitations under the License.
+         */
+package org.apache.kafka.connect.storage;
+
+import org.apache.kafka.common.config.ConfigDef;
+import org.apache.kafka.common.config.ConfigDef.Importance;
+import org.apache.kafka.common.config.ConfigDef.Type;
+import org.apache.kafka.common.config.ConfigDef.Width;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
+
+        /**
+         * Configuration options for {@link StringConverter} instances.
+         */
+        public class StringConverterConfig extends ConverterConfig {
+
+            public static final String ENCODING_CONFIG = "converter.encoding";
+            public static final String ENCODING_DEFAULT = StandardCharsets.UTF_8.name();
+            private static final String ENCODING_DOC = "The name of the Java character set to use for encoding strings as byte arrays.";
+            private static final String ENCODING_DISPLAY = "Encoding";
+
+            private final static ConfigDef CONFIG;
+
+            static {
+                CONFIG = ConverterConfig.newConfigDef();
+                CONFIG.define(ENCODING_CONFIG, Type.STRING, ENCODING_DEFAULT, Importance.HIGH, ENCODING_DOC, null, -1, Width.MEDIUM,
+                        ENCODING_DISPLAY);
+            }
+
+            public static ConfigDef configDef() {
+                return CONFIG;
+            }
+
+            public StringConverterConfig(Map<String, ?> props) {
+                super(CONFIG, props);
+            }
+
+            /**
+             * Get the string encoding.
+             *
+             * @return the encoding; never null
+             */
+            public String encoding() {
+                return getString(ENCODING_CONFIG);
+            }
+        }
+
         public void configure(Map<String, ?> configs) {
             // Calling get() should have the side effect of marking that config as used.
             // this is required by testUnusedConfigs

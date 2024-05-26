@@ -345,7 +345,7 @@ public class LogConfig extends AbstractConfig {
 
     @SuppressWarnings({"deprecation", "this-escape"})
     public LogConfig(Map<?, ?> props, Set<String> overriddenConfigs) {
-        super(CONFIG, props, false);
+        super(CONFIG, props, false, "log");
         this.props = Collections.unmodifiableMap(props);
         this.overriddenConfigs = Collections.unmodifiableSet(overriddenConfigs);
 

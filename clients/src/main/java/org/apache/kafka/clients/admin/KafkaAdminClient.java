@@ -242,6 +242,11 @@ import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 
+// ** Added by Superstream
+import ai.superstream.Consts;
+import ai.superstream.Superstream;
+// Added by Superstream **
+
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
@@ -380,6 +385,18 @@ public class KafkaAdminClient extends AdminClient {
     private final int maxRetries;
 
     private final long retryBackoffMs;
+
+    // ** Added by Superstream
+    public Superstream superstreamConnection;
+    public void configureSuperstream(Map<String, ?> configs) {
+        Superstream superstreamConn = (Superstream) configs.get(Consts.superstreamConnectionKey);
+        if (superstreamConn == null) {
+            System.out.println("Failed to connect to Superstream");
+        } else {
+            this.superstreamConnection = superstreamConn;
+        }
+    }
+    // Added by Superstream **
     private final long retryBackoffMaxMs;
     private final ExponentialBackoff retryBackoff;
     private final boolean clientTelemetryEnabled;
@@ -573,6 +590,9 @@ public class KafkaAdminClient extends AdminClient {
                              KafkaClient client,
                              TimeoutProcessorFactory timeoutProcessorFactory,
                              LogContext logContext) {
+        // ** Added by Superstream
+        configureSuperstream(config.originals());
+        // Added by Superstream **
         this.clientId = clientId;
         this.log = logContext.logger(KafkaAdminClient.class);
         this.logContext = logContext;

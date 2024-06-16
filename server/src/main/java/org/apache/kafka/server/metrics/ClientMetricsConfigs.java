@@ -104,7 +104,7 @@ public class ClientMetricsConfigs extends AbstractConfig {
         .define(CLIENT_MATCH_PATTERN, Type.LIST, Collections.emptyList(), Importance.MEDIUM, "Client match pattern list");
 
     public ClientMetricsConfigs(Properties props) {
-        super(CONFIG, props);
+        super(CONFIG, props, "client-metrics");
     }
 
     public static ConfigDef configDef() {

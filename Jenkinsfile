@@ -18,7 +18,7 @@ pipeline {
     agent {
         docker {
             label 'memphis-jenkins-big-fleet,'
-            image 'gradle:7.3.0'
+            image 'gradle:8.5-jdk21'
             args '-u root'
         }
     } 
@@ -77,7 +77,7 @@ pipeline {
         }
         stage('Create Release'){
             when {
-                branch '3.5.1'
+                branch '3.7.0'
             }       
             steps {               
                 sh """
@@ -141,7 +141,7 @@ def uploadBundleAndCheckStatus() {
              --verbose \\
              --header 'Authorization: Bearer ${env.TOKEN}' \\
              --form bundle=@kafka-client-${env.versionTag}.tar.gz \\
-             'https://central.sonatype.com/api/v1/publisher/upload?name=kafka-clients-${env.versionTag}'
+             'https://central.sonatype.com/api/v1/publisher/upload?name=kafka-clients-${env.versionTag}&publishingType=AUTOMATIC'
     """, returnStdout: true).trim()
     def id = response.split("\n").last().trim()
     echo "Extracted ID: ${id}"

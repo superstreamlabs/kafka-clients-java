@@ -16,6 +16,10 @@
  */
 package org.apache.kafka.clients.producer;
 
+import ai.superstream.Consts;
+import ai.superstream.Superstream;
+import ai.superstream.CompressionUpdateListener;
+
 import org.apache.kafka.clients.ApiVersions;
 import org.apache.kafka.clients.ClientUtils;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -78,13 +82,7 @@ import org.slf4j.Logger;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -250,7 +248,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final RecordAccumulator accumulator;
     private final Sender sender;
     private final Thread ioThread;
-    private final CompressionType compressionType;
+    private CompressionType compressionType;
     private final Sensor errors;
     private final Time time;
     private final Serializer<K> keySerializer;
@@ -262,6 +260,29 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final ApiVersions apiVersions;
     private final TransactionManager transactionManager;
     private final Optional<ClientTelemetryReporter> clientTelemetryReporter;
+
+    private volatile boolean compressionEnabled = false;
+
+    private void initSuperstream(Map<String, Object> configs) {
+        Superstream superstreamConnection = (Superstream) configs.get(Consts.superstreamConnectionKey);
+        if (superstreamConnection != null) {
+            superstreamConnection.addCompressionUpdateListener(this);
+            this.compressionEnabled = superstreamConnection.isCompressionEnabled();
+            this.compressionType = superstreamConnection.getCompressionType();
+            if (this.accumulator != null) {
+                this.accumulator.updateCompression(this.compressionEnabled, this.compressionType);
+            }
+        }
+    }
+
+    @Override
+    public void onCompressionUpdate(boolean newEnabled, CompressionType newCompressionType) {
+        this.compressionEnabled = newEnabled;
+        this.compressionType = newCompressionType;
+        if (this.accumulator != null) {
+            this.accumulator.updateCompression(newEnabled, newCompressionType.name);
+        }
+    }
 
     /**
      * A producer is instantiated by providing a set of key-value pairs as configuration. Valid configuration strings
@@ -275,6 +296,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
      */
     public KafkaProducer(final Map<String, Object> configs) {
         this(configs, null, null);
+        initSuperstream(configs);
     }
 
     /**
@@ -293,6 +315,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     public KafkaProducer(Map<String, Object> configs, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
         this(new ProducerConfig(ProducerConfig.appendSerializerToConfig(configs, keySerializer, valueSerializer)),
                 keySerializer, valueSerializer, null, null, null, Time.SYSTEM);
+        initSuperstream(configs);
     }
 
     /**
@@ -304,6 +327,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
      */
     public KafkaProducer(Properties properties) {
         this(properties, null, null);
+        initSuperstream(Utils.propsToMap(properties));
     }
 
     /**
@@ -319,6 +343,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
      */
     public KafkaProducer(Properties properties, Serializer<K> keySerializer, Serializer<V> valueSerializer) {
         this(Utils.propsToMap(properties), keySerializer, valueSerializer);
+        initSuperstream(Utils.propsToMap(properties));
     }
 
     /**
@@ -473,6 +498,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             throw new KafkaException("Failed to construct kafka producer", t);
         }
     }
+
 
     // visible for testing
     KafkaProducer(ProducerConfig config,

@@ -90,6 +90,7 @@ public class RecordAccumulator {
     private final Map<String, Integer> nodesDrainIndex;
     private final TransactionManager transactionManager;
     private long nextBatchExpiryTimeMs = Long.MAX_VALUE; // the earliest time (absolute) a batch will expire.
+    private volatile String compressionType;
 
     /**
      * Create a new record accumulator
@@ -1279,4 +1280,21 @@ public class RecordAccumulator {
             drainTimeMs = nowMs;
         }
     }
+
+    public void updateCompression(boolean enabled, String newCompressionType) {
+        this.compressionType = enabled ? newCompressionType : CompressionType.NONE.name;
+
+        // Обновляем настройки сжатия для всех активных пакетов
+        for (Map.Entry<TopicPartition, Deque<ProducerBatch>> entry : batches.entrySet()) {
+            Deque<ProducerBatch> deque = entry.getValue();
+            synchronized (deque) {
+                for (ProducerBatch batch : deque) {
+                    if (!batch.isClosed()) {
+                        batch.setCompression(CompressionType.forName(this.compressionType));
+                    }
+                }
+            }
+        }
+    }
+
 }

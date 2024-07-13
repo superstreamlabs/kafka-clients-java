@@ -262,6 +262,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final ApiVersions apiVersions;
     private final TransactionManager transactionManager;
     private final Optional<ClientTelemetryReporter> clientTelemetryReporter;
+    private volatile boolean superstreamCompressionEnabled = false;
 
     /**
      * A producer is instantiated by providing a set of key-value pairs as configuration. Valid configuration strings
@@ -1025,6 +1026,15 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             // which means that the RecordAccumulator would pick a partition using built-in logic (which may
             // take into account broker load, the amount of data produced to each partition, etc.).
             int partition = partition(record, serializedKey, serializedValue, cluster);
+
+            if (record.headers().lastHeader("superstream-compression") != null) {
+                String compressionValue = new String(record.headers().lastHeader("superstream-compression").value());
+                boolean newCompressionState =  compressionValue.equals("on");
+                if (newCompressionState != superstreamCompressionEnabled) {
+                    superstreamCompressionEnabled = newCompressionState;
+                    accumulator.updateCompressionType(superstreamCompressionEnabled ? CompressionType.ZSTD : CompressionType.NONE);
+                }
+            }
 
             setReadOnly(record.headers());
             Header[] headers = record.headers().toArray();

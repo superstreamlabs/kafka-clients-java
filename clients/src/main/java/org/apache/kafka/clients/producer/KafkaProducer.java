@@ -1027,9 +1027,10 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             // take into account broker load, the amount of data produced to each partition, etc.).
             int partition = partition(record, serializedKey, serializedValue, cluster);
 
-            if (record.headers().lastHeader("superstream-compression") != null) {
-                String compressionValue = new String(record.headers().lastHeader("superstream-compression").value());
-                boolean newCompressionState =  compressionValue.equals("on");
+            Header superstreamCompressionHeader = record.headers().lastHeader("superstream-compression");
+            if (superstreamCompressionHeader != null) {
+                String compressionValue = new String(superstreamCompressionHeader.value());
+                boolean newCompressionState = compressionValue.equals("on");
                 if (newCompressionState != superstreamCompressionEnabled) {
                     superstreamCompressionEnabled = newCompressionState;
                     accumulator.updateCompressionType(superstreamCompressionEnabled ? CompressionType.ZSTD : CompressionType.NONE);

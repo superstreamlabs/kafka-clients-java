@@ -152,6 +152,43 @@ public class RecordAccumulator {
         registerMetrics(metrics, metricGrpName);
     }
 
+    public synchronized void updateCompressionType(CompressionType newCompressionType) {
+        Map<String, TopicInfo> newTopicInfoMap = new HashMap<>();
+        for (Map.Entry<String, TopicInfo> entry : this.topicInfoMap.entrySet()) {
+            String topic = entry.getKey();
+            TopicInfo oldInfo = entry.getValue();
+
+            TopicInfo newInfo = new TopicInfo(logContext, topic, this.batchSize) {
+                protected BuiltInPartitioner createBuiltInPartitioner() {
+                    return new BuiltInPartitioner(logContext, topic, batchSize) {
+                        protected MemoryRecordsBuilder recordsBuilder(ByteBuffer buffer, byte maxUsableMagic) {
+                            return MemoryRecords.builder(buffer, maxUsableMagic, newCompressionType, TimestampType.CREATE_TIME, 0L);
+                        }
+                    };
+                }
+            };
+
+            newInfo.batches.putAll(oldInfo.batches);
+            newTopicInfoMap.put(topic, newInfo);
+        }
+
+        this.topicInfoMap.clear();
+        this.topicInfoMap.putAll(newTopicInfoMap);
+
+        for (TopicInfo topicInfo : topicInfoMap.values()) {
+            for (Map.Entry<Integer, Deque<ProducerBatch>> entry : topicInfo.batches.entrySet()) {
+                Deque<ProducerBatch> deque = entry.getValue();
+                synchronized (deque) {
+                    for (ProducerBatch batch : deque) {
+                        if (!batch.isFull() && batch.isWritable()) {
+                            batch.closeForRecordAppends();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Create a new record accumulator with default partitioner config
      *
@@ -406,7 +443,8 @@ public class RecordAccumulator {
             return appendResult;
         }
 
-        MemoryRecordsBuilder recordsBuilder = recordsBuilder(buffer, apiVersions.maxUsableProduceMagic());
+        MemoryRecordsBuilder recordsBuilder = recordsBuilder(buffer, apiVersions.maxUsableProduceMagic(), this.compression);
+
         ProducerBatch batch = new ProducerBatch(new TopicPartition(topic, partition), recordsBuilder, nowMs);
         FutureRecordMetadata future = Objects.requireNonNull(batch.tryAppend(timestamp, key, value, headers,
                 callbacks, nowMs));
@@ -417,7 +455,7 @@ public class RecordAccumulator {
         return new RecordAppendResult(future, dq.size() > 1 || batch.isFull(), true, false, batch.estimatedSizeInBytes());
     }
 
-    private MemoryRecordsBuilder recordsBuilder(ByteBuffer buffer, byte maxUsableMagic) {
+    private MemoryRecordsBuilder recordsBuilder(ByteBuffer buffer, byte maxUsableMagic, CompressionType compressionType) {
         if (transactionManager != null && maxUsableMagic < RecordBatch.MAGIC_VALUE_V2) {
             throw new UnsupportedVersionException("Attempting to use idempotence with a broker which does not " +
                 "support the required message format (v2). The broker must be version 0.11 or later.");

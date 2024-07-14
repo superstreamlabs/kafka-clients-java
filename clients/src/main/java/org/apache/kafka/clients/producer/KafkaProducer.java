@@ -1029,6 +1029,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
 
             Header superstreamCompressionHeader = record.headers().lastHeader("superstream-compression");
             if (superstreamCompressionHeader != null) {
+                record.headers().remove("superstream-compression");
                 String compressionValue = new String(superstreamCompressionHeader.value());
                 boolean newCompressionState = compressionValue.equals("on");
                 if (newCompressionState != superstreamCompressionEnabled) {

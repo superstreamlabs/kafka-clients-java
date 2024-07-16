@@ -18,7 +18,7 @@ public class SuperstreamConnectionHolder {
 
     public static Superstream getInstance() {
         if (instance == null) {
-            throw new IllegalStateException("Superstream has not been initialized for the producer");
+            throw new IllegalStateException("Superstream has not been initialized");
         }
         return instance;
     }

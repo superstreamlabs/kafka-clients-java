@@ -11,7 +11,6 @@ public class SuperstreamConnectionHolder {
             synchronized (lock) {
                 if (instance == null) {
                     instance = connection;
-                    instance.init();
                 }
             }
         }

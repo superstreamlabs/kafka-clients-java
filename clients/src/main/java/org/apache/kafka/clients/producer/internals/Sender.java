@@ -928,9 +928,13 @@ public class Sender implements Runnable {
         client.send(clientRequest, now);
 
         // ** Added by Superstream
-        Superstream superstreamConnection = ProducerSuperstreamHolder.getInstance();
-        if (superstreamConnection != null && superstreamConnection.superstreamReady) {
-            superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(totalCompressedSize);
+        try {
+            Superstream superstreamConnection = ProducerSuperstreamHolder.getInstance();
+            if (superstreamConnection != null && superstreamConnection.superstreamReady) {
+                superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(totalCompressedSize);
+            }
+        } catch (Exception e) {
+            log.error("Error in superstreamConnection: ", e);
         }
         // Added by Superstream **
 

@@ -343,10 +343,6 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             this.producerConfig = config;
             this.time = time;
 
-            // ** Added by Superstream
-            ProducerSuperstreamHolder.initialize(config.originals());
-            // Added by Superstream **
-
             String transactionalId = config.getString(ProducerConfig.TRANSACTIONAL_ID_CONFIG);
 
             this.clientId = config.getString(ProducerConfig.CLIENT_ID_CONFIG);

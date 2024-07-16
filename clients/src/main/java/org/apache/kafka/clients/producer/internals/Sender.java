@@ -22,14 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import ai.superstream.Superstream;
-import org.apache.kafka.clients.ApiVersions;
-import org.apache.kafka.clients.ClientRequest;
-import org.apache.kafka.clients.ClientResponse;
-import org.apache.kafka.clients.KafkaClient;
-import org.apache.kafka.clients.Metadata;
-import org.apache.kafka.clients.NetworkClientUtils;
-import org.apache.kafka.clients.RequestCompletionHandler;
-import org.apache.kafka.clients.producer.ProducerSuperstreamHolder;
+import org.apache.kafka.clients.*;
 import org.apache.kafka.common.InvalidRecordException;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.MetricName;
@@ -929,7 +922,7 @@ public class Sender implements Runnable {
 
         // ** Added by Superstream
         try {
-            Superstream superstreamConnection = ProducerSuperstreamHolder.getInstance();
+            Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
             if (superstreamConnection != null && superstreamConnection.superstreamReady) {
                 superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(totalCompressedSize);
             }

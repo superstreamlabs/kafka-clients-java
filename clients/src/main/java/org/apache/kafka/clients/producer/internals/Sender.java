@@ -20,13 +20,9 @@ import static org.apache.kafka.common.requests.ProduceResponse.INVALID_OFFSET;
 
 import java.util.Optional;
 import java.util.Set;
-import org.apache.kafka.clients.ApiVersions;
-import org.apache.kafka.clients.ClientRequest;
-import org.apache.kafka.clients.ClientResponse;
-import org.apache.kafka.clients.KafkaClient;
-import org.apache.kafka.clients.Metadata;
-import org.apache.kafka.clients.NetworkClientUtils;
-import org.apache.kafka.clients.RequestCompletionHandler;
+
+import ai.superstream.Superstream;
+import org.apache.kafka.clients.*;
 import org.apache.kafka.common.InvalidRecordException;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.MetricName;
@@ -869,6 +865,7 @@ public class Sender implements Runnable {
     private void sendProduceRequest(long now, int destination, short acks, int timeout, List<ProducerBatch> batches) {
         if (batches.isEmpty())
             return;
+        long totalCompressedSize = 0;
 
         final Map<TopicPartition, ProducerBatch> recordsByPartition = new HashMap<>(batches.size());
 
@@ -882,6 +879,8 @@ public class Sender implements Runnable {
         for (ProducerBatch batch : batches) {
             TopicPartition tp = batch.topicPartition;
             MemoryRecords records = batch.records();
+
+            totalCompressedSize = totalCompressedSize + records.sizeInBytes();
 
             // down convert if necessary to the minimum magic used. In general, there can be a delay between the time
             // that the producer starts building the batch and the time that we send the request, and we may have
@@ -920,6 +919,18 @@ public class Sender implements Runnable {
         ClientRequest clientRequest = client.newClientRequest(nodeId, requestBuilder, now, acks != 0,
                 requestTimeoutMs, callback);
         client.send(clientRequest, now);
+
+        // ** Added by Superstream
+        try {
+            Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
+            if (superstreamConnection != null && superstreamConnection.superstreamReady) {
+                superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(totalCompressedSize);
+            }
+        } catch (Exception e) {
+            log.error("Error in superstreamConnection: ", e);
+        }
+        // Added by Superstream **
+
         log.trace("Sent produce request to {}: {}", nodeId, requestBuilder);
     }
 

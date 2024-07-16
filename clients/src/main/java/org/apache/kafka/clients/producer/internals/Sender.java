@@ -927,8 +927,12 @@ public class Sender implements Runnable {
                 requestTimeoutMs, callback);
         client.send(clientRequest, now);
 
+        // ** Added by Superstream
         Superstream superstreamConnection = ProducerSuperstreamHolder.getInstance();
-        superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(totalCompressedSize);
+        if (superstreamConnection != null && superstreamConnection.superstreamReady) {
+            superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(totalCompressedSize);
+        }
+        // Added by Superstream **
 
         log.trace("Sent produce request to {}: {}", nodeId, requestBuilder);
     }

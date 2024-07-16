@@ -924,7 +924,7 @@ public class Sender implements Runnable {
         try {
             Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
             if (superstreamConnection != null && superstreamConnection.superstreamReady) {
-                superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(totalCompressedSize);
+                superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(totalCompressedSize);
             }
         } catch (Exception e) {
             log.error("Error in superstreamConnection: ", e);

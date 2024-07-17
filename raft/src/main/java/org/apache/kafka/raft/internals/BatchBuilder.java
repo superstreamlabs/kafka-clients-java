@@ -16,6 +16,8 @@
  */
 package org.apache.kafka.raft.internals;
 
+import ai.superstream.Superstream;
+import org.apache.kafka.clients.SuperstreamConnectionHolder;
 import org.apache.kafka.common.protocol.DataOutputStreamWritable;
 import org.apache.kafka.common.protocol.ObjectSerializationCache;
 import org.apache.kafka.common.protocol.Writable;
@@ -91,8 +93,18 @@ public class BatchBuilder<T> {
         int batchHeaderSizeInBytes = batchHeaderSizeInBytes();
         batchOutput.position(initialPosition + batchHeaderSizeInBytes);
 
-        this.recordOutput = new DataOutputStreamWritable(new DataOutputStream(
-            compressionType.wrapForOutput(this.batchOutput, RecordBatch.MAGIC_VALUE_V2)));
+        DataOutputStream dataOutputStream = new DataOutputStream(compressionType.wrapForOutput(this.batchOutput, RecordBatch.MAGIC_VALUE_V2));
+        this.recordOutput = new DataOutputStreamWritable(dataOutputStream);
+
+        // ** Added by Superstream
+        int sizeInBytesBefore = batchOutput.position();
+        int sizeInBytesAfter = dataOutputStream.size();
+        Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
+        if (superstreamConnection != null && superstreamConnection.superstreamReady) {
+            superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
+            superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
+        }
+        // Added by Superstream **
     }
 
     /**

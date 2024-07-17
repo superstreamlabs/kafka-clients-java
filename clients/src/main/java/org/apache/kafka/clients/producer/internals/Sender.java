@@ -919,18 +919,6 @@ public class Sender implements Runnable {
         ClientRequest clientRequest = client.newClientRequest(nodeId, requestBuilder, now, acks != 0,
                 requestTimeoutMs, callback);
         client.send(clientRequest, now);
-
-        // ** Added by Superstream
-        try {
-            Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
-            if (superstreamConnection != null && superstreamConnection.superstreamReady) {
-                superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(totalCompressedSize);
-            }
-        } catch (Exception e) {
-            log.error("Error in superstreamConnection: ", e);
-        }
-        // Added by Superstream **
-
         log.trace("Sent produce request to {}: {}", nodeId, requestBuilder);
     }
 

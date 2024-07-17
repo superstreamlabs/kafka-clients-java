@@ -364,10 +364,11 @@ public class MemoryRecordsBuilder implements AutoCloseable {
                     Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
                     if (superstreamConnection != null && superstreamConnection.superstreamReady) {
                         if (superstreamConnection.reductionEnabled || superstreamConnection.compressionEnabled) {
-                        int sizeInBytesBefore = this.uncompressedRecordsSizeInBytes;
-                        int sizeInBytesAfter = writeLegacyCompressedWrapperHeader();
-                        superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
-                        superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
+                            int sizeInBytesBefore = this.uncompressedRecordsSizeInBytes;
+                            int sizeInBytesAfter = writeLegacyCompressedWrapperHeader();
+                            superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
+                            superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
+                        }
                     }
                 } catch (Exception e) {
                     System.out.println("Error incrementing Superstream counters: " + e.getMessage());

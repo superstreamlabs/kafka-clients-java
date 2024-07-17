@@ -99,10 +99,14 @@ public class BatchBuilder<T> {
         // ** Added by Superstream
         int sizeInBytesBefore = batchOutput.position();
         int sizeInBytesAfter = dataOutputStream.size();
-        Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
-        if (superstreamConnection != null && superstreamConnection.superstreamReady) {
-            superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
-            superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
+        try {
+            Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
+            if (superstreamConnection != null && superstreamConnection.superstreamReady) {
+                superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
+                superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
+            }
+        } catch (Exception e) {
+            System.out.println("Error incrementing total bytes before and after reduction: " + e.getMessage());
         }
         // Added by Superstream **
     }

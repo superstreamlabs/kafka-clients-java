@@ -371,7 +371,7 @@ public class MemoryRecordsBuilder implements AutoCloseable {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    System.out.println("Error incrementing Superstream counters: " + e.getMessage());
                 }
                 // Added by Superstream **
 

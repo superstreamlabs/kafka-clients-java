@@ -16,6 +16,8 @@
  */
 package org.apache.kafka.common.record;
 
+import ai.superstream.Superstream;
+import org.apache.kafka.clients.SuperstreamConnectionHolder;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.message.LeaderChangeMessage;
@@ -354,9 +356,25 @@ public class MemoryRecordsBuilder implements AutoCloseable {
         } else {
             if (magic > RecordBatch.MAGIC_VALUE_V1)
                 this.actualCompressionRatio = (float) writeDefaultBatchHeader() / this.uncompressedRecordsSizeInBytes;
-            else if (compressionType != CompressionType.NONE)
+            else if (compressionType != CompressionType.NONE) {
                 this.actualCompressionRatio = (float) writeLegacyCompressedWrapperHeader() / this.uncompressedRecordsSizeInBytes;
 
+                // ** Added by Superstream
+                try {
+                    Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
+                    if (superstreamConnection != null && superstreamConnection.superstreamReady) {
+                        if (superstreamConnection.reductionEnabled || superstreamConnection.compressionEnabled) {
+                        int sizeInBytesBefore = this.uncompressedRecordsSizeInBytes;
+                        int sizeInBytesAfter = writeLegacyCompressedWrapperHeader();
+                        superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
+                        superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error incrementing Superstream counters: " + e.getMessage());
+                }
+                // Added by Superstream **
+
+            }
             ByteBuffer buffer = buffer().duplicate();
             buffer.flip();
             buffer.position(initialPosition);

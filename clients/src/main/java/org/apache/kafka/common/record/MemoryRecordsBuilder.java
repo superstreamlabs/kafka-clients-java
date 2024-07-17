@@ -358,24 +358,31 @@ public class MemoryRecordsBuilder implements AutoCloseable {
                 this.actualCompressionRatio = (float) writeDefaultBatchHeader() / this.uncompressedRecordsSizeInBytes;
             else if (compressionType != CompressionType.NONE) {
                 this.actualCompressionRatio = (float) writeLegacyCompressedWrapperHeader() / this.uncompressedRecordsSizeInBytes;
+            }
 
-                // ** Added by Superstream
-                try {
-                    Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
-                    if (superstreamConnection != null && superstreamConnection.superstreamReady) {
-                        if (superstreamConnection.reductionEnabled || superstreamConnection.compressionEnabled) {
+            // ** Added by Superstream
+            try {
+                Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
+                if (superstreamConnection != null && superstreamConnection.superstreamReady) {
+                    if (superstreamConnection.reductionEnabled || superstreamConnection.compressionEnabled) {
+                        int sizeInBytesAfter=0;
+                        if (magic > RecordBatch.MAGIC_VALUE_V1){
+                            sizeInBytesAfter = writeDefaultBatchHeader();
+                        } else if (compressionType != CompressionType.NONE) {
+                            sizeInBytesAfter = writeLegacyCompressedWrapperHeader();
+                        }
+                        if (sizeInBytesAfter > 0) {
                             int sizeInBytesBefore = this.uncompressedRecordsSizeInBytes;
-                            int sizeInBytesAfter = writeLegacyCompressedWrapperHeader();
                             superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
                             superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
                         }
                     }
-                } catch (Exception e) {
-                    System.out.println("Error incrementing Superstream counters: " + e.getMessage());
                 }
-                // Added by Superstream **
-
+            } catch (Exception e) {
+                System.out.println("Error incrementing Superstream counters: " + e.getMessage());
             }
+            // Added by Superstream **
+
             ByteBuffer buffer = buffer().duplicate();
             buffer.flip();
             buffer.position(initialPosition);

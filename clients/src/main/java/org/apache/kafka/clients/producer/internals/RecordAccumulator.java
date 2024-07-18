@@ -73,7 +73,7 @@ public class RecordAccumulator {
     private final AtomicInteger flushesInProgress;
     private final AtomicInteger appendsInProgress;
     private final int batchSize;
-    private final CompressionType compression;
+    private CompressionType compression;
     private final int lingerMs;
     private final ExponentialBackoff retryBackoff;
     private final int deliveryTimeoutMs;
@@ -154,6 +154,7 @@ public class RecordAccumulator {
 
     public synchronized void updateCompressionType(CompressionType newCompressionType) {
         Map<String, TopicInfo> newTopicInfoMap = new HashMap<>();
+        this.compression = newCompressionType;
         for (Map.Entry<String, TopicInfo> entry : this.topicInfoMap.entrySet()) {
             String topic = entry.getKey();
             TopicInfo oldInfo = entry.getValue();

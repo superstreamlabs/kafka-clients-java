@@ -17,6 +17,7 @@
 package org.apache.kafka.common.record;
 
 import ai.superstream.Superstream;
+import ai.superstream.SuperstreamCounters;
 import org.apache.kafka.clients.SuperstreamConnectionHolder;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.header.Header;
@@ -363,6 +364,7 @@ public class MemoryRecordsBuilder implements AutoCloseable {
             // ** Added by Superstream
             try {
                 Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
+                SuperstreamCounters counters = SuperstreamConnectionHolder.getInstance().clientCounters;
                 if (superstreamConnection != null && superstreamConnection.superstreamReady) {
                     if (superstreamConnection.reductionEnabled || superstreamConnection.compressionEnabled) {
                         int sizeInBytesAfter=0;
@@ -373,8 +375,10 @@ public class MemoryRecordsBuilder implements AutoCloseable {
                         }
                         if (sizeInBytesAfter > 0) {
                             int sizeInBytesBefore = this.uncompressedRecordsSizeInBytes;
-                            superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
-                            superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
+                            synchronized (counters) {
+                                superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
+                                superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
+                            }
                         }
                     }
                 }

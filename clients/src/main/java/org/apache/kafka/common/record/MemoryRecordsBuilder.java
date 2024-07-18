@@ -364,21 +364,22 @@ public class MemoryRecordsBuilder implements AutoCloseable {
             // ** Added by Superstream
             try {
                 Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
-                SuperstreamCounters counters = SuperstreamConnectionHolder.getInstance().clientCounters;
                 if (superstreamConnection != null && superstreamConnection.superstreamReady) {
                     if (superstreamConnection.reductionEnabled || superstreamConnection.compressionEnabled) {
-                        int sizeInBytesAfter=0;
+                        int sizeInBytesAfter;
                         if (magic > RecordBatch.MAGIC_VALUE_V1){
                             sizeInBytesAfter = writeDefaultBatchHeader();
                         } else if (compressionType != CompressionType.NONE) {
                             sizeInBytesAfter = writeLegacyCompressedWrapperHeader();
+                        } else {
+                            sizeInBytesAfter = 0;
                         }
                         if (sizeInBytesAfter > 0) {
                             int sizeInBytesBefore = this.uncompressedRecordsSizeInBytes;
-                            synchronized (counters) {
-                                superstreamConnection.clientCounters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
-                                superstreamConnection.clientCounters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
-                            }
+                            superstreamConnection.updateClientCounters(counters -> {
+                                counters.incrementTotalBytesBeforeReduction(sizeInBytesBefore);
+                                counters.incrementTotalBytesAfterReduction(sizeInBytesAfter);
+                            });
                         }
                     }
                 }

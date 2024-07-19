@@ -17,8 +17,6 @@
 package org.apache.kafka.common.record;
 
 import ai.superstream.Superstream;
-import ai.superstream.SuperstreamCounters;
-import org.apache.kafka.clients.SuperstreamConnectionHolder;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.message.LeaderChangeMessage;
@@ -68,6 +66,7 @@ public class MemoryRecordsBuilder implements AutoCloseable {
     private final int partitionLeaderEpoch;
     private final int writeLimit;
     private final int batchHeaderSizeInBytes;
+    private final Superstream superstreamConnection;
 
     // Use a conservative estimate of the compression ratio. The producer overrides this using statistics
     // from previous batches before appending any records.
@@ -104,7 +103,8 @@ public class MemoryRecordsBuilder implements AutoCloseable {
                                 boolean isControlBatch,
                                 int partitionLeaderEpoch,
                                 int writeLimit,
-                                long deleteHorizonMs) {
+                                long deleteHorizonMs,
+                                Superstream superstreamConnection) {
         if (magic > RecordBatch.MAGIC_VALUE_V0 && timestampType == TimestampType.NO_TIMESTAMP_TYPE)
             throw new IllegalArgumentException("TimestampType must be set for magic >= 0");
         if (magic < RecordBatch.MAGIC_VALUE_V2) {
@@ -137,6 +137,7 @@ public class MemoryRecordsBuilder implements AutoCloseable {
         this.writeLimit = writeLimit;
         this.initialPosition = bufferStream.position();
         this.batchHeaderSizeInBytes = AbstractRecords.recordBatchHeaderSizeInBytes(magic, compressionType);
+        this.superstreamConnection = superstreamConnection;
 
         bufferStream.position(initialPosition + batchHeaderSizeInBytes);
         this.bufferStream = bufferStream;
@@ -159,10 +160,11 @@ public class MemoryRecordsBuilder implements AutoCloseable {
                                 boolean isTransactional,
                                 boolean isControlBatch,
                                 int partitionLeaderEpoch,
-                                int writeLimit) {
+                                int writeLimit,
+                                Superstream superstreamConnection) {
         this(bufferStream, magic, compressionType, timestampType, baseOffset, logAppendTime, producerId,
              producerEpoch, baseSequence, isTransactional, isControlBatch, partitionLeaderEpoch, writeLimit,
-             RecordBatch.NO_TIMESTAMP);
+             RecordBatch.NO_TIMESTAMP, superstreamConnection);
     }
 
     /**
@@ -197,10 +199,11 @@ public class MemoryRecordsBuilder implements AutoCloseable {
                                 boolean isTransactional,
                                 boolean isControlBatch,
                                 int partitionLeaderEpoch,
-                                int writeLimit) {
+                                int writeLimit,
+                                Superstream superstreamConnection) {
         this(new ByteBufferOutputStream(buffer), magic, compressionType, timestampType, baseOffset, logAppendTime,
                 producerId, producerEpoch, baseSequence, isTransactional, isControlBatch, partitionLeaderEpoch,
-                writeLimit);
+                writeLimit, superstreamConnection);
     }
 
     public ByteBuffer buffer() {
@@ -363,7 +366,6 @@ public class MemoryRecordsBuilder implements AutoCloseable {
 
             // ** Added by Superstream
             try {
-                Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
                 if (superstreamConnection != null && superstreamConnection.superstreamReady) {
                     if (superstreamConnection.reductionEnabled || superstreamConnection.compressionEnabled) {
                         int sizeInBytesAfter;

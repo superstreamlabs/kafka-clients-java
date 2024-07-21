@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import ai.superstream.Superstream;
 import org.apache.kafka.clients.ApiVersions;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.Metadata;
@@ -74,6 +75,7 @@ public class RecordAccumulator {
     private final AtomicInteger appendsInProgress;
     private final int batchSize;
     private CompressionType compression;
+    private Superstream supersrtreamConnection;
     private final int lingerMs;
     private final ExponentialBackoff retryBackoff;
     private final int deliveryTimeoutMs;
@@ -150,6 +152,10 @@ public class RecordAccumulator {
         nodesDrainIndex = new HashMap<>();
         this.transactionManager = transactionManager;
         registerMetrics(metrics, metricGrpName);
+    }
+
+    public synchronized void setSuperstreamConnection(Superstream connection) {
+        this.supersrtreamConnection = connection;
     }
 
     public synchronized void updateCompressionType(CompressionType newCompressionType) {

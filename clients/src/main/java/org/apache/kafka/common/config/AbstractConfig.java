@@ -16,7 +16,6 @@
  */
 package org.apache.kafka.common.config;
 
-import org.apache.kafka.clients.SuperstreamConnectionHolder;
 import org.apache.kafka.common.Configurable;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.config.provider.ConfigProvider;
@@ -47,6 +46,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class AbstractConfig {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
+    private final Superstream superstreamConnection;
 
     /**
      * Configs for which values have been requested, used to detect unused configs.
@@ -115,8 +115,7 @@ public class AbstractConfig {
 
         // ** Added by Superstream
         originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals, type);
-        Superstream superstreamConnection = (Superstream) originals.get("superstream.connection");
-        SuperstreamConnectionHolder.initialize(superstreamConnection);
+        superstreamConnection = (Superstream) originals.get("superstream.connection");
         // Added by Superstream **
         this.originals = resolveConfigVariables(configProviderProps, (Map<String, Object>) originals);
         this.values = definition.parse(this.originals);
@@ -154,6 +153,10 @@ public class AbstractConfig {
     public AbstractConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog, String type) {
         this(definition, originals, Collections.emptyMap(), doLog, type);
 
+    }
+
+    public Superstream getSuperstreamConnection() {
+        return superstreamConnection;
     }
 
     /**

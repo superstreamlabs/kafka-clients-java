@@ -17,8 +17,6 @@
 package org.apache.kafka.common.record;
 
 import ai.superstream.Superstream;
-import ai.superstream.SuperstreamCounters;
-import org.apache.kafka.clients.SuperstreamConnectionHolder;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.message.LeaderChangeMessage;
@@ -56,6 +54,7 @@ public class MemoryRecordsBuilder implements AutoCloseable {
 
     private final TimestampType timestampType;
     private final CompressionType compressionType;
+    private Superstream superstreamConnection;
     // Used to hold a reference to the underlying ByteBuffer so that we can write the record batch header and access
     // the written bytes. ByteBufferOutputStream allocates a new ByteBuffer if the existing one is not large enough,
     // so it's not safe to hold a direct reference to the underlying ByteBuffer.
@@ -363,7 +362,6 @@ public class MemoryRecordsBuilder implements AutoCloseable {
 
             // ** Added by Superstream
             try {
-                Superstream superstreamConnection = SuperstreamConnectionHolder.getInstance();
                 if (superstreamConnection != null && superstreamConnection.superstreamReady) {
                     if (superstreamConnection.reductionEnabled || superstreamConnection.compressionEnabled) {
                         int sizeInBytesAfter;

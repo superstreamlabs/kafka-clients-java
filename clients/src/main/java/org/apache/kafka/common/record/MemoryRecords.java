@@ -16,7 +16,6 @@
  */
 package org.apache.kafka.common.record;
 
-import ai.superstream.Superstream;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.CorruptRecordException;
 import org.apache.kafka.common.message.LeaderChangeMessage;
@@ -515,13 +514,13 @@ public class MemoryRecords extends AbstractRecords {
                                                byte magic,
                                                CompressionType compressionType,
                                                TimestampType timestampType,
-                                               long baseOffset, Superstream superstreamConnection) {
+                                               long baseOffset) {
         long logAppendTime = RecordBatch.NO_TIMESTAMP;
         if (timestampType == TimestampType.LOG_APPEND_TIME)
             logAppendTime = System.currentTimeMillis();
         return builder(buffer, magic, compressionType, timestampType, baseOffset, logAppendTime,
                 RecordBatch.NO_PRODUCER_ID, RecordBatch.NO_PRODUCER_EPOCH, RecordBatch.NO_SEQUENCE, false,
-                RecordBatch.NO_PARTITION_LEADER_EPOCH, superstreamConnection);
+                RecordBatch.NO_PARTITION_LEADER_EPOCH);
     }
 
     public static MemoryRecordsBuilder builder(ByteBuffer buffer,
@@ -586,8 +585,7 @@ public class MemoryRecords extends AbstractRecords {
                                                int baseSequence,
                                                boolean isTransactional,
                                                boolean isControlBatch,
-                                               int partitionLeaderEpoch,
-                                               Superstream superstreamConnection) {
+                                               int partitionLeaderEpoch) {
         return new MemoryRecordsBuilder(buffer, magic, compressionType, timestampType, baseOffset,
                 logAppendTime, producerId, producerEpoch, baseSequence, isTransactional, isControlBatch, partitionLeaderEpoch,
                 buffer.remaining());

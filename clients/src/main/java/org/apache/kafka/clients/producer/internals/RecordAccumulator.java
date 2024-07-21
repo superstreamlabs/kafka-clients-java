@@ -129,7 +129,7 @@ public class RecordAccumulator {
                              ApiVersions apiVersions,
                              TransactionManager transactionManager,
                              BufferPool bufferPool,
-                             Superstream superstreamConnection) {
+            ,                Superstream superstreamConnection) {
         this.logContext = logContext;
         this.log = logContext.logger(RecordAccumulator.class);
         this.closed = false;
@@ -167,7 +167,7 @@ public class RecordAccumulator {
                 protected BuiltInPartitioner createBuiltInPartitioner() {
                     return new BuiltInPartitioner(logContext, topic, batchSize) {
                         protected MemoryRecordsBuilder recordsBuilder(ByteBuffer buffer, byte maxUsableMagic) {
-                            return MemoryRecords.builder(buffer, maxUsableMagic, newCompressionType, TimestampType.CREATE_TIME, 0L, superstreamConnection);
+                            return MemoryRecords.builder(buffer, maxUsableMagic, newCompressionType, TimestampType.CREATE_TIME, 0L);
                         }
                     };
                 }

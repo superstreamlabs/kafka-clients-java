@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ai.superstream.Superstream;
 import org.apache.kafka.clients.ApiVersions;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.Metadata;
@@ -90,7 +89,6 @@ public class RecordAccumulator {
     private final Set<TopicPartition> muted;
     private final Map<String, Integer> nodesDrainIndex;
     private final TransactionManager transactionManager;
-    private final Superstream superstreamConnection;
     private long nextBatchExpiryTimeMs = Long.MAX_VALUE; // the earliest time (absolute) a batch will expire.
 
     /**
@@ -128,8 +126,7 @@ public class RecordAccumulator {
                              Time time,
                              ApiVersions apiVersions,
                              TransactionManager transactionManager,
-                             BufferPool bufferPool,
-            ,                Superstream superstreamConnection) {
+                             BufferPool bufferPool) {
         this.logContext = logContext;
         this.log = logContext.logger(RecordAccumulator.class);
         this.closed = false;
@@ -152,7 +149,6 @@ public class RecordAccumulator {
         this.apiVersions = apiVersions;
         nodesDrainIndex = new HashMap<>();
         this.transactionManager = transactionManager;
-        this.superstreamConnection = superstreamConnection;
         registerMetrics(metrics, metricGrpName);
     }
 
@@ -227,8 +223,7 @@ public class RecordAccumulator {
                              Time time,
                              ApiVersions apiVersions,
                              TransactionManager transactionManager,
-                             BufferPool bufferPool,
-                             Superstream superstreamConnection) {
+                             BufferPool bufferPool) {
         this(logContext,
             batchSize,
             compression,
@@ -242,8 +237,7 @@ public class RecordAccumulator {
             time,
             apiVersions,
             transactionManager,
-            bufferPool,
-            superstreamConnection);
+            bufferPool);
     }
 
     private void registerMetrics(Metrics metrics, String metricGrpName) {
@@ -467,7 +461,7 @@ public class RecordAccumulator {
             throw new UnsupportedVersionException("Attempting to use idempotence with a broker which does not " +
                 "support the required message format (v2). The broker must be version 0.11 or later.");
         }
-        return MemoryRecords.builder(buffer, maxUsableMagic, compression, TimestampType.CREATE_TIME, 0L, this.superstreamConnection);
+        return MemoryRecords.builder(buffer, maxUsableMagic, compression, TimestampType.CREATE_TIME, 0L);
     }
 
     /**

@@ -87,7 +87,7 @@ public class WorkerCoordinator extends AbstractCoordinator implements Closeable 
               client,
               metrics,
               metricGrpPrefix,
-              time, "worker-coordinator");
+              time);
         this.log = logContext.logger(WorkerCoordinator.class);
         this.restUrl = restUrl;
         this.configStorage = configStorage;

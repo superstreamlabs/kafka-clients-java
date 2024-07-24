@@ -165,7 +165,7 @@ public class ConnectorConfig extends AbstractConfig {
     private final EnrichedConnectorConfig enrichedConfig;
     private static class EnrichedConnectorConfig extends AbstractConfig {
         EnrichedConnectorConfig(ConfigDef configDef, Map<String, String> props) {
-            super(configDef, props, "enriched-connector");
+            super(configDef, props);
         }
 
         @Override
@@ -229,7 +229,7 @@ public class ConnectorConfig extends AbstractConfig {
     }
 
     public ConnectorConfig(Plugins plugins, ConfigDef configDef, Map<String, String> props) {
-        super(configDef, props, "connector");
+        super(configDef, props);
         enrichedConfig = new EnrichedConnectorConfig(
                 enrich(plugins, configDef, props, true),
                 props

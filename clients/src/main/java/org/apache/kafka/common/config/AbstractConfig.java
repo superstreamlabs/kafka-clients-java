@@ -24,10 +24,6 @@ import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// ** Added by Superstream
-import ai.superstream.Superstream;
-// Added by Superstream **
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -106,15 +102,12 @@ public class AbstractConfig {
      * @param doLog               whether the configurations should be logged
      */
     @SuppressWarnings("unchecked")
-    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, Map<String, ?> configProviderProps, boolean doLog, String type) {
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, Map<String, ?> configProviderProps, boolean doLog) {
         /* check that all the keys are really strings */
         for (Map.Entry<?, ?> entry : originals.entrySet())
             if (!(entry.getKey() instanceof String))
                 throw new ConfigException(entry.getKey().toString(), entry.getValue(), "Key must be a string.");
 
-        // ** Added by Superstream
-        originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals, type);
-        // Added by Superstream **
         this.originals = resolveConfigVariables(configProviderProps, (Map<String, Object>) originals);
         this.values = definition.parse(this.originals);
         Map<String, Object> configUpdates = postProcessParsedConfig(Collections.unmodifiableMap(this.values));
@@ -135,8 +128,8 @@ public class AbstractConfig {
      * @param definition the definition of the configurations; may not be null
      * @param originals  the configuration properties plus any optional config provider properties; may not be null
      */
-    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, String type) {
-        this(definition, originals, Collections.emptyMap(), true, type);
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals) {
+        this(definition, originals, Collections.emptyMap(), true);
     }
 
     /**
@@ -148,8 +141,8 @@ public class AbstractConfig {
      * @param originals  the configuration properties plus any optional config provider properties; may not be null
      * @param doLog      whether the configurations should be logged
      */
-    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog, String type) {
-        this(definition, originals, Collections.emptyMap(), doLog, type);
+    public AbstractConfig(ConfigDef definition, Map<?, ?> originals, boolean doLog) {
+        this(definition, originals, Collections.emptyMap(), doLog);
 
     }
 

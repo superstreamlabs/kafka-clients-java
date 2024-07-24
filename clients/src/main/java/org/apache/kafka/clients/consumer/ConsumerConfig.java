@@ -650,15 +650,15 @@ public class ConsumerConfig extends AbstractConfig {
     }
 
     public ConsumerConfig(Properties props) {
-        super(CONFIG, props, "consumer");
+        super(CONFIG, props);
     }
 
     public ConsumerConfig(Map<String, Object> props) {
-        super(CONFIG, props, "consumer");
+        super(CONFIG, props);
     }
 
     protected ConsumerConfig(Map<?, ?> props, boolean doLog) {
-        super(CONFIG, props, doLog, "consumer");
+        super(CONFIG, props, doLog);
     }
 
     public static Set<String> configNames() {

@@ -242,7 +242,7 @@ public class AdminClientConfig extends AbstractConfig {
     }
 
     protected AdminClientConfig(Map<?, ?> props, boolean doLog) {
-        super(CONFIG, props, doLog, "admin");
+        super(CONFIG, props, doLog);
     }
 
     public static Set<String> configNames() {

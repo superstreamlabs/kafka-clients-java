@@ -192,7 +192,7 @@ object DynamicBrokerConfig {
 
   private[server] def resolveVariableConfigs(propsOriginal: Properties): Properties = {
     val props = new Properties
-    val config = new AbstractConfig(new ConfigDef(), propsOriginal, false, "dynamic-broker-config")
+    val config = new AbstractConfig(new ConfigDef(), propsOriginal, false)
     config.originals.forEach { (key, value) =>
       if (!key.startsWith(AbstractConfig.CONFIG_PROVIDERS_CONFIG)) {
         props.put(key, value)

@@ -59,7 +59,7 @@ public class MockInternalNewProcessorContext<KOut, VOut> extends MockProcessorCo
     }
 
     public MockInternalNewProcessorContext(final Properties config, final TaskId taskId, final File stateDir) {
-        super(config, taskId, stateDir, "mock-interal-processor-context");
+        super(config, taskId, stateDir);
         processorMetadata = new ProcessorMetadata();
     }
 

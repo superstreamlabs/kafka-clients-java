@@ -34,6 +34,6 @@ public class NumberConverterConfig extends ConverterConfig {
     }
 
     public NumberConverterConfig(Map<String, ?> props) {
-        super(CONFIG, props, "number-converter");
+        super(CONFIG, props);
     }
 }

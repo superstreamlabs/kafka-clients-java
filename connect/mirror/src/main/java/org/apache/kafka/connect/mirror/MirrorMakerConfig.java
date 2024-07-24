@@ -91,7 +91,7 @@ public class MirrorMakerConfig extends AbstractConfig {
     private final Map<String, String> rawProperties;
 
     public MirrorMakerConfig(Map<String, String> props) {
-        super(config(), props, true, "mirror-maker");
+        super(config(), props, true);
         plugins = new Plugins(originalsStrings());
 
         rawProperties = new HashMap<>(props);

@@ -183,7 +183,7 @@ public class PluginsTest {
     public void shouldThrowIfPluginThrows() {
         assertThrows(ConnectException.class, () -> plugins.newPlugin(
             TestPlugin.ALWAYS_THROW_EXCEPTION.className(),
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
             Converter.class
         ));
     }
@@ -192,7 +192,7 @@ public class PluginsTest {
     public void shouldFindCoLocatedPluginIfBadPackaging() {
         Converter converter = plugins.newPlugin(
                 TestPlugin.BAD_PACKAGING_CO_LOCATED.className(),
-                new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
+                new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
                 Converter.class
         );
         assertNotNull(converter);
@@ -202,7 +202,7 @@ public class PluginsTest {
     public void shouldThrowIfPluginMissingSuperclass() {
         assertThrows(ConnectException.class, () -> plugins.newPlugin(
                 TestPlugin.BAD_PACKAGING_MISSING_SUPERCLASS.className(),
-                new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
+                new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
                 Converter.class
         ));
     }
@@ -218,7 +218,7 @@ public class PluginsTest {
     public void shouldThrowIfStaticInitializerThrowsServiceLoader() {
         assertThrows(ConnectException.class, () -> plugins.newPlugin(
                 TestPlugin.BAD_PACKAGING_STATIC_INITIALIZER_THROWS_REST_EXTENSION.className(),
-                new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
+                new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
                 ConnectRestExtension.class
         ));
     }
@@ -263,7 +263,7 @@ public class PluginsTest {
         // Plugins are not isolated from other instances of their own class.
         Converter firstPlugin = plugins.newPlugin(
             TestPlugin.ALIASED_STATIC_FIELD.className(),
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
             Converter.class
         );
 
@@ -271,7 +271,7 @@ public class PluginsTest {
 
         Converter secondPlugin = plugins.newPlugin(
             TestPlugin.ALIASED_STATIC_FIELD.className(),
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
             Converter.class
         );
 
@@ -286,7 +286,7 @@ public class PluginsTest {
     public void newPluginShouldServiceLoadWithPluginClassLoader() {
         Converter plugin = plugins.newPlugin(
             TestPlugin.SERVICE_LOADER.className(),
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
             Converter.class
         );
 
@@ -302,7 +302,7 @@ public class PluginsTest {
     public void newPluginShouldInstantiateWithPluginClassLoader() {
         Converter plugin = plugins.newPlugin(
             TestPlugin.ALIASED_STATIC_FIELD.className(),
-            new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
+            new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
             Converter.class
         );
 
@@ -449,7 +449,7 @@ public class PluginsTest {
 
         Converter converter = plugins.newPlugin(
                 className,
-                new AbstractConfig(new ConfigDef(), Collections.emptyMap(), "plugins-test"),
+                new AbstractConfig(new ConfigDef(), Collections.emptyMap()),
                 Converter.class
         );
         // Verify the version was read from the correct resource

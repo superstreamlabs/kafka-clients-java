@@ -46,7 +46,7 @@ public class FakeForwardingAdminWithLocalMetadata extends ForwardingAdmin {
     private static final Logger log = LoggerFactory.getLogger(FakeForwardingAdminWithLocalMetadata.class);
 
     public FakeForwardingAdminWithLocalMetadata(Map<String, Object> configs) {
-        super(configs, "fake-forwarding-admin-with-local-metadata");
+        super(configs);
     }
 
     @Override

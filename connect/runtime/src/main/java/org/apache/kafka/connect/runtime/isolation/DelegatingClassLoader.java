@@ -519,7 +519,7 @@ public class DelegatingClassLoader extends URLClassLoader {
     private static class InternalReflections extends Reflections {
 
         public InternalReflections(Configuration configuration) {
-            super(configuration, "internal-reflections");
+            super(configuration);
         }
 
         // When Reflections is used for parallel scans, it has a bug where it propagates ReflectionsException

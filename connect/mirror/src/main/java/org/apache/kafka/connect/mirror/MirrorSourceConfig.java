@@ -122,7 +122,7 @@ public class MirrorSourceConfig extends MirrorConnectorConfig {
     }
 
     public MirrorSourceConfig(ConfigDef configDef, Map<String, String> props) {
-        super(configDef, props, "mirror-source");
+        super(configDef, props);
     }
 
     String connectorName() {

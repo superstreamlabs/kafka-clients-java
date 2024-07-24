@@ -62,13 +62,13 @@ public class AbstractConfigTest {
         AbstractConfig conf;
         ConfigDef configDef = new ConfigDef().define("a", Type.LIST, "", new ConfigDef.NonNullValidator(), Importance.HIGH, "doc");
 
-        conf = new AbstractConfig(configDef, Collections.emptyMap(), "");
+        conf = new AbstractConfig(configDef, Collections.emptyMap());
         assertEquals(Collections.emptyList(), conf.getList("a"));
 
-        conf = new AbstractConfig(configDef, Collections.singletonMap("a", ""), "");
+        conf = new AbstractConfig(configDef, Collections.singletonMap("a", ""));
         assertEquals(Collections.emptyList(), conf.getList("a"));
 
-        conf = new AbstractConfig(configDef, Collections.singletonMap("a", "b,c,d"), "");
+        conf = new AbstractConfig(configDef, Collections.singletonMap("a", "b,c,d"));
         assertEquals(Arrays.asList("b", "c", "d"), conf.getList("a"));
     }
 
@@ -549,11 +549,11 @@ public class AbstractConfigTest {
         }
 
         public TestIndirectConfigResolution(Map<?, ?> props) {
-            super(CONFIG, props, true, "test-indirect-config");
+            super(CONFIG, props, true);
         }
 
         public TestIndirectConfigResolution(Map<?, ?> props, Map<String, ?> providers) {
-            super(CONFIG, props, providers, true, "test-indirect-config");
+            super(CONFIG, props, providers, true);
         }
     }
 
@@ -569,11 +569,11 @@ public class AbstractConfigTest {
         }
 
         public ClassTestConfig() {
-            super(CONFIG, new Properties(), "test-class-config");
+            super(CONFIG, new Properties());
         }
 
         public ClassTestConfig(Object classPropOverride, Object listPropOverride) {
-            super(CONFIG, overrideProps(classPropOverride, listPropOverride), "test-class-config");
+            super(CONFIG, overrideProps(classPropOverride, listPropOverride));
         }
 
         void checkInstances(Class<?> expectedClassPropClass, Class<?>... expectedListPropClasses) {
@@ -619,7 +619,7 @@ public class AbstractConfigTest {
         }
 
         public TestConfig(Map<?, ?> props) {
-            super(CONFIG, props, "test-config");
+            super(CONFIG, props);
         }
     }
 

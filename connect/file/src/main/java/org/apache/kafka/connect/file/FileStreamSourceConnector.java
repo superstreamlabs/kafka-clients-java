@@ -59,7 +59,7 @@ public class FileStreamSourceConnector extends SourceConnector {
     @Override
     public void start(Map<String, String> props) {
         this.props = props;
-        AbstractConfig config = new AbstractConfig(CONFIG_DEF, props, "source-connector");
+        AbstractConfig config = new AbstractConfig(CONFIG_DEF, props);
         String filename = config.getString(FILE_CONFIG);
         filename = (filename == null || filename.isEmpty()) ? "standard input" : filename;
         log.info("Starting file source connector reading from {}", filename);
@@ -90,7 +90,7 @@ public class FileStreamSourceConnector extends SourceConnector {
 
     @Override
     public ExactlyOnceSupport exactlyOnceSupport(Map<String, String> props) {
-        AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, props, "source-connector");
+        AbstractConfig parsedConfig = new AbstractConfig(CONFIG_DEF, props);
         String filename = parsedConfig.getString(FILE_CONFIG);
         // We can provide exactly-once semantics if reading from a "real" file
         // (as long as the file is only appended to over the lifetime of the connector)

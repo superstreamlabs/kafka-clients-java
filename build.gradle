@@ -284,10 +284,10 @@ subprojects {
         // To test locally, invoke gradlew with `-PmavenUrl=file:///some/local/path`
         maven {
           url = mavenUrl
-          credentials {
-            username = mavenUsername
-            password = mavenPassword
-          }
+          // credentials {
+          //   username = mavenUsername
+          //   password = mavenPassword
+          // }
         }
       }
       publications {
@@ -324,7 +324,7 @@ subprojects {
                 connection = 'scm:git:git://github.com:superstreamlabs/apache-kafka-java-sdk.git'
                 developerConnection = 'scm:git:ssh://github.com:superstreamlabs/apache-kafka-java-sdk.git'
                 url = 'https://superstream.ai'
-              }
+              }                         
             }
           }
         }

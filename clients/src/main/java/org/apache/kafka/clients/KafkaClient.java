@@ -23,7 +23,6 @@ import org.apache.kafka.common.requests.AbstractRequest;
 
 import java.io.Closeable;
 import java.util.List;
-import java.util.Map;
 
 /**
  * The interface for {@link NetworkClient}
@@ -216,5 +215,4 @@ public interface KafkaClient extends Closeable {
     boolean active();
 
     void configureSuperstream(AbstractConfig configs, String type);
-
 }

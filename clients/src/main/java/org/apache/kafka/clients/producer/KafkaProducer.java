@@ -530,6 +530,10 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                 throttleTimeSensor,
                 logContext);
 
+        //** Added by Superstream
+        client.configureSuperstream(producerConfig);
+        // Added by Superstream **
+
         short acks = Short.parseShort(producerConfig.getString(ProducerConfig.ACKS_CONFIG));
         return new Sender(logContext,
                 client,

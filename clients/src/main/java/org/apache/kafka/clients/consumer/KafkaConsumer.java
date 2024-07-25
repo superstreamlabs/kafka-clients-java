@@ -764,6 +764,11 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
                     apiVersions,
                     fetchMetricsManager.throttleTimeSensor(),
                     logContext);
+
+            // ** Added by Superstream
+            netClient.configureSuperstream(config);
+            // Added by Superstream **
+
             this.client = new ConsumerNetworkClient(
                     logContext,
                     netClient,

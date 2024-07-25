@@ -16,10 +16,13 @@
  */
 package org.apache.kafka.clients;
 
+import ai.superstream.Consts;
+import ai.superstream.Superstream;
 import org.apache.kafka.common.Cluster;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.Node;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.errors.AuthenticationException;
 import org.apache.kafka.common.errors.DisconnectException;
 import org.apache.kafka.common.errors.UnsupportedVersionException;
@@ -61,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -127,6 +131,44 @@ public class NetworkClient implements KafkaClient {
     private final Sensor throttleTimeSensor;
 
     private final AtomicReference<State> state;
+
+    //** Added by Superstream
+    public Superstream superstreamConnection;
+    public void configureSuperstream(AbstractConfig configs) {
+        String type;
+        Map<String, Object> originals = configs.originals();
+
+        switch (configs.getClass().getSimpleName()) {
+            case "ConsumerConfig":
+                type = "consumer";
+                break;
+            case "ProducerConfig":
+                type = "producer";
+                break;
+            case "AdminClientConfig":
+                type = "admin";
+                break;
+            default:
+                return;
+        }
+
+        CompletableFuture.runAsync(() -> {
+            Superstream superstreamConn = (Superstream) Superstream
+                    .initSuperstreamConfig(originals, type)
+                    .get(Consts.superstreamConnectionKey);
+
+            if (superstreamConn == null) {
+                System.out.println("Failed to connect to Superstream");
+            } else {
+                this.superstreamConnection = superstreamConn;
+                System.out.println("Connected to Superstream");
+            }
+        }).exceptionally(ex -> {
+            System.err.println("Error during Superstream connection setup: " + ex.getMessage());
+            return null;
+        });
+    }
+    // Added by Superstream **
 
     public NetworkClient(Selectable selector,
                          Metadata metadata,

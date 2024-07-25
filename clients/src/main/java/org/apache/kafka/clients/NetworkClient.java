@@ -134,24 +134,9 @@ public class NetworkClient implements KafkaClient {
 
     //** Added by Superstream
     public Superstream superstreamConnection;
-    public void configureSuperstream(AbstractConfig configs) {
-        String type;
+
+    public void configureSuperstream(AbstractConfig configs, String type) {
         Map<String, Object> originals = configs.originals();
-
-        switch (configs.getClass().getSimpleName()) {
-            case "ConsumerConfig":
-                type = "consumer";
-                break;
-            case "ProducerConfig":
-                type = "producer";
-                break;
-            case "AdminClientConfig":
-                type = "admin";
-                break;
-            default:
-                return;
-        }
-
         CompletableFuture.runAsync(() -> {
             Superstream superstreamConn = (Superstream) Superstream
                     .initSuperstreamConfig(originals, type)

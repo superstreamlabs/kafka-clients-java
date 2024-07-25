@@ -766,7 +766,7 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
                     logContext);
 
             // ** Added by Superstream
-            netClient.configureSuperstream(config);
+            netClient.configureSuperstream(config, "consumer");
             // Added by Superstream **
 
             this.client = new ConsumerNetworkClient(

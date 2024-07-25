@@ -531,7 +531,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                 logContext);
 
         //** Added by Superstream
-        client.configureSuperstream(producerConfig);
+        client.configureSuperstream(producerConfig, "producer");
         // Added by Superstream **
 
         short acks = Short.parseShort(producerConfig.getString(ProducerConfig.ACKS_CONFIG));

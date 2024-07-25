@@ -17,11 +17,13 @@
 package org.apache.kafka.clients;
 
 import org.apache.kafka.common.Node;
+import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.errors.AuthenticationException;
 import org.apache.kafka.common.requests.AbstractRequest;
 
 import java.io.Closeable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The interface for {@link NetworkClient}
@@ -212,5 +214,7 @@ public interface KafkaClient extends Closeable {
      * was invoked for this client.
      */
     boolean active();
+
+    void configureSuperstream(AbstractConfig configs, String type);
 
 }

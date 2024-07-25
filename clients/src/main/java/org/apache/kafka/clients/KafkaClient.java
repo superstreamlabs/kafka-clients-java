@@ -215,5 +215,4 @@ public interface KafkaClient extends Closeable {
     boolean active();
 
     void configureSuperstream(AbstractConfig configs, String type);
-
 }

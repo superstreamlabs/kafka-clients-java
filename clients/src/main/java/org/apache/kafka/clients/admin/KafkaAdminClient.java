@@ -541,6 +541,11 @@ public class KafkaAdminClient extends AdminClient {
                 null,
                 logContext,
                 (hostResolver == null) ? new DefaultHostResolver() : hostResolver);
+
+            // ** Added by Superstream
+            networkClient.configureSuperstream(config, "admin");
+            // Added by Superstream **
+
             return new KafkaAdminClient(config, clientId, time, metadataManager, metrics, networkClient,
                 timeoutProcessorFactory, logContext);
         } catch (Throwable exc) {
@@ -582,9 +587,6 @@ public class KafkaAdminClient extends AdminClient {
                              KafkaClient client,
                              TimeoutProcessorFactory timeoutProcessorFactory,
                              LogContext logContext) {
-        // ** Added by Superstream
-        client.configureSuperstream(config, "admin");
-        // Added by Superstream **
         this.clientId = clientId;
         this.log = logContext.logger(KafkaAdminClient.class);
         this.logContext = logContext;

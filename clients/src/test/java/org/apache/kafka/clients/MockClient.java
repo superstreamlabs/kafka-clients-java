@@ -17,6 +17,7 @@
 package org.apache.kafka.clients;
 
 import org.apache.kafka.common.Node;
+import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.errors.AuthenticationException;
 import org.apache.kafka.common.errors.InterruptException;
 import org.apache.kafka.common.errors.UnsupportedVersionException;
@@ -47,6 +48,12 @@ import java.util.stream.Collectors;
  */
 public class MockClient implements KafkaClient {
     public static final RequestMatcher ALWAYS_TRUE = body -> true;
+
+
+    @Override
+    public void configureSuperstream(AbstractConfig config, String someString) {
+        return;
+    }
 
     private static class FutureResponse {
         private final Node node;

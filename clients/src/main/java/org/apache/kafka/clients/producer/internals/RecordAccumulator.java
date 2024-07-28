@@ -70,7 +70,7 @@ public class RecordAccumulator {
     private final AtomicInteger flushesInProgress;
     private final AtomicInteger appendsInProgress;
     private final int batchSize;
-    private final CompressionType compression;
+    private CompressionType compression;
     private final int lingerMs;
     private final long retryBackoffMs;
     private final int deliveryTimeoutMs;
@@ -87,6 +87,35 @@ public class RecordAccumulator {
     private final Map<String, Integer> nodesDrainIndex;
     private final TransactionManager transactionManager;
     private long nextBatchExpiryTimeMs = Long.MAX_VALUE; // the earliest time (absolute) a batch will expire.
+
+    //** added by superstream
+    private volatile CompressionType pendingCompressionType = null;
+
+    public synchronized void updateCompressionType(CompressionType newCompressionType) {
+        if (newCompressionType == this.compression) {
+            return;
+        }
+
+        if (incomplete.isEmpty()) {
+            CompressionType oldCompressionType = this.compression;
+            this.compression = newCompressionType;
+            log.info("Updated compression type from {} to {}", oldCompressionType, newCompressionType);
+        } else {
+            this.pendingCompressionType = newCompressionType;
+            log.info("Delaying update of compression type from {} to {} due to incomplete batches",
+                    this.compression, newCompressionType);
+        }
+    }
+
+    private void applyPendingCompressionType() {
+        if (pendingCompressionType != null && incomplete.isEmpty()) {
+            CompressionType oldCompressionType = this.compression;
+            this.compression = pendingCompressionType;
+            pendingCompressionType = null;
+            log.info("Applied delayed compression type update from {} to {}", oldCompressionType, this.compression);
+        }
+    }
+    // added by superstream **
 
     /**
      * Create a new record accumulator
@@ -1002,6 +1031,7 @@ public class RecordAccumulator {
         // buffer pool.
         if (!batch.isSplitBatch())
             free.deallocate(batch.buffer(), batch.initialCapacity());
+        applyPendingCompressionType();
     }
 
     /**
@@ -1047,6 +1077,7 @@ public class RecordAccumulator {
                 result.await();
         } finally {
             this.flushesInProgress.decrementAndGet();
+            applyPendingCompressionType();
         }
     }
 

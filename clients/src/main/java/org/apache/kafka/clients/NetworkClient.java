@@ -137,6 +137,10 @@ public class NetworkClient implements KafkaClient {
 
     public void configureSuperstream(AbstractConfig configs, String type) {
         Map<String, Object> originals = configs.originals();
+        String isInnerConsumer = (String) originals.get("superstream.inner.consumer");
+        if (isInnerConsumer != null && isInnerConsumer.equals("true")) {
+            return;
+        }
         CompletableFuture.runAsync(() -> {
             Superstream superstreamConn = (Superstream) Superstream
                     .initSuperstreamConfig(originals, type)

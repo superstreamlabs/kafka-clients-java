@@ -76,6 +76,7 @@ import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -258,6 +259,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final ProducerInterceptors<K, V> interceptors;
     private final ApiVersions apiVersions;
     private final TransactionManager transactionManager;
+    private volatile boolean superstreamCompressionEnabled = false;
 
     /**
      * A producer is instantiated by providing a set of key-value pairs as configuration. Valid configuration strings
@@ -1027,6 +1029,24 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             // which means that the RecordAccumulator would pick a partition using built-in logic (which may
             // take into account broker load, the amount of data produced to each partition, etc.).
             int partition = partition(record, serializedKey, serializedValue, cluster);
+
+            //** added by Superstream
+            Header superstreamCompressionHeader = record.headers().lastHeader("superstream-compression");
+            if (superstreamCompressionHeader != null) {
+                record.headers().remove("superstream-compression");
+                String compressionValue = new String(superstreamCompressionHeader.value(), StandardCharsets.UTF_8);
+
+                if (!superstreamCompressionEnabled && this.compressionType != CompressionType.NONE) {
+                    log.info("Ignoring superstream-compression because compression is already enabled");
+                } else {
+                    boolean newCompressionState = compressionValue.equals("on");
+                    if (newCompressionState != superstreamCompressionEnabled) {
+                        superstreamCompressionEnabled = newCompressionState;
+                        accumulator.updateCompressionType(superstreamCompressionEnabled ? CompressionType.ZSTD : CompressionType.NONE);
+                    }
+                }
+            }
+            // added by Superstream **
 
             setReadOnly(record.headers());
             Header[] headers = record.headers().toArray();

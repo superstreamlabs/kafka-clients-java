@@ -2,88 +2,37 @@ package org.apache.kafka.common.superstream;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class SuperstreamCounters {
-    @JsonProperty("total_bytes_reduced")
-    public AtomicLong TotalBytesReduced = new AtomicLong(0);
+    @JsonProperty("total_read_bytes_reduced")
+    public AtomicLong TotalReadBytesReduced = new AtomicLong(0);
 
-    @JsonProperty ("total_messages_successfully_produce")
-    public AtomicInteger TotalMessagesSuccessfullyProduce = new AtomicInteger(0);
-    @JsonProperty("total_messages_successfully_consume")
-    public AtomicInteger TotalMessagesSuccessfullyConsumed = new AtomicInteger(0);
-    @JsonProperty("total_messages_failed_produce")
-    public AtomicInteger TotalMessagesFailedProduce = new AtomicInteger(0);
-    @JsonProperty("total_messages_failed_consume")
-    public AtomicInteger TotalMessagesFailedConsume = new AtomicInteger(0);
+    @JsonProperty("total_write_bytes_reduced")
+    public AtomicLong TotalWriteBytesReduced = new AtomicLong(0);
 
-    public SuperstreamCounters() {
+    @JsonProperty("connection_id")
+    public final Integer ConnectionId;
+
+
+    public SuperstreamCounters(int connectionId) {
+        ConnectionId = connectionId;
     }
 
-    public void reset() {
-        TotalBytesReduced = new AtomicLong(0);
-        TotalMessagesSuccessfullyProduce = new AtomicInteger(0);
-        TotalMessagesSuccessfullyConsumed = new AtomicInteger(0);
-        TotalMessagesFailedProduce = new AtomicInteger(0);
-        TotalMessagesFailedConsume = new AtomicInteger(0);
+    public void incrementTotalReadBytesReduced(long bytes) {
+        TotalReadBytesReduced.addAndGet(bytes);
     }
 
-    public void incrementTotalBytesReduced(long bytes) {
-        TotalBytesReduced.addAndGet(bytes);
+    public void incrementTotalWriteBytesReduced(long bytes) {
+        TotalWriteBytesReduced.addAndGet(bytes);
     }
 
-    public void incrementTotalMessagesSuccessfullyProduce() {
-        TotalMessagesSuccessfullyProduce.incrementAndGet();
+    public long getTotalReadBytesReduced() {
+        return TotalReadBytesReduced.get();
     }
 
-
-    public void incrementTotalMessagesSuccessfullyConsumed() {
-        TotalMessagesSuccessfullyConsumed.incrementAndGet();
-    }
-
-    public void incrementTotalMessagesFailedProduce() {
-        TotalMessagesFailedProduce.incrementAndGet();
-    }
-
-    public void incrementTotalMessagesFailedConsume() {
-        TotalMessagesFailedConsume.incrementAndGet();
-    }
-
-    public int getTotalMessagesSuccessfullyProduce() {
-        return TotalMessagesSuccessfullyProduce.get();
-    }
-
-    public int getTotalMessagesSuccessfullyConsumed() {
-        return TotalMessagesSuccessfullyConsumed.get();
-    }
-
-    public int getTotalMessagesFailedProduce() {
-        return TotalMessagesFailedProduce.get();
-    }
-
-    public int getTotalMessagesFailedConsume() {
-        return TotalMessagesFailedConsume.get();
-    }
-
-    public void setTotalBytesBeforeReduction(long bytesReduced) {
-        TotalBytesReduced = new AtomicLong(bytesReduced);
-    }
-
-    public void setTotalMessagesSuccessfullyProduce(int totalMessagesSuccessfullyProduce) {
-        TotalMessagesSuccessfullyProduce.addAndGet(totalMessagesSuccessfullyProduce);
-    }
-
-    public void setTotalMessagesSuccessfullyConsumed(int totalMessagesSuccessfullyConsumed) {
-        TotalMessagesSuccessfullyConsumed.addAndGet(totalMessagesSuccessfullyConsumed);
-    }
-
-    public void setTotalMessagesFailedProduce(int totalMessagesFailedProduce) {
-        TotalMessagesFailedProduce.addAndGet(totalMessagesFailedProduce);
-    }
-
-    public void setTotalMessagesFailedConsume(int totalMessagesFailedConsume) {
-        TotalMessagesFailedConsume.addAndGet(totalMessagesFailedConsume);
+    public long getTotalWriteBytesReduced() {
+        return TotalWriteBytesReduced.get();
     }
 }
 

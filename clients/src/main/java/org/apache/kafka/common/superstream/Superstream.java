@@ -42,7 +42,7 @@ public class Superstream {
     public String accountName;
     private static final ObjectMapper objectMapper = new ObjectMapper();
     public Map<String, Object> configs;
-    public final SuperstreamCounters clientCounters = new SuperstreamCounters();
+    public SuperstreamCounters clientCounters;
     private final String host;
     private final String token;
     public String type;
@@ -109,7 +109,7 @@ public class Superstream {
     public void updateClientCounters(Consumer<SuperstreamCounters> updateFunction) {
         clientCountersMap.compute(clientHash, (key, counterRef) -> {
             if (counterRef == null) {
-                counterRef = new AtomicReference<>(new SuperstreamCounters());
+                counterRef = new AtomicReference<>(this.clientCounters);
             }
             counterRef.updateAndGet(counters -> {
                 updateFunction.accept(counters);
@@ -190,6 +190,7 @@ public class Superstream {
     public void registerClient(Map<String, ?> configs) {
         try {
             String kafkaConnID = consumeConnectionID();
+
             if (!kafkaConnID.equals("0")) {
                 try {
                     kafkaConnectionID = Integer.parseInt(kafkaConnID);
@@ -197,6 +198,7 @@ public class Superstream {
                     kafkaConnectionID = 0;
                 }
             }
+            this.clientCounters = new SuperstreamCounters(kafkaConnectionID);
             Map<String, Object> reqData = new HashMap<>();
             reqData.put("nats_connection_id", natsConnectionID);
             reqData.put("language", "java");

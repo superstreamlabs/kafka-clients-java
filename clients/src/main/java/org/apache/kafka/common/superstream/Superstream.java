@@ -424,16 +424,6 @@ public class Superstream {
             try {
                 if (brokerConnection != null && superstreamReady){
                     byte[] byteCounters = objectMapper.writeValueAsBytes(clientCounters);
-                    AtomicReference<SuperstreamCounters> countersRef = clientCountersMap.get(clientHash);
-                    if (countersRef != null) {
-                        SuperstreamCounters currentCounters = countersRef.get();
-
-                        if (currentCounters != null) {
-                            byteCounters = objectMapper.writeValueAsBytes(currentCounters);
-                            clientCounters.reset();
-                        }
-                    }
-
                     Map<String, Object> topicPartitionConfig = new HashMap<>();
                     if (!topicPartitions.isEmpty()) {
                         Map<String, Integer[]> topicPartitionsToSend = convertMap(topicPartitions);
@@ -454,7 +444,7 @@ public class Superstream {
                             byteCounters);
                     brokerConnection.publish(String.format(Consts.superstreamClientsUpdateSubject, "config", clientHash),
                             byteConfig);
-
+                    clientCounters.reset();
                 }
             } catch (Exception e) {
                 handleError("reportClientsUpdate: " + e.getMessage());

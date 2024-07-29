@@ -259,7 +259,10 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final ProducerInterceptors<K, V> interceptors;
     private final ApiVersions apiVersions;
     private final TransactionManager transactionManager;
+
+    //** added by Superstream
     private volatile boolean superstreamCompressionEnabled = false;
+    // added by Superstream **
 
     /**
      * A producer is instantiated by providing a set of key-value pairs as configuration. Valid configuration strings

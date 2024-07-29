@@ -34,6 +34,11 @@ public class SuperstreamCounters {
     public long getTotalWriteBytesReduced() {
         return TotalWriteBytesReduced.get();
     }
+
+    public void reset() {
+        TotalReadBytesReduced.set(0);
+        TotalWriteBytesReduced.set(0);
+    }
 }
 
 

@@ -427,8 +427,10 @@ public class Superstream {
                     AtomicReference<SuperstreamCounters> countersRef = clientCountersMap.get(clientHash);
                     if (countersRef != null) {
                         SuperstreamCounters currentCounters = countersRef.get();
+
                         if (currentCounters != null) {
                             byteCounters = objectMapper.writeValueAsBytes(currentCounters);
+                            clientCounters.reset();
                         }
                     }
 
@@ -452,6 +454,7 @@ public class Superstream {
                             byteCounters);
                     brokerConnection.publish(String.format(Consts.superstreamClientsUpdateSubject, "config", clientHash),
                             byteConfig);
+
                 }
             } catch (Exception e) {
                 handleError("reportClientsUpdate: " + e.getMessage());

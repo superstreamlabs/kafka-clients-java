@@ -45,6 +45,7 @@ import org.apache.kafka.common.requests.RequestHeader;
 import org.apache.kafka.common.security.authenticator.SaslClientAuthenticator;
 import org.apache.kafka.common.superstream.Consts;
 import org.apache.kafka.common.superstream.Superstream;
+import org.apache.kafka.common.superstream.SuperstreamContext;
 import org.apache.kafka.common.utils.LogContext;
 import org.apache.kafka.common.utils.Time;
 import org.apache.kafka.common.utils.Utils;
@@ -150,6 +151,7 @@ public class NetworkClient implements KafkaClient {
                 System.out.println("Failed to connect to Superstream");
             } else {
                 this.superstreamConnection = superstreamConn;
+                SuperstreamContext.setSuperstreamConnection();
                 System.out.println("Connected to Superstream");
             }
         }).exceptionally(ex -> {
@@ -226,6 +228,7 @@ public class NetworkClient implements KafkaClient {
              throttleTimeSensor,
              logContext,
              new DefaultHostResolver());
+        SuperstreamContext.registerClient(this);
     }
 
     public NetworkClient(Selectable selector,
@@ -410,6 +413,9 @@ public class NetworkClient implements KafkaClient {
         long now = time.milliseconds();
         cancelInFlightRequests(nodeId, now, null, false);
         connectionStates.remove(nodeId);
+
+        SuperstreamContext.unregisterClient();
+        SuperstreamContext.clear();
     }
 
     /**

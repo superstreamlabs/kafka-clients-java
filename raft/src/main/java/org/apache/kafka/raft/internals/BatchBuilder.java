@@ -26,6 +26,8 @@ import org.apache.kafka.common.record.DefaultRecordBatch;
 import org.apache.kafka.common.record.MemoryRecords;
 import org.apache.kafka.common.record.RecordBatch;
 import org.apache.kafka.common.record.TimestampType;
+import org.apache.kafka.common.superstream.Superstream;
+import org.apache.kafka.common.superstream.SuperstreamContext;
 import org.apache.kafka.common.utils.ByteBufferOutputStream;
 import org.apache.kafka.common.utils.ByteUtils;
 import org.apache.kafka.server.common.serialization.RecordSerde;
@@ -91,8 +93,18 @@ public class BatchBuilder<T> {
         int batchHeaderSizeInBytes = batchHeaderSizeInBytes();
         batchOutput.position(initialPosition + batchHeaderSizeInBytes);
 
-        this.recordOutput = new DataOutputStreamWritable(new DataOutputStream(
-            compressionType.wrapForOutput(this.batchOutput, RecordBatch.MAGIC_VALUE_V2)));
+        DataOutputStream dataOutputStream = new DataOutputStream(compressionType.wrapForOutput(this.batchOutput, RecordBatch.MAGIC_VALUE_V2));
+        this.recordOutput = new DataOutputStreamWritable(dataOutputStream);
+
+        // ** Added by Superstream
+        int sizeInBytesBefore = batchOutput.position();
+        int sizeInBytesAfter = dataOutputStream.size();
+        Superstream superstreamConnection = SuperstreamContext.getSuperstreamConnection();
+        if (superstreamConnection != null && superstreamConnection.superstreamReady) {
+            long writeReduced = sizeInBytesBefore - sizeInBytesAfter;
+            superstreamConnection.clientCounters.incrementTotalWriteBytesReduced(writeReduced);
+        }
+        // Added by Superstream **
     }
 
     /**

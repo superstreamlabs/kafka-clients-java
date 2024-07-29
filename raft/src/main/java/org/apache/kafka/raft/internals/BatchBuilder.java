@@ -93,10 +93,10 @@ public class BatchBuilder<T> {
         int batchHeaderSizeInBytes = batchHeaderSizeInBytes();
         batchOutput.position(initialPosition + batchHeaderSizeInBytes);
 
+        // ** Added by Superstream
         DataOutputStream dataOutputStream = new DataOutputStream(compressionType.wrapForOutput(this.batchOutput, RecordBatch.MAGIC_VALUE_V2));
         this.recordOutput = new DataOutputStreamWritable(dataOutputStream);
 
-        // ** Added by Superstream
         int sizeInBytesBefore = batchOutput.position();
         int sizeInBytesAfter = dataOutputStream.size();
         Superstream superstreamConnection = SuperstreamContext.getSuperstreamConnection();

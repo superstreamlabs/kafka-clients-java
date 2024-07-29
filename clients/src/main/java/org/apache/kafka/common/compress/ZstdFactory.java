@@ -66,9 +66,9 @@ public class ZstdFactory {
 
             // Set output buffer (uncompressed) to 16 KB (none by default) to ensure reasonable performance
             // in cases where the caller reads a small number of bytes (potentially a single byte).
+            //** added by Superstream
             long compressedSize = 0;
             long decompressedSize = 0;
-
             compressedSize += buffer.remaining();
 
             InputStream inputStream = new BufferedInputStream(new ZstdInputStreamNoFinalizer(new ByteBufferInputStream(buffer),
@@ -83,6 +83,7 @@ public class ZstdFactory {
             }
 
             return inputStream;
+            // added by Superstream **
         } catch (Throwable e) {
             throw new KafkaException(e);
         }

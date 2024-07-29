@@ -22,6 +22,8 @@ import com.github.luben.zstd.RecyclingBufferPool;
 import com.github.luben.zstd.ZstdInputStreamNoFinalizer;
 import com.github.luben.zstd.ZstdOutputStreamNoFinalizer;
 import org.apache.kafka.common.KafkaException;
+import org.apache.kafka.common.superstream.Superstream;
+import org.apache.kafka.common.superstream.SuperstreamContext;
 import org.apache.kafka.common.utils.BufferSupplier;
 import org.apache.kafka.common.utils.ByteBufferInputStream;
 import org.apache.kafka.common.utils.ByteBufferOutputStream;
@@ -64,8 +66,24 @@ public class ZstdFactory {
 
             // Set output buffer (uncompressed) to 16 KB (none by default) to ensure reasonable performance
             // in cases where the caller reads a small number of bytes (potentially a single byte).
-            return new BufferedInputStream(new ZstdInputStreamNoFinalizer(new ByteBufferInputStream(buffer),
-                bufferPool), 16 * 1024);
+            //** added by Superstream
+            long compressedSize = 0;
+            long decompressedSize = 0;
+            compressedSize += buffer.remaining();
+
+            InputStream inputStream = new BufferedInputStream(new ZstdInputStreamNoFinalizer(new ByteBufferInputStream(buffer),
+                    bufferPool), 16 * 1024);
+
+            decompressedSize += inputStream.available();
+
+            Superstream superstreamConnection = SuperstreamContext.getSuperstreamConnection();
+            if (superstreamConnection != null && superstreamConnection.superstreamReady) {
+                long reduced = decompressedSize - compressedSize;
+                superstreamConnection.clientCounters.incrementTotalReadBytesReduced(reduced);
+            }
+
+            return inputStream;
+            // added by Superstream **
         } catch (Throwable e) {
             throw new KafkaException(e);
         }

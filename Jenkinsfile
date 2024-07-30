@@ -27,6 +27,7 @@ pipeline {
             HOME           = '/tmp'
             TOKEN          = credentials('maven-central-token')
             GPG_PASSPHRASE = credentials('gpg-key-passphrase')
+            SLACK_CHANNEL  = '#jenkins-events'
     }
 
     stages {
@@ -34,7 +35,7 @@ pipeline {
             when {
                 branch '*-alpha'
             }            
-            steps {
+            steps {               
                 script {
                     def version = readFile('version-alpha.conf').trim()
                     env.versionTag = version
@@ -50,6 +51,13 @@ pipeline {
                 branch '*-beta'
             }            
             steps {
+                script {
+                    sh 'git config --global --add safe.directory $(pwd)'
+                    env.GIT_AUTHOR = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+                    env.COMMIT_MESSAGE = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                    def triggerCause = currentBuild.getBuildCauses().find { it._class == 'hudson.model.Cause$UserIdCause' }
+                    env.TRIGGERED_BY = triggerCause ? triggerCause.userId : 'Commit'
+                }                 
                 script {
                     def version = readFile('version-beta.conf').trim()
                     env.versionTag = version
@@ -107,7 +115,13 @@ pipeline {
         always {
             cleanWs()
         }
-    }    
+        success {
+            sendSlackNotification('SUCCESS')
+        }
+        failure {
+            sendSlackNotification('FAILURE')
+        }
+    }   
 }
 
 // Function to setup GPG
@@ -160,4 +174,27 @@ def uploadBundleAndCheckStatus() {
     } else {
         echo "Deployment is successful."
     }
+}
+
+// SlackSend Function
+def sendSlackNotification(String jobResult) {
+    def jobUrl = env.BUILD_URL
+    def messageDetail = env.COMMIT_MESSAGE ? "Commit/PR by ${env.GIT_AUTHOR}:\n${env.COMMIT_MESSAGE}" : "No commit message available."
+    def projectName = env.JOB_NAME
+
+    slackSend (
+        channel: "${env.SLACK_CHANNEL}",
+        color: jobResult == 'SUCCESS' ? 'good' : 'danger',
+        message: """\
+*:rocket: Jenkins Build Notification :rocket:*
+
+*Project:* `${projectName}`
+*Build Number:* `#${env.BUILD_NUMBER}`
+*Status:* ${jobResult == 'SUCCESS' ? ':white_check_mark: *Success*' : ':x: *Failure*'}
+
+:information_source: ${messageDetail}
+Triggered by: ${env.TRIGGERED_BY}
+:link: *Build URL:* <${jobUrl}|View Build Details>
+"""
+    )
 }

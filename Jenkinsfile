@@ -34,14 +34,7 @@ pipeline {
             when {
                 branch '*-alpha'
             }
-            steps {
-                script {
-                    sh 'git config --global --add safe.directory $(pwd)'
-                    env.GIT_AUTHOR = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
-                    env.COMMIT_MESSAGE = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
-                    def triggerCause = currentBuild.getBuildCauses().find { it._class == 'hudson.model.Cause$UserIdCause' }
-                    env.TRIGGERED_BY = triggerCause ? triggerCause.userId : 'Commit'
-                }                
+            steps {               
                 script {
                     def version = readFile('version-alpha.conf').trim()
                     env.versionTag = version
@@ -57,6 +50,13 @@ pipeline {
                 branch '*-beta'
             }
             steps {
+                script {
+                    sh 'git config --global --add safe.directory $(pwd)'
+                    env.GIT_AUTHOR = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+                    env.COMMIT_MESSAGE = sh(script: 'git log -1 --pretty=%B', returnStdout: true).trim()
+                    def triggerCause = currentBuild.getBuildCauses().find { it._class == 'hudson.model.Cause$UserIdCause' }
+                    env.TRIGGERED_BY = triggerCause ? triggerCause.userId : 'Commit'
+                }                
                 script {
                     def version = readFile('version-beta.conf').trim()
                     env.versionTag = version

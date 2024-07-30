@@ -12,6 +12,7 @@ pipeline {
             HOME           = '/tmp'
             TOKEN          = credentials('maven-central-token')
             GPG_PASSPHRASE = credentials('gpg-key-passphrase')
+            SLACK_CHANNEL  = '#jenkins-events'
     }
 
     stages {

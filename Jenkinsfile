@@ -111,19 +111,13 @@ pipeline {
     }
     post {
         always {
-            script {
-                cleanWs()
-            }
+            cleanWs()
         }
         success {
-            script {
-                sendSlackNotification('SUCCESS')
-            }
+            sendSlackNotification('SUCCESS')
         }
         failure {
-            script {
-                sendSlackNotification('FAILURE')
-            }
+            sendSlackNotification('FAILURE')
         }
     }
 }
@@ -183,7 +177,7 @@ def uploadBundleAndCheckStatus() {
 // SlackSend Function
 def sendSlackNotification(String jobResult) {
     def jobUrl = env.BUILD_URL
-    def messageDetail = env.COMMIT_MESSAGE ? "Commit/PR by @${env.GIT_AUTHOR}:\n${env.COMMIT_MESSAGE}" : "No commit message available."
+    def messageDetail = env.COMMIT_MESSAGE ? "Commit/PR by ${env.GIT_AUTHOR}:\n${env.COMMIT_MESSAGE}" : "No commit message available."
     def projectName = env.JOB_NAME
 
     slackSend (

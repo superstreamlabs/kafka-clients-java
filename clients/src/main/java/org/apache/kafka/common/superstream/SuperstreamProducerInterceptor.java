@@ -32,7 +32,7 @@ public class SuperstreamProducerInterceptor<K, V> implements ProducerInterceptor
             if (exception == null) {
                 int serializedValueSize = metadata.serializedValueSize();
                 if (serializedValueSize > 0) {
-                    this.superstreamConnection.clientCounters.incrementTotalWriteBytesReduced(serializedValueSize);(serializedValueSize);
+                    this.superstreamConnection.clientCounters.incrementTotalWriteBytesReduced(serializedValueSize);
                 }
             }
         }

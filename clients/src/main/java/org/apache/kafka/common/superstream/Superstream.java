@@ -459,7 +459,6 @@ public class Superstream {
                     Map<String, Object> countersMap = new HashMap<>();
                     countersMap.put("total_read_bytes_reduced", calculatedReadBytes);
                     countersMap.put("total_write_bytes_reduced", calculatedWriteBytes);
-
                     byte[] byteCounters = objectMapper.writeValueAsBytes(countersMap);
                     brokerConnection.publish(
                             String.format(Consts.superstreamClientsUpdateSubject, "counters", clientHash),

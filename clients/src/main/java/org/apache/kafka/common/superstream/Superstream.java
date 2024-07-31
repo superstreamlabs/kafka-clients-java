@@ -856,6 +856,20 @@ public class Superstream {
                 configs.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);
             }
 
+            List<String> metricsReporters = new ArrayList<>();
+            Object existingMetricsReporters = configs.get(ProducerConfig.METRIC_REPORTER_CLASSES_CONFIG);
+            if (existingMetricsReporters != null) {
+                if (existingMetricsReporters instanceof List) {
+                    metricsReporters = new ArrayList<>((List<String>) existingMetricsReporters);
+                } else if (existingMetricsReporters instanceof String) {
+                    metricsReporters.add((String) existingMetricsReporters);
+                }
+            }
+            metricsReporters.add(SuperstreamMetricsReporter.class.getName());
+            if (metricsReporters != null && !metricsReporters.isEmpty()) {
+                configs.put(ProducerConfig.METRIC_REPORTER_CLASSES_CONFIG, metricsReporters);
+            }
+
             Map<String, String> envVars = System.getenv();
             String superstreamHost = envVars.get("SUPERSTREAM_HOST");
             if (superstreamHost == null) {

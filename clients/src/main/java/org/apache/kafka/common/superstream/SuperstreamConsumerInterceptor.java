@@ -19,7 +19,6 @@ public class SuperstreamConsumerInterceptor<K, V> implements ConsumerInterceptor
         if (this.superstreamConnection != null) {
             if (!records.isEmpty()) {
                 for (ConsumerRecord<K, V> record : records) {
-                    // ConsumerRecord<K, V> firstRecord = records.iterator().next();
                     this.superstreamConnection.updateTopicPartitions(record.topic(), record.partition());
                     this.superstreamConnection.clientCounters
                             .incrementTotalReadBytesReduced(record.serializedValueSize());

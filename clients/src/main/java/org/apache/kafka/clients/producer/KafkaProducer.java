@@ -68,6 +68,8 @@ import org.apache.kafka.common.record.CompressionType;
 import org.apache.kafka.common.record.RecordBatch;
 import org.apache.kafka.common.requests.JoinGroupRequest;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.superstream.Consts;
+import org.apache.kafka.common.superstream.Superstream;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.common.utils.KafkaThread;
 import org.apache.kafka.common.utils.LogContext;
@@ -259,6 +261,10 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final ApiVersions apiVersions;
     private final TransactionManager transactionManager;
 
+    //** added by Superstream
+    Superstream superstreamConnection;
+    // added by Superstream **
+
     /**
      * A producer is instantiated by providing a set of key-value pairs as configuration. Valid configuration strings
      * are documented <a href="http://kafka.apache.org/documentation.html#producerconfigs">here</a>. Values can be
@@ -348,6 +354,13 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             this.time = time;
 
             String transactionalId = config.getString(ProducerConfig.TRANSACTIONAL_ID_CONFIG);
+            // ** Added by Superstream
+            Map<String, Object> originalsMap = config.originals();
+            Superstream superstreamConn = (Superstream) originalsMap.get(Consts.superstreamConnectionKey);
+            if (superstreamConn != null) {
+                this.superstreamConnection = superstreamConn;
+            }
+            // Added by Superstream **
 
             this.clientId = config.getString(ProducerConfig.CLIENT_ID_CONFIG);
 
@@ -1023,6 +1036,39 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             // which means that the RecordAccumulator would pick a partition using built-in logic (which may
             // take into account broker load, the amount of data produced to each partition, etc.).
             int partition = partition(record, serializedKey, serializedValue, cluster);
+
+            //** added by Superstream
+            if (superstreamConnection != null)  {
+                if (this.compressionType == CompressionType.NONE) {
+                    if (superstreamConnection.compressionEnabled) {
+                        superstreamConnection.compressionEnabledBySuperstream = true;
+                        // for now support only ZSTD
+                        switch (superstreamConnection.compressionType.toLowerCase()) {
+                            case "gzip":
+                                accumulator.updateCompressionType(CompressionType.GZIP);
+                                break;
+                            case "snappy":
+                                accumulator.updateCompressionType(CompressionType.SNAPPY);
+                                break;
+                            case "lz4":
+                                accumulator.updateCompressionType(CompressionType.LZ4);
+                                break;
+                            case "zstd":
+                                accumulator.updateCompressionType(CompressionType.ZSTD);
+                                break;
+                            default:
+                                System.out.println("Unknown compression type: " + superstreamConnection.compressionType + ", defaulting to ZSTD");
+                                accumulator.updateCompressionType(CompressionType.ZSTD);
+                                break;
+                        }
+                    }
+                } else {
+                    if (superstreamConnection.compressionTurnedOffBySuperstream) {
+                        accumulator.updateCompressionType(CompressionType.NONE);
+                    }
+                }
+            }
+            // added by Superstream **
 
             setReadOnly(record.headers());
             Header[] headers = record.headers().toArray();

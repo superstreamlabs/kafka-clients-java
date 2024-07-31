@@ -245,8 +245,8 @@ import org.apache.kafka.common.utils.Utils;
 import org.slf4j.Logger;
 
 // ** Added by Superstream
-import ai.superstream.Consts;
-import ai.superstream.Superstream;
+import org.apache.kafka.common.superstream.Consts;
+import org.apache.kafka.common.superstream.Superstream;
 // Added by Superstream **
 
 import java.net.InetSocketAddress;

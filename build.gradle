@@ -1343,8 +1343,6 @@ project(':clients') {
     implementation libs.snappy
     implementation libs.slf4jApi
 
-    implementation 'ai.superstream:superstream-java:1.0.11'
-
     compileOnly libs.jacksonDatabind // for SASL/OAUTHBEARER bearer token parsing
     compileOnly libs.jacksonJDK8Datatypes
     compileOnly libs.jose4j          // for SASL/OAUTHBEARER JWT validation; only used by broker

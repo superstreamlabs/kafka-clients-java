@@ -424,7 +424,7 @@ public class Superstream {
             return;
         }
         try {
-            <String, Object> reqData = new HashMap<>();
+            Map<String, Object> reqData = new HashMap<>();
             reqData.put("client_hash", clientHash);
             reqData.put("type", type);
             ObjectMapper mapper = new ObjectMapper();

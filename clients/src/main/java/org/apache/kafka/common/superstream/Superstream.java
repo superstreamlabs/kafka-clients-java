@@ -422,11 +422,8 @@ public class Superstream {
         if (type == "" || type == null) {
             return;
         }
-        if (type != "consumer" && type != "producer") {
-            return;
-        }
         try {
-            Map<String, Object> reqData = new HashMap<>();
+           <String, Object> reqData = new HashMap<>();
             reqData.put("client_hash", clientHash);
             reqData.put("type", type);
             ObjectMapper mapper = new ObjectMapper();

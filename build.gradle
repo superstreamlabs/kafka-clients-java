@@ -1345,6 +1345,7 @@ project(':clients') {
 
     // ** Added by Superstream
     implementation 'com.google.protobuf:protobuf-java:3.19.1'
+    implementation 'com.google.protobuf:protobuf-java-util:3.19.1'
 
     implementation 'com.google.code.gson:gson:2.8.8'
 

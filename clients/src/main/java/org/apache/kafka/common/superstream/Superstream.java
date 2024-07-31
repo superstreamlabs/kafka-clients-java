@@ -810,7 +810,7 @@ public class Superstream {
         String interceptorToAdd = "";
         switch (type) {
             case "producer":
-                in ptorToAdd = SuperstreamProducerInterceptor.class.getName();
+                interceptorToAdd = SuperstreamProducerInterceptor.class.getName();
                 // : handle serializer logic for payload reduction
                 // igs.containsKey(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG)) {
                 // if (!configs.containsKey(Consts.originalSerializer)) {
@@ -822,7 +822,7 @@ public class Superstream {
                 //
                 break;
             case "consumer":
-                in ptorToAdd = SuperstreamConsumerInterceptor.class.getName();
+                interceptorToAdd = SuperstreamConsumerInterceptor.class.getName();
                 // : handle deserializer logic for payload reduction
                 // igs.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
                 // if (!configs.containsKey(Consts.originalDeserializer)) {

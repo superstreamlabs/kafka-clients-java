@@ -1043,7 +1043,24 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                     if (superstreamConnection.compressionEnabled) {
                         superstreamConnection.compressionEnabledBySuperstream = true;
                         // for now support only ZSTD
-                        accumulator.updateCompressionType(CompressionType.ZSTD);
+                        switch (superstreamConnection.compressionType.toLowerCase()) {
+                            case "gzip":
+                                accumulator.updateCompressionType(CompressionType.GZIP);
+                                break;
+                            case "snappy":
+                                accumulator.updateCompressionType(CompressionType.SNAPPY);
+                                break;
+                            case "lz4":
+                                accumulator.updateCompressionType(CompressionType.LZ4);
+                                break;
+                            case "zstd":
+                                accumulator.updateCompressionType(CompressionType.ZSTD);
+                                break;
+                            default:
+                                System.out.println("Unknown compression type: " + superstreamConnection.compressionType + ", defaulting to ZSTD");
+                                accumulator.updateCompressionType(CompressionType.ZSTD);
+                                break;
+                        }
                     }
                 } else {
                     if (superstreamConnection.compressionTurnedOffBySuperstream) {

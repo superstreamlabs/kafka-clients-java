@@ -82,6 +82,7 @@ public class Superstream {
     private String tags = "";
     public Boolean canStart = false;
     public Boolean compressionEnabled;
+    public String compressionType;
     public Boolean compressionEnabledBySuperstream = false;
     public Boolean compressionTurnedOffBySuperstream = false;
 
@@ -639,8 +640,11 @@ public class Superstream {
                     } else {
                         this.compressionTurnedOffBySuperstream = true;
                     }
-                    String compressionType = (String) payload.get("compression_type");
                     this.compressionEnabled = enableCompression;
+                    String compType = (String) payload.get("compression_type");
+                    if (compType != null) {
+                        this.compressionType = compType;
+                    }
                     break;
             }
         } catch (Exception e) {

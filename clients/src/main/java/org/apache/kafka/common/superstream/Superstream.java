@@ -424,7 +424,7 @@ public class Superstream {
             return;
         }
         try {
-           <String, Object> reqData = new HashMap<>();
+            <String, Object> reqData = new HashMap<>();
             reqData.put("client_hash", clientHash);
             reqData.put("type", type);
             ObjectMapper mapper = new ObjectMapper();
@@ -449,8 +449,8 @@ public class Superstream {
         ScheduledExecutorService singleExecutorService = Executors.newSingleThreadScheduledExecutor();
         singleExecutorService.scheduleAtFixedRate(() -> {
             if (brokerConnection != null && superstreamReady) {
-                long backupReadBytes = clientCounters.getTotalReadBytesRedu
-                long backupWriteBytes = clientCounters.getTotalWriteBytesRedu
+                long backupReadBytes = clientCounters.getTotalReadBytesReduced();
+                long backupWriteBytes = clientCounters.getTotalWriteBytesReduced();
                 double compressionRate = clientCounters.getCompressionRate();
                 long calculatedReadBytes = Math.round(backupReadBytes * compressionRate);
                 long calculatedWriteBytes = Math.round(backupWriteBytes * compressionRate);
@@ -459,8 +459,7 @@ public class Superstream {
                     Map<String, Object> countersMap = new HashMap<>();
                     countersMap.put("total_read_bytes_reduced", calculatedReadBytes);
                     countersMap.put("total_write_bytes_reduced", calculatedWriteBytes);
-                    
-    
+
                     byte[] byteCounters = objectMapper.writeValueAsBytes(countersMap);
                     brokerConnection.publish(
                             String.format(Consts.superstreamClientsUpdateSubject, "counters", clientHash),
@@ -488,11 +487,11 @@ public class Superstream {
                         }
                     }
                     byte[] byteConfig = objectMapper.writeValueAsBytes(topicPartitionConfig);
-                    
+
                     brokerConnection.publish(
                             String.format(Consts.superstreamClientsUpdateSubject, "config", clientHash),
                             byteConfig);
-                
+
                 } catch (Exception e) {
                     handleError("reportClientsUpdate config: " + e.getMessage());
                 }

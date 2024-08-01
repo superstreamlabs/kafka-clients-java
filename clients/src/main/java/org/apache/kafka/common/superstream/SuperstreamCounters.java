@@ -65,10 +65,14 @@ public class SuperstreamCounters {
 
     public Double getConsumerCompressionRate() { 
         Double totalBytesCompressedConsumed = getConsumerBytesConsumedMetric();
-        if (totalBytesCompressedConsumed == null || totalBytesCompressedConsumed.isNaN() || totalBytesCompressedConsumed <= 0.0 || getTotalReadBytes() <= 0) {
+        long totalRead = getTotalReadBytes();
+        if (totalBytesCompressedConsumed == null || totalBytesCompressedConsumed.isNaN() || totalBytesCompressedConsumed <= 0.0 || totalRead <= 0) {
             return 0.0;
         }
-        return (1 - (totalBytesCompressedConsumed / getTotalReadBytes()));
+        if (totalBytesCompressedConsumed > totalRead) {
+            return 0.0;
+        }
+        return (1 - (totalBytesCompressedConsumed / totalRead));
     }
 
     public void setMetrics(Metrics metrics) {

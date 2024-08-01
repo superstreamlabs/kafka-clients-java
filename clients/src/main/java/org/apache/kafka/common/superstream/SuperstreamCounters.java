@@ -18,9 +18,7 @@ public class SuperstreamCounters {
 
     public AtomicLong TotalReadBytes = new AtomicLong(0);
 
-    public Metric producerCompressionRateAvgMetric;
-
-    public Metric consumerBytesConsumedTotalMetric;
+    public Metrics metrics;
 
     public SuperstreamCounters() {
     }
@@ -55,7 +53,7 @@ public class SuperstreamCounters {
     }
 
     public Double getProducerCompressionRate() {
-        Double rate = (Double) producerCompressionRateAvgMetric.metricValue();
+        Double rate = (Double) getProducerCompressionMetric();
         if (rate == null || rate.isNaN() || rate > 1.0 || rate == 1.0 || rate < 0.0) {
             return 0.0;
         }
@@ -66,28 +64,39 @@ public class SuperstreamCounters {
     }
 
     public Double getConsumerCompressionRate() { 
-        Double totalBytesCompressedConsumed = (Double) consumerBytesConsumedTotalMetric.metricValue();
+        Double totalBytesCompressedConsumed = (Double) getConsumerBytesConsumedMetric();
         if (totalBytesCompressedConsumed == null || totalBytesCompressedConsumed.isNaN() || totalBytesCompressedConsumed <= 0.0 || getTotalReadBytes() <= 0) {
             return 0.0;
         }
         return (1 - (totalBytesCompressedConsumed / getTotalReadBytes()));
     }
 
-    public void setProducerCompressionMetricReference(Metrics metrics) {
-        for (Map.Entry<MetricName, ? extends Metric> entry : metrics.metrics().entrySet()) {
-            String name = entry.getKey().name();
-            if (name.equals("compression-rate-avg")) {
-                producerCompressionRateAvgMetric = entry.getValue();
-            }
-        } 
+    public void setMetrics(Metrics metrics) {
+        this.metrics = metrics;
     }
 
-    public void setConsumerBytesConsumedMetricReference(Metrics metrics) {
-        for (Map.Entry<MetricName, ? extends Metric> entry : metrics.metrics().entrySet()) {
-            String name = entry.getKey().name();
-            if (name.equals("bytes-consumed-total")) {
-                consumerBytesConsumedTotalMetric = entry.getValue();
+
+    public Double getProducerCompressionMetric() {
+        if (metrics != null) {
+            for (Map.Entry<MetricName, ? extends Metric> entry : metrics.metrics().entrySet()) {
+                String name = entry.getKey().name();
+                if (name.equals("compression-rate-avg")) {
+                    return entry.getValue().metricValue();
+                }
             }
-        } 
+        }
+        return 0.0; 
+    }
+
+    public Double getConsumerBytesConsumedMetric() {
+        if (metrics != null) {
+            for (Map.Entry<MetricName, ? extends Metric> entry : metrics.metrics().entrySet()) {
+                String name = entry.getKey().name();
+                if (name.equals("bytes-consumed-total")) {
+                    return entry.getValue().metricValue();
+                }
+            } 
+        }
+        return 0.0;
     }
 }

@@ -53,7 +53,7 @@ public class SuperstreamCounters {
     }
 
     public Double getProducerCompressionRate() {
-        Double rate = (Double) getProducerCompressionMetric();
+        Double rate = getProducerCompressionMetric();
         if (rate == null || rate.isNaN() || rate > 1.0 || rate == 1.0 || rate < 0.0) {
             return 0.0;
         }
@@ -64,7 +64,7 @@ public class SuperstreamCounters {
     }
 
     public Double getConsumerCompressionRate() { 
-        Double totalBytesCompressedConsumed = (Double) getConsumerBytesConsumedMetric();
+        Double totalBytesCompressedConsumed = getConsumerBytesConsumedMetric();
         if (totalBytesCompressedConsumed == null || totalBytesCompressedConsumed.isNaN() || totalBytesCompressedConsumed <= 0.0 || getTotalReadBytes() <= 0) {
             return 0.0;
         }
@@ -81,7 +81,7 @@ public class SuperstreamCounters {
             for (Map.Entry<MetricName, ? extends Metric> entry : metrics.metrics().entrySet()) {
                 String name = entry.getKey().name();
                 if (name.equals("compression-rate-avg")) {
-                    return entry.getValue().metricValue();
+                    return (Double) entry.getValue().metricValue();
                 }
             }
         }
@@ -93,7 +93,7 @@ public class SuperstreamCounters {
             for (Map.Entry<MetricName, ? extends Metric> entry : metrics.metrics().entrySet()) {
                 String name = entry.getKey().name();
                 if (name.equals("bytes-consumed-total")) {
-                    return entry.getValue().metricValue();
+                    return (Double) entry.getValue().metricValue();
                 }
             } 
         }

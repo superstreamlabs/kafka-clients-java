@@ -451,9 +451,10 @@ public class Superstream {
             if (brokerConnection != null && superstreamReady) {
                 long backupReadBytes = clientCounters.getTotalReadBytesReduced();
                 long backupWriteBytes = clientCounters.getTotalWriteBytesReduced();
-                double compressionRate = clientCounters.getCompressionRate();
-                long calculatedReadBytes = Math.round(backupReadBytes * compressionRate);
-                long calculatedWriteBytes = Math.round(backupWriteBytes * compressionRate);
+                Double producerCompressionRate = clientCounters.getProducerCompressionRate();
+                long calculatedWriteBytes = Math.round(backupWriteBytes * producerCompressionRate);
+                Double consumerCompressionRate = clientCounters.getConsumerCompressionRate();
+                long calculatedReadBytes = Math.round(backupReadBytes * consumerCompressionRate);
                 clientCounters.reset();
                 try {
                     Map<String, Object> countersMap = new HashMap<>();
@@ -854,20 +855,6 @@ public class Superstream {
             if (interceptorToAdd != "") {
                 interceptors.add(interceptorToAdd);
                 configs.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);
-            }
-
-            List<String> metricsReporters = new ArrayList<>();
-            Object existingMetricsReporters = configs.get(ProducerConfig.METRIC_REPORTER_CLASSES_CONFIG);
-            if (existingMetricsReporters != null) {
-                if (existingMetricsReporters instanceof List) {
-                    metricsReporters = new ArrayList<>((List<String>) existingMetricsReporters);
-                } else if (existingMetricsReporters instanceof String) {
-                    metricsReporters.add((String) existingMetricsReporters);
-                }
-            }
-            metricsReporters.add(SuperstreamMetricsReporter.class.getName());
-            if (metricsReporters != null && !metricsReporters.isEmpty()) {
-                configs.put(ProducerConfig.METRIC_REPORTER_CLASSES_CONFIG, metricsReporters);
             }
 
             Map<String, String> envVars = System.getenv();

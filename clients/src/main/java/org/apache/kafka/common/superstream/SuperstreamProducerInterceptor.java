@@ -19,6 +19,13 @@ public class SuperstreamProducerInterceptor<K, V> implements ProducerInterceptor
     public ProducerRecord<K, V> onSend(ProducerRecord<K, V> record) {
         if (this.superstreamConnection != null) {
             if (record != null) {
+                int headersSize = 0;
+                for (Header header : record.headers()) {
+                    headersSize += header.key().getBytes().length + header.value().length;
+                }
+                if (headersSize > 0) {
+                    this.superstreamConnection.clientCounters.incrementTotalWriteBytesReduced(headersSize);
+                }
                 this.superstreamConnection.updateTopicPartitions(record.topic(), record.partition());
             }
         }
@@ -30,9 +37,9 @@ public class SuperstreamProducerInterceptor<K, V> implements ProducerInterceptor
     public void onAcknowledgement(RecordMetadata metadata, Exception exception) {
         if (this.superstreamConnection != null && metadata != null) {
             if (exception == null) {
-                int serializedValueSize = metadata.serializedValueSize();
-                if (serializedValueSize > 0) {
-                    this.superstreamConnection.clientCounters.incrementTotalWriteBytesReduced(serializedValueSize);
+                int serializedTotalSize = metadata.serializedValueSize() + metadata.serializedKeySize();
+                if (serializedTotalSize > 0) {
+                    this.superstreamConnection.clientCounters.incrementTotalWriteBytesReduced(serializedTotalSize);
                 }
             }
         }

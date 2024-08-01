@@ -1040,9 +1040,8 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
 
             //** added by Superstream
             if (superstreamConnection != null)  {
-                if (this.compressionType == CompressionType.NONE) {
-                    if (superstreamConnection.compressionEnabled) {
-                        superstreamConnection.compressionEnabledBySuperstream = true;
+                if (superstreamConnection.compressionEnabled) {
+                    if (this.compressionType.name() != (superstreamConnection.compressionType)){
                         switch (superstreamConnection.compressionType.toLowerCase()) {
                             case "gzip":
                                 accumulator.updateCompressionType(CompressionType.GZIP);

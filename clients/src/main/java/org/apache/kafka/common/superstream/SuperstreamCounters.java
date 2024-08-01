@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.metrics.Metrics;
+import org.apache.kafka.common.Metric;
 
 public class SuperstreamCounters {
     @JsonProperty("total_read_bytes_reduced")
@@ -40,10 +41,6 @@ public class SuperstreamCounters {
         TotalReadBytes.addAndGet(bytes);
     }
 
-    public void setCompressionRate(Double rate) {
-        CompressionRate = rate;
-    }
-
     public long getTotalReadBytesReduced() {
         return TotalReadBytesReduced.get();
     }
@@ -57,7 +54,7 @@ public class SuperstreamCounters {
     }
 
     public Double getProducerCompressionRate() {
-        Double rate = (Double) producerCproducerCompressionRateAvgMetric.metricValue();
+        Double rate = (Double) producerCompressionRateAvgMetric.metricValue();
         if (rate == null || rate.isNaN() || rate > 1.0 || rate == 1.0 || rate < 0.0) {
             return 0.0;
         }
@@ -69,10 +66,10 @@ public class SuperstreamCounters {
 
     public Double getConsumerCompressionRate() { 
         Double totalBytesCompressedConsumed = (Double) consumerBytesConsumedTotalMetric.metricValue();
-        if (totalBytesCompressedConsumed == null || totalBytesCompressedConsumed.isNaN() || totalBytesCompressedConsumed <= 0.0 || TotalReadBytes <= 0) {
+        if (totalBytesCompressedConsumed == null || totalBytesCompressedConsumed.isNaN() || totalBytesCompressedConsumed <= 0.0 || getTotalReadBytes() <= 0) {
             return 0.0;
         }
-        return (1 - (totalBytesCompressedConsumed / TotalReadBytes));
+        return (1 - (totalBytesCompressedConsumed / getTotalReadBytes()));
     }
 
     public void setProducerCompressionMetricReference(Metrics metrics) {

@@ -486,6 +486,7 @@ public class Superstream {
                                 break;
                         }
                     }
+                    topicPartitionConfig.put("connection_id", kafkaConnectionID);
                     byte[] byteConfig = objectMapper.writeValueAsBytes(topicPartitionConfig);
 
                     brokerConnection.publish(

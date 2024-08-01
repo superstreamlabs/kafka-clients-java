@@ -12,16 +12,27 @@ public class SuperstreamMetricsReporter implements MetricsReporter {
 
     @Override
     public void init(List<KafkaMetric> metrics) {
+        System.out.println("Initializing metrics...");
+        for (KafkaMetric metric : metrics) {
+            System.out.println("Metric: " + metric.metricName().name());
+        }
     }
 
     @Override
     public void metricChange(KafkaMetric metric) {
         MetricName name = metric.metricName();
         if (name.name().equals("compression-rate-avg")) {
+            System.out.println("compression-rate-avg metric changed: " + metric.metricValue().toString());
             double compressionRate = (double) metric.metricValue();
             if (superstreamConnection != null) {
                 superstreamConnection.clientCounters.setCompressionRate(compressionRate);
             }
+        } else if (name.name().equals("compression-rate")) {
+            System.out.println("compression-rate metric changed: " + metric.metricValue().toString());
+            double compressionRate = (double) metric.metricValue();
+            // if (superstreamConnection != null) {
+            //     superstreamConnection.clientCounters.setCompressionRate(compressionRate);
+            // }
         }
     }
 

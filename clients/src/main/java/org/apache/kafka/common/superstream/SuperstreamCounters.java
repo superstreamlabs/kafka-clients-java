@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.kafka.common.MetricName;
 import org.apache.kafka.common.metrics.Metrics;
 import org.apache.kafka.common.Metric;
+import java.util.Map;
 
 public class SuperstreamCounters {
     @JsonProperty("total_read_bytes_reduced")

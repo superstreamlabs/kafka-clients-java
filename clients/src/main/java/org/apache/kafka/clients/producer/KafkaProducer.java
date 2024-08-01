@@ -354,13 +354,6 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             this.time = time;
 
             String transactionalId = config.getString(ProducerConfig.TRANSACTIONAL_ID_CONFIG);
-            // ** Added by Superstream
-            Map<String, Object> originalsMap = config.originals();
-            Superstream superstreamConn = (Superstream) originalsMap.get(Consts.superstreamConnectionKey);
-            if (superstreamConn != null) {
-                this.superstreamConnection = superstreamConn;
-            }
-            // Added by Superstream **
 
             this.clientId = config.getString(ProducerConfig.CLIENT_ID_CONFIG);
 
@@ -381,6 +374,14 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             MetricsContext metricsContext = new KafkaMetricsContext(JMX_PREFIX,
                     config.originalsWithPrefix(CommonClientConfigs.METRICS_CONTEXT_PREFIX));
             this.metrics = new Metrics(metricConfig, reporters, time, metricsContext);
+             // ** Added by Superstream
+             Map<String, Object> originalsMap = config.originals();
+             Superstream superstreamConn = (Superstream) originalsMap.get(Consts.superstreamConnectionKey);
+             if (superstreamConn != null) {
+                 this.superstreamConnection = superstreamConn;
+                 this.superstreamConnection.clientCounters.setProducerCompressionMetricReference(metrics);
+             }
+             // Added by Superstream **
             this.producerMetrics = new KafkaProducerMetrics(metrics);
             this.partitioner = config.getConfiguredInstance(
                     ProducerConfig.PARTITIONER_CLASS_CONFIG,
@@ -1042,7 +1043,6 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                 if (this.compressionType == CompressionType.NONE) {
                     if (superstreamConnection.compressionEnabled) {
                         superstreamConnection.compressionEnabledBySuperstream = true;
-                        // for now support only ZSTD
                         switch (superstreamConnection.compressionType.toLowerCase()) {
                             case "gzip":
                                 accumulator.updateCompressionType(CompressionType.GZIP);

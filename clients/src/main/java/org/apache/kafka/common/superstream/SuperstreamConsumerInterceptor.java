@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.header.Header;
 
 public class SuperstreamConsumerInterceptor<K, V> implements ConsumerInterceptor<K, V> {
     Superstream superstreamConnection;
@@ -20,8 +21,14 @@ public class SuperstreamConsumerInterceptor<K, V> implements ConsumerInterceptor
             if (!records.isEmpty()) {
                 for (ConsumerRecord<K, V> record : records) {
                     this.superstreamConnection.updateTopicPartitions(record.topic(), record.partition());
-                    this.superstreamConnection.clientCounters
-                            .incrementTotalReadBytesReduced(record.serializedValueSize());
+                    int serializedTotalSize = record.serializedValueSize() + record.serializedKeySize();
+                    for (Header header : record.headers()) {
+                        serializedTotalSize += header.key().getBytes().length + header.value().length;
+                    } 
+                    if (serializedTotalSize > 0) {
+                        this.superstreamConnection.clientCounters.incrementTotalReadBytesReduced(serializedTotalSize);
+                    }
+                    this.superstreamConnection.clientCounters.incrementTotalReadBytes(serializedTotalSize);
                 }
             }
         }

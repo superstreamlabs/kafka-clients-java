@@ -82,8 +82,7 @@ public class Superstream {
     private String tags = "";
     public Boolean canStart = false;
     public Boolean compressionEnabled;
-    public String compressionType;
-    public Boolean compressionEnabledBySuperstream = false;
+    public String compressionType = "zstd";
     public Boolean compressionTurnedOffBySuperstream = false;
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,

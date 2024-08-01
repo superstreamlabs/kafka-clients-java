@@ -87,7 +87,7 @@ public class Superstream {
     public Boolean compressionTurnedOffBySuperstream = false;
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
-            Boolean enableReduction, String type, String tags) {
+            Boolean enableReduction, String type, String tags, Boolean enableCompression) {
         this.learningFactor = learningFactor;
         this.token = token;
         this.host = host;
@@ -95,12 +95,12 @@ public class Superstream {
         this.reductionEnabled = enableReduction;
         this.type = type;
         this.tags = tags;
-        this.compressionEnabled = getBooleanEnv("SUPERSTREAM_COMPRESSION_ENABLED", false);
+        this.compressionEnabled = enableCompression;
     }
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
             Boolean enableReduction, String type) {
-        this(token, host, learningFactor, configs, enableReduction, type, "");
+        this(token, host, learningFactor, configs, enableReduction, type, "", false);
     }
 
     public void init() {
@@ -134,10 +134,10 @@ public class Superstream {
         }
     }
 
-    private Boolean getBooleanEnv(String key, Boolean defaultValue) {
-        String value = System.getenv(key);
-        return (value != null) ? Boolean.parseBoolean(value) : defaultValue;
-    }
+    // private Boolean getBooleanEnv(String key, Boolean defaultValue) {
+    //     String value = System.getenv(key);
+    //     return (value != null) ? Boolean.parseBoolean(value) : defaultValue;
+    // }
 
     private void initializeNatsConnection(String token, String host) {
         try {
@@ -614,6 +614,7 @@ public class Superstream {
             byte[] payloadBytes = Base64.getDecoder().decode(payloadBytesString);
             @SuppressWarnings("unchecked")
             Map<String, Object> payload = objectMapper.readValue(payloadBytes, Map.class);
+            Map<String, String> envVars = System.getenv();
             switch (type) {
                 case "LearnedSchema":
                     String descriptorBytesString = (String) payload.get("desc");
@@ -625,6 +626,15 @@ public class Superstream {
                     break;
 
                 case "ToggleReduction":
+                    // if defined as false in env vars - override the value from superstream
+                    String reductionEnabledString = envVars.get("SUPERSTREAM_REDUCTION_ENABLED");
+                    if (reductionEnabledString != null) {
+                        Boolean reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
+                        if (!reductionEnabled) {
+                            this.reductionEnabled = false;
+                            break;
+                        }
+                    }
                     Boolean enableReduction = (Boolean) payload.get("enable_reduction");
                     if (enableReduction) {
                         this.reductionEnabled = true;
@@ -634,6 +644,15 @@ public class Superstream {
                     break;
 
                 case "CompressionUpdate":
+                    // if defined as false in env vars - override the value from superstream
+                    String compressionEnabledString = envVars.get("SUPERSTREAM_COMPRESSION_ENABLED");
+                    if (compressionEnabledString != null) {
+                        Boolean compressionEnabled = Boolean.parseBoolean(compressionEnabledString);
+                        if (!compressionEnabled) {
+                            this.compressionEnabled = false;
+                            break;
+                        }
+                    }
                     Boolean enableCompression = (Boolean) payload.get("enable_compression");
                     if (enableCompression) {
                         this.compressionTurnedOffBySuperstream = false;
@@ -885,8 +904,13 @@ public class Superstream {
             if (tags == null) {
                 tags = "";
             }
+            Boolean compressionEnabled = false;
+            String compressionEnabledString = envVars.get("SUPERSTREAM_COMPRESSION_ENABLED");
+            if (compressionEnabledString != null) {
+                compressionEnabled = Boolean.parseBoolean(compressionEnabledString);
+            }
             Superstream superstreamConnection = new Superstream(token, superstreamHost, learningFactor, configs,
-                    reductionEnabled, type, tags);
+                    reductionEnabled, type, tags, compressionEnabled);
             superstreamConnection.init();
             configs.put(Consts.superstreamConnectionKey, superstreamConnection);
         } catch (Exception e) {

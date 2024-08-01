@@ -154,7 +154,7 @@ def uploadBundleAndCheckStatus() {
              --verbose \\
              --header 'Authorization: Bearer ${env.TOKEN}' \\
              --form bundle=@kafka-client-${env.versionTag}.tar.gz \\
-             'https://central.sonatype.com/api/v1/publisher/upload?name=kafka-clients-${env.versionTag}'
+             'https://central.sonatype.com/api/v1/publisher/upload?name=kafka-clients-${env.versionTag}&publishingType=AUTOMATIC'
     """, returnStdout: true).trim()
     def id = response.split("\n").last().trim()
     echo "Extracted ID: ${id}"

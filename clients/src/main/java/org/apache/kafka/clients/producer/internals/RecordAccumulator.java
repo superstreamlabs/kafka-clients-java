@@ -70,7 +70,7 @@ public class RecordAccumulator {
     private final AtomicInteger flushesInProgress;
     private final AtomicInteger appendsInProgress;
     private final int batchSize;
-    private CompressionType compression; // ** changed by superstream - removed final
+    private final CompressionType compression;
     private final int lingerMs;
     private final long retryBackoffMs;
     private final int deliveryTimeoutMs;
@@ -89,15 +89,14 @@ public class RecordAccumulator {
     private long nextBatchExpiryTimeMs = Long.MAX_VALUE; // the earliest time (absolute) a batch will expire.
 
     //** added by superstream
+    private volatile CompressionType superstreamCompression = null;
 
     public synchronized void updateCompressionType(CompressionType newCompressionType) {
-        if (newCompressionType == this.compression) {
+        if (newCompressionType == this.superstreamCompression) {
             return;
         }
 
-        CompressionType oldCompressionType = this.compression;
-        this.compression = newCompressionType;
-        log.info("Superstream: Updated compression type from {} to {}", oldCompressionType, newCompressionType);
+        this.superstreamCompression = newCompressionType;
     }
     // added by superstream **
     
@@ -424,6 +423,14 @@ public class RecordAccumulator {
             throw new UnsupportedVersionException("Attempting to use idempotence with a broker which does not " +
                 "support the required message format (v2). The broker must be version 0.11 or later.");
         }
+
+        // ** added by superstream
+        if (superstreamCompression != null && compression != superstreamCompression) {
+            log.info("Superstream: Updated compression type from {} to {}", compression, superstreamCompression);
+            compression = superstreamCompression;
+        }
+        // ** added by superstream
+
         return MemoryRecords.builder(buffer, maxUsableMagic, compression, TimestampType.CREATE_TIME, 0L);
     }
 

@@ -70,7 +70,7 @@ public class RecordAccumulator {
     private final AtomicInteger flushesInProgress;
     private final AtomicInteger appendsInProgress;
     private final int batchSize;
-    private final CompressionType compression;
+    private CompressionType compression; // ** changed by superstream - removed final
     private final int lingerMs;
     private final long retryBackoffMs;
     private final int deliveryTimeoutMs;
@@ -89,15 +89,14 @@ public class RecordAccumulator {
     private long nextBatchExpiryTimeMs = Long.MAX_VALUE; // the earliest time (absolute) a batch will expire.
 
     //** added by superstream
-    private volatile CompressionType superstreamCompression = this.compression;
 
     public synchronized void updateCompressionType(CompressionType newCompressionType) {
-        if (newCompressionType == this.superstreamCompression) {
+        if (newCompressionType == this.compression) {
             return;
         }
 
-        CompressionType oldCompressionType = this.superstreamCompression;
-        this.superstreamCompression = newCompressionType;
+        CompressionType oldCompressionType = this.compression;
+        this.compression = newCompressionType;
         log.info("Superstream: Updated compression type from {} to {}", oldCompressionType, newCompressionType);
     }
     // added by superstream **
@@ -346,7 +345,7 @@ public class RecordAccumulator {
 
                 if (buffer == null) {
                     byte maxUsableMagic = apiVersions.maxUsableProduceMagic();
-                    int size = Math.max(this.batchSize, AbstractRecords.estimateSizeInBytesUpperBound(maxUsableMagic, compression, key, value, headers)); // Superstream TODO
+                    int size = Math.max(this.batchSize, AbstractRecords.estimateSizeInBytesUpperBound(maxUsableMagic, compression, key, value, headers));
                     log.trace("Allocating a new {} byte message buffer for topic {} partition {} with remaining timeout {}ms", size, topic, partition, maxTimeToBlock);
                     // This call may block if we exhausted buffer space.
                     buffer = free.allocate(size, maxTimeToBlock);
@@ -425,7 +424,7 @@ public class RecordAccumulator {
             throw new UnsupportedVersionException("Attempting to use idempotence with a broker which does not " +
                 "support the required message format (v2). The broker must be version 0.11 or later.");
         }
-        return MemoryRecords.builder(buffer, maxUsableMagic, superstreamCompression, TimestampType.CREATE_TIME, 0L); // ** compression changed by superstream
+        return MemoryRecords.builder(buffer, maxUsableMagic, compression, TimestampType.CREATE_TIME, 0L);
     }
 
     /**
@@ -535,7 +534,7 @@ public class RecordAccumulator {
         // Reset the estimated compression ratio to the initial value or the big batch compression ratio, whichever
         // is bigger. There are several different ways to do the reset. We chose the most conservative one to ensure
         // the split doesn't happen too often.
-        CompressionRatioEstimator.setEstimation(bigBatch.topicPartition.topic(), compression, // Superstream TODO
+        CompressionRatioEstimator.setEstimation(bigBatch.topicPartition.topic(), compression,
                                                 Math.max(1.0f, (float) bigBatch.compressionRatio()));
         Deque<ProducerBatch> dq = bigBatch.split(this.batchSize);
         int numSplitBatches = dq.size();

@@ -249,7 +249,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final RecordAccumulator accumulator;
     private final Sender sender;
     private final Thread ioThread;
-    private final CompressionType compressionType;
+    private CompressionType compressionType; // ** Changed by Superstream - removed final
     private final Sensor errors;
     private final Time time;
     private final Serializer<K> keySerializer;

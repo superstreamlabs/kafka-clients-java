@@ -263,7 +263,6 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
 
     //** added by Superstream
     Superstream superstreamConnection;
-    private volatile CompressionType superstreamCompression = this.compressionType;
     // added by Superstream **
 
     /**

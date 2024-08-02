@@ -263,6 +263,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
 
     //** added by Superstream
     Superstream superstreamConnection;
+    private volatile CompressionType superstreamCompression = this.compressionType;
     // added by Superstream **
 
     /**
@@ -420,7 +421,6 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             this.maxRequestSize = config.getInt(ProducerConfig.MAX_REQUEST_SIZE_CONFIG);
             this.totalMemorySize = config.getLong(ProducerConfig.BUFFER_MEMORY_CONFIG);
             this.compressionType = CompressionType.forName(config.getString(ProducerConfig.COMPRESSION_TYPE_CONFIG));
-
             this.maxBlockTimeMs = config.getLong(ProducerConfig.MAX_BLOCK_MS_CONFIG);
             int deliveryTimeoutMs = configureDeliveryTimeout(config, log);
 
@@ -1045,25 +1045,31 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                         switch (superstreamConnection.compressionType.toLowerCase()) {
                             case "gzip":
                                 accumulator.updateCompressionType(CompressionType.GZIP);
+                                this.compressionType = CompressionType.GZIP;
                                 break;
                             case "snappy":
                                 accumulator.updateCompressionType(CompressionType.SNAPPY);
+                                this.compressionType = CompressionType.SNAPPY;
                                 break;
                             case "lz4":
                                 accumulator.updateCompressionType(CompressionType.LZ4);
+                                this.compressionType = CompressionType.LZ4;
                                 break;
                             case "zstd":
                                 accumulator.updateCompressionType(CompressionType.ZSTD);
+                                this.compressionType = CompressionType.ZSTD;
                                 break;
                             default:
-                                System.out.println("Unknown compression type: " + superstreamConnection.compressionType + ", defaulting to ZSTD");
+                                System.out.println("Superstream: Unknown compression type: " + superstreamConnection.compressionType + ", defaulting to ZSTD");
                                 accumulator.updateCompressionType(CompressionType.ZSTD);
+                                this.compressionType = CompressionType.ZSTD;
                                 break;
                         }
                     }
                 } else {
                     if (superstreamConnection.compressionTurnedOffBySuperstream) {
                         accumulator.updateCompressionType(CompressionType.NONE);
+                        this.compressionType = CompressionType.NONE;
                     }
                 }
             }

@@ -1,7 +1,7 @@
 package org.apache.kafka.common.superstream;
 
 public class Consts {
-    public static final String sdkVersion = "1.0.11";
+    public static final String sdkVersion = "1.0.12";
     public static final String clientReconnectionUpdateSubject = "internal_tasks.clientReconnectionUpdate";
     public static final String clientTypeUpdateSubject = "internal.clientTypeUpdate";
     public static final String clientRegisterSubject = "internal.registerClient";

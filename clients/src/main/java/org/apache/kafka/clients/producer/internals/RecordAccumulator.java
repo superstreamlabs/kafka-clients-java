@@ -426,7 +426,7 @@ public class RecordAccumulator {
 
          // ** added by superstream
          if (superstreamCompression != null && compression != superstreamCompression) {
-            log.info("Superstream: Updated compression type from {} to {}", compression, superstreamCompression);
+            log.info("Superstream: updated compression type from {} to {}", compression, superstreamCompression);
             compression = superstreamCompression;
         }
         // ** added by superstream

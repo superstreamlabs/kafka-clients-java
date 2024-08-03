@@ -1059,7 +1059,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                                 this.compressionType = CompressionType.ZSTD;
                                 break;
                             default:
-                                System.out.println("Superstream: Unknown compression type: " + superstreamConnection.compressionType + ", defaulting to ZSTD");
+                                System.out.println("Superstream: unknown compression type: " + superstreamConnection.compressionType + ", defaulting to ZSTD");
                                 accumulator.updateCompressionType(CompressionType.ZSTD);
                                 this.compressionType = CompressionType.ZSTD;
                                 break;

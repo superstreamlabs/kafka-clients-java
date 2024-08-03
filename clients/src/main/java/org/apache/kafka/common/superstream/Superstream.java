@@ -152,7 +152,7 @@ public class Superstream {
                             if (type == Events.DISCONNECTED) {
                                 brokerConnection = null;
                                 superstreamReady = false;
-                                System.out.println("superstream: Disconnected");
+                                System.out.println("superstream: disconnected from superstream");
                             } else if (type == Events.RECONNECTED) {
                                 try {
                                     brokerConnection = conn;
@@ -170,9 +170,9 @@ public class Superstream {
                                     }
                                 } catch (Exception e) {
                                     System.out.println(
-                                            "superstream: Failed to reconnect: " + e.getMessage());
+                                            "superstream: failed to reconnect: " + e.getMessage());
                                 }
-                                System.out.println("superstream: Reconnected to superstream");
+                                System.out.println("superstream: reconnected to superstream");
                             }
                         }
                     })
@@ -274,7 +274,7 @@ public class Superstream {
                         latch.countDown(); // continue and stop the wait
                     } else {
                         String err = (String) messageData.get("error");
-                        System.out.println("superstream: Could not start superstream: " + err);
+                        System.out.println("superstream: could not start: " + err);
                         Thread.currentThread().interrupt();
                     }
                 }
@@ -288,7 +288,7 @@ public class Superstream {
 
         try {
             if (!latch.await(10, TimeUnit.MINUTES)) {
-                System.out.println("superstream: Could not connect to superstream for 10 minutes.");
+                System.out.println("superstream: unable not connect with superstream for 10 minutes");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

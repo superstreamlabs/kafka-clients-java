@@ -460,6 +460,7 @@ public class Superstream {
                     countersMap.put("total_read_bytes_reduced", calculatedReadBytes);
                     countersMap.put("total_write_bytes_reduced", calculatedWriteBytes);
 
+                    countersMap.put("connection_id", kafkaConnectionID);
                     byte[] byteCounters = objectMapper.writeValueAsBytes(countersMap);
                     brokerConnection.publish(
                             String.format(Consts.superstreamClientsUpdateSubject, "counters", clientHash),

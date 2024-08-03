@@ -56,6 +56,8 @@ import org.apache.kafka.common.metrics.Sensor;
 import org.apache.kafka.common.network.ChannelBuilder;
 import org.apache.kafka.common.network.Selector;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.superstream.Consts;
+import org.apache.kafka.common.superstream.Superstream;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.common.utils.LogContext;
 import org.apache.kafka.common.utils.Time;
@@ -602,6 +604,10 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
 
     // to keep from repeatedly scanning subscriptions in poll(), cache the result during metadata updates
     private boolean cachedSubscriptionHasAllFetchPositions;
+
+    //** added by Superstream
+    Superstream superstreamConnection;
+    // added by Superstream **
     
     /**
      * A consumer is instantiated by providing a set of key-value pairs as configuration. Valid configuration strings
@@ -705,7 +711,14 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
             this.time = Time.SYSTEM;
             this.metrics = buildMetrics(config, time, clientId);
             this.retryBackoffMs = config.getLong(ConsumerConfig.RETRY_BACKOFF_MS_CONFIG);
-
+            // ** Added by Superstream
+            Map<String, Object> originalsMap = config.originals();
+            Superstream superstreamConn = (Superstream) originalsMap.get(Consts.superstreamConnectionKey);
+            if (superstreamConn != null) {
+                this.superstreamConnection = superstreamConn;
+                this.superstreamConnection.clientCounters.setMetrics(this.metrics);
+            }
+            // Added by Superstream **
             List<ConsumerInterceptor<K, V>> interceptorList = (List) config.getConfiguredInstances(
                     ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG,
                     ConsumerInterceptor.class,

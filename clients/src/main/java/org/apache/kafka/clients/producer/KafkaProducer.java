@@ -68,6 +68,8 @@ import org.apache.kafka.common.record.CompressionType;
 import org.apache.kafka.common.record.RecordBatch;
 import org.apache.kafka.common.requests.JoinGroupRequest;
 import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.superstream.Consts;
+import org.apache.kafka.common.superstream.Superstream;
 import org.apache.kafka.common.utils.AppInfoParser;
 import org.apache.kafka.common.utils.KafkaThread;
 import org.apache.kafka.common.utils.LogContext;
@@ -247,7 +249,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final RecordAccumulator accumulator;
     private final Sender sender;
     private final Thread ioThread;
-    private final CompressionType compressionType;
+    private CompressionType compressionType; // ** Changed by Superstream - removed final
     private final Sensor errors;
     private final Time time;
     private final Serializer<K> keySerializer;
@@ -258,6 +260,10 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
     private final ProducerInterceptors<K, V> interceptors;
     private final ApiVersions apiVersions;
     private final TransactionManager transactionManager;
+
+    //** added by Superstream
+    Superstream superstreamConnection;
+    // added by Superstream **
 
     /**
      * A producer is instantiated by providing a set of key-value pairs as configuration. Valid configuration strings
@@ -368,6 +374,14 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             MetricsContext metricsContext = new KafkaMetricsContext(JMX_PREFIX,
                     config.originalsWithPrefix(CommonClientConfigs.METRICS_CONTEXT_PREFIX));
             this.metrics = new Metrics(metricConfig, reporters, time, metricsContext);
+             // ** Added by Superstream
+             Map<String, Object> originalsMap = config.originals();
+             Superstream superstreamConn = (Superstream) originalsMap.get(Consts.superstreamConnectionKey);
+             if (superstreamConn != null) {
+                 this.superstreamConnection = superstreamConn;
+                 this.superstreamConnection.clientCounters.setMetrics(this.metrics);
+             }
+             // Added by Superstream **
             this.producerMetrics = new KafkaProducerMetrics(metrics);
             this.partitioner = config.getConfiguredInstance(
                     ProducerConfig.PARTITIONER_CLASS_CONFIG,
@@ -406,7 +420,6 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             this.maxRequestSize = config.getInt(ProducerConfig.MAX_REQUEST_SIZE_CONFIG);
             this.totalMemorySize = config.getLong(ProducerConfig.BUFFER_MEMORY_CONFIG);
             this.compressionType = CompressionType.forName(config.getString(ProducerConfig.COMPRESSION_TYPE_CONFIG));
-
             this.maxBlockTimeMs = config.getLong(ProducerConfig.MAX_BLOCK_MS_CONFIG);
             int deliveryTimeoutMs = configureDeliveryTimeout(config, log);
 
@@ -1023,6 +1036,43 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
             // which means that the RecordAccumulator would pick a partition using built-in logic (which may
             // take into account broker load, the amount of data produced to each partition, etc.).
             int partition = partition(record, serializedKey, serializedValue, cluster);
+
+            //** added by Superstream
+            if (superstreamConnection != null)  {
+                if (superstreamConnection.compressionEnabled) {
+                    if (this.compressionType.name() != (superstreamConnection.compressionType)){
+                        switch (superstreamConnection.compressionType.toLowerCase()) {
+                            case "gzip":
+                                accumulator.updateCompressionType(CompressionType.GZIP);
+                                this.compressionType = CompressionType.GZIP;
+                                break;
+                            case "snappy":
+                                accumulator.updateCompressionType(CompressionType.SNAPPY);
+                                this.compressionType = CompressionType.SNAPPY;
+                                break;
+                            case "lz4":
+                                accumulator.updateCompressionType(CompressionType.LZ4);
+                                this.compressionType = CompressionType.LZ4;
+                                break;
+                            case "zstd":
+                                accumulator.updateCompressionType(CompressionType.ZSTD);
+                                this.compressionType = CompressionType.ZSTD;
+                                break;
+                            default:
+                                System.out.println("Superstream: unknown compression type: " + superstreamConnection.compressionType + ", defaulting to ZSTD");
+                                accumulator.updateCompressionType(CompressionType.ZSTD);
+                                this.compressionType = CompressionType.ZSTD;
+                                break;
+                        }
+                    }
+                } else {
+                    if (superstreamConnection.compressionTurnedOffBySuperstream) {
+                        accumulator.updateCompressionType(CompressionType.NONE);
+                        this.compressionType = CompressionType.NONE;
+                    }
+                }
+            }
+            // added by Superstream **
 
             setReadOnly(record.headers());
             Header[] headers = record.headers().toArray();

@@ -157,7 +157,7 @@ def uploadBundleAndCheckStatus() {
         curl --request POST \\
              --verbose \\
              --header 'Authorization: Bearer ${env.TOKEN}' \\
-             --form bundle=@/tmp/kafka-clients/kafka-client-${env.versionTag}.tar.gz \\
+             --form bundle=@kafka-client-${env.versionTag}.tar.gz \\
              'https://central.sonatype.com/api/v1/publisher/upload?name=kafka-clients-${env.versionTag}&publishingType=AUTOMATIC'
     """, returnStdout: true).trim()
     def id = response.split("\n").last().trim()

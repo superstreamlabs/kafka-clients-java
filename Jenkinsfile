@@ -113,6 +113,7 @@ pipeline {
     post {
         always {
             cleanWs()
+            archiveArtifacts artifacts: 'kafka-client-${env.versionTag}.tar.gz'
         }
         success {
             sendSlackNotification('SUCCESS')
@@ -144,17 +145,19 @@ def setupGPG() {
 def publishClients() {
     sh "./gradlew :clients:publish -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE}"
     sh "rm /tmp/kafka-clients/ai/superstream/kafka-clients/maven-metadata.xml*"
+    sh """ cd /tmp/kafka-clients
+           tar czvf kafka-client-${env.versionTag}.tar.gz ai
+       """
+    sh "cp /tmp/kafka-clients/kafka-client-${env.versionTag}.tar.gz ."      
 }
 
 // Function to upload a bundle and check deployment status
 def uploadBundleAndCheckStatus() {
     def response = sh(script: """
-        cd /tmp/kafka-clients
-        tar czvf kafka-client-${env.versionTag}.tar.gz ai
         curl --request POST \\
              --verbose \\
              --header 'Authorization: Bearer ${env.TOKEN}' \\
-             --form bundle=@kafka-client-${env.versionTag}.tar.gz \\
+             --form bundle=@/tmp/kafka-clients/kafka-client-${env.versionTag}.tar.gz \\
              'https://central.sonatype.com/api/v1/publisher/upload?name=kafka-clients-${env.versionTag}&publishingType=AUTOMATIC'
     """, returnStdout: true).trim()
     def id = response.split("\n").last().trim()

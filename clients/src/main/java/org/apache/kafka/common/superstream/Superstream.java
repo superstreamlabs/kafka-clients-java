@@ -266,9 +266,7 @@ public class Superstream {
         private Map<String, Object> populateConfigToSend(Map<String,?> configs) {
             Map<String, Object> configToSend = new HashMap<>();
             if (configs != null && !configs.isEmpty()) {
-                // Iterate over the entries of the original map
                 for (Map.Entry<String, ?> entry : configs.entrySet()) {
-                    // Put each entry into the new map
                     if (!Consts.superstreamConnectionKey.equalsIgnoreCase(entry.getKey())) {
                         configToSend.put(entry.getKey(), entry.getValue());
                     }

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import java.util.Properties;
 import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -216,7 +217,7 @@ public class Superstream {
             reqData.put("language", "java");
             reqData.put("learning_factor", learningFactor);
             reqData.put("version", Consts.sdkVersion);
-            reqData.put("config", normalizeClientConfig(configs));
+            reqData.put("config", mapAllClientConfigToJson(configs));
             reqData.put("reduction_enabled", reductionEnabled);
             reqData.put("connection_id", kafkaConnectionID);
             reqData.put("tags", tags);
@@ -751,6 +752,40 @@ public class Superstream {
                         clientHash, Consts.sdkVersion, tags, msg);
                 brokerConnection.publish(Consts.superstreamErrorSubject, message.getBytes(StandardCharsets.UTF_8));
             }
+        }
+    }
+
+    public static Map<String, Object> mapAllClientConfigToJson(Map<String, ?> javaConfig) {
+        Map<String, Object> superstreamConfig = new HashMap<>();
+        if (javaConfig != null && !javaConfig.isEmpty()) {
+            for (String key : javaConfig.keySet()){
+                Object value = javaConfig.get(key);
+                if (key != null &&  key.equalsIgnoreCase(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG)) {
+                    if (value instanceof String[]) {
+                        superstreamConfig.put(key, Arrays.toString((String[]) value));
+                    } else if (value instanceof ArrayList) {
+                        @SuppressWarnings("unchecked")
+                        ArrayList<String> arrayList = (ArrayList<String>) value;
+                        superstreamConfig.put(key, String.join(", ", arrayList));
+                    } else {
+                        superstreamConfig.put(key, value);
+                    }
+                } else {
+                    superstreamConfig.put(key, value);
+                }
+            }
+        }
+
+        return superstreamConfig;
+    }
+
+    public static String convertMapToJson(Map<String, Object> map) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(map);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return "";  // or you could return an empty string or throw a custom exception
         }
     }
 

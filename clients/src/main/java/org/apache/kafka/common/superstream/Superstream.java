@@ -217,13 +217,13 @@ public class Superstream {
             reqData.put("language", "java");
             reqData.put("learning_factor", learningFactor);
             reqData.put("version", Consts.sdkVersion);
-            reqData.put("config", configs);
+            Map<String,Object> configToSend = populateConfigToSend(configs);
+            reqData.put("config", configToSend);
             reqData.put("reduction_enabled", reductionEnabled);
             reqData.put("connection_id", kafkaConnectionID);
             reqData.put("tags", tags);
             ObjectMapper mapper = new ObjectMapper();
-            Map<String,Object> configToSend = populateConfigToSend(configs);
-            byte[] reqBytes = mapper.writeValueAsBytes(configToSend);
+            byte[] reqBytes = mapper.writeValueAsBytes(reqData);
             Message reply = brokerConnection.request(Consts.clientRegisterSubject, reqBytes, Duration.ofMinutes(5));
             if (reply != null) {
                 @SuppressWarnings("unchecked")

@@ -1,27 +1,17 @@
 package org.apache.kafka.common.superstream;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.Properties;
-import java.util.Set;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.FileDescriptor;
+import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.util.JsonFormat;
+import io.nats.client.*;
+import io.nats.client.api.ServerInfo;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -30,27 +20,12 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.Descriptors.FileDescriptor;
-import com.google.protobuf.DynamicMessage;
-import com.google.protobuf.util.JsonFormat;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import com.google.protobuf.DescriptorProtos;
-
-import io.nats.client.Connection;
-import io.nats.client.Nats;
-import io.nats.client.Options;
-import io.nats.client.Subscription;
-import io.nats.client.api.ServerInfo;
-import io.nats.client.ConnectionListener;
-import io.nats.client.Dispatcher;
-import io.nats.client.JetStream;
-import io.nats.client.Message;
-import io.nats.client.MessageHandler;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class Superstream {
     public Connection brokerConnection;
@@ -87,7 +62,7 @@ public class Superstream {
     public Boolean compressionTurnedOffBySuperstream = false;
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
-            Boolean enableReduction, String type, String tags, Boolean enableCompression) {
+                       Boolean enableReduction, String type, String tags, Boolean enableCompression) {
         this.learningFactor = learningFactor;
         this.token = token;
         this.host = host;
@@ -99,7 +74,7 @@ public class Superstream {
     }
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
-            Boolean enableReduction, String type) {
+                       Boolean enableReduction, String type) {
         this(token, host, learningFactor, configs, enableReduction, type, "", false);
     }
 
@@ -217,7 +192,7 @@ public class Superstream {
             reqData.put("language", "java");
             reqData.put("learning_factor", learningFactor);
             reqData.put("version", Consts.sdkVersion);
-            Map<String,Object> configToSend = populateConfigToSend(configs);
+            Map<String, Object> configToSend = populateConfigToSend(configs);
             reqData.put("config", configToSend);
             reqData.put("reduction_enabled", reductionEnabled);
             reqData.put("connection_id", kafkaConnectionID);
@@ -263,19 +238,19 @@ public class Superstream {
         }
     }
 
-        private Map<String, Object> populateConfigToSend(Map<String,?> configs) {
-            Map<String, Object> configToSend = new HashMap<>();
-            if (configs != null && !configs.isEmpty()) {
-                for (Map.Entry<String, ?> entry : configs.entrySet()) {
-                    if (!Consts.superstreamConnectionKey.equalsIgnoreCase(entry.getKey())) {
-                        configToSend.put(entry.getKey(), entry.getValue());
-                    }
+    private Map<String, Object> populateConfigToSend(Map<String, ?> configs) {
+        Map<String, Object> configToSend = new HashMap<>();
+        if (configs != null && !configs.isEmpty()) {
+            for (Map.Entry<String, ?> entry : configs.entrySet()) {
+                if (!Consts.superstreamConnectionKey.equalsIgnoreCase(entry.getKey())) {
+                    configToSend.put(entry.getKey(), entry.getValue());
                 }
-
             }
 
-            return configToSend;
         }
+
+        return configToSend;
+    }
 
     private void waitForStart() {
         CountDownLatch latch = new CountDownLatch(1);
@@ -300,7 +275,7 @@ public class Superstream {
         });
 
         dispatcher.subscribe(String.format(Consts.clientStartSubject, clientHash)); // replace with your specific
-                                                                                    // subject
+        // subject
 
         try {
             if (!latch.await(10, TimeUnit.MINUTES)) {
@@ -721,7 +696,7 @@ public class Superstream {
     }
 
     private Descriptors.Descriptor compileMsgDescriptor(String descriptorBytesString, String masterMsgName,
-            String fileName) {
+                                                        String fileName) {
         try {
             byte[] descriptorAsBytes = Base64.getDecoder().decode(descriptorBytesString);
             if (descriptorAsBytes == null) {
@@ -731,7 +706,7 @@ public class Superstream {
             FileDescriptor fileDescriptor = null;
             for (DescriptorProtos.FileDescriptorProto fdp : descriptorSet.getFileList()) {
                 if (fdp.getName().equals(fileName)) {
-                    fileDescriptor = FileDescriptor.buildFrom(fdp, new FileDescriptor[] {});
+                    fileDescriptor = FileDescriptor.buildFrom(fdp, new FileDescriptor[]{});
                     break;
                 }
             }

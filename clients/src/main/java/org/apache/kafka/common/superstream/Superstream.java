@@ -217,7 +217,7 @@ public class Superstream {
             reqData.put("language", "java");
             reqData.put("learning_factor", learningFactor);
             reqData.put("version", Consts.sdkVersion);
-            reqData.put("config", mapAllClientConfigToJson(configs));
+            reqData.put("config", configs);
             reqData.put("reduction_enabled", reductionEnabled);
             reqData.put("connection_id", kafkaConnectionID);
             reqData.put("tags", tags);
@@ -751,108 +751,6 @@ public class Superstream {
                 String message = String.format("[clientHash: %s][sdk: java][version: %s][tags: %s] %s",
                         clientHash, Consts.sdkVersion, tags, msg);
                 brokerConnection.publish(Consts.superstreamErrorSubject, message.getBytes(StandardCharsets.UTF_8));
-            }
-        }
-    }
-
-    public static Map<String, Object> mapAllClientConfigToJson(Map<String, ?> javaConfig) {
-        Map<String, Object> superstreamConfig = new HashMap<>();
-        if (javaConfig != null && !javaConfig.isEmpty()) {
-            for (String key : javaConfig.keySet()){
-                Object value = javaConfig.get(key);
-                if (key != null &&  key.equalsIgnoreCase(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG)) {
-                    if (value instanceof String[]) {
-                        superstreamConfig.put(key, Arrays.toString((String[]) value));
-                    } else if (value instanceof ArrayList) {
-                        @SuppressWarnings("unchecked")
-                        ArrayList<String> arrayList = (ArrayList<String>) value;
-                        superstreamConfig.put(key, String.join(", ", arrayList));
-                    } else {
-                        superstreamConfig.put(key, value);
-                    }
-                } else {
-                    superstreamConfig.put(key, value);
-                }
-            }
-        }
-
-        return superstreamConfig;
-    }
-
-    public static String convertMapToJson(Map<String, Object> map) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            return objectMapper.writeValueAsString(map);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-            return "";  // or you could return an empty string or throw a custom exception
-        }
-    }
-
-    public static Map<String, Object> normalizeClientConfig(Map<String, ?> javaConfig) {
-        Map<String, Object> superstreamConfig = new HashMap<>();
-
-        // Producer configurations
-        // Note: Handling of `producer_return_errors` and `producer_return_successes` is
-        // typically done programmatically in the Java client,
-        // `producer_flush_max_messages` does not exist in java
-        mapIfPresent(javaConfig, ProducerConfig.MAX_REQUEST_SIZE_CONFIG, superstreamConfig,
-                "producer_max_messages_bytes");
-        mapIfPresent(javaConfig, ProducerConfig.ACKS_CONFIG, superstreamConfig, "producer_required_acks");
-        mapIfPresent(javaConfig, ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, superstreamConfig, "producer_timeout");
-        mapIfPresent(javaConfig, ProducerConfig.RETRIES_CONFIG, superstreamConfig, "producer_retry_max");
-        mapIfPresent(javaConfig, ProducerConfig.RETRY_BACKOFF_MS_CONFIG, superstreamConfig, "producer_retry_backoff");
-        mapIfPresent(javaConfig, ProducerConfig.COMPRESSION_TYPE_CONFIG, superstreamConfig,
-                "producer_compression_level");
-        // Consumer configurations
-        // Note: `consumer_return_errors`, `consumer_offsets_initial`,
-        // `consumer_offsets_retry_max`, `consumer_group_rebalance_timeout`,
-        // `consumer_group_rebalance_retry_max` does not exist in java
-        mapIfPresent(javaConfig, ConsumerConfig.FETCH_MIN_BYTES_CONFIG, superstreamConfig, "consumer_fetch_min");
-        mapIfPresent(javaConfig, ConsumerConfig.FETCH_MAX_BYTES_CONFIG, superstreamConfig, "consumer_fetch_default");
-        mapIfPresent(javaConfig, ConsumerConfig.RETRY_BACKOFF_MS_CONFIG, superstreamConfig, "consumer_retry_backoff");
-        mapIfPresent(javaConfig, ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, superstreamConfig,
-                "consumer_max_wait_time");
-        mapIfPresent(javaConfig, ConsumerConfig.MAX_POLL_RECORDS_CONFIG, superstreamConfig,
-                "consumer_max_processing_time");
-        // mapIfPresent(javaConfig, ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
-        // superstreamConfig, "consumer_offset_auto_commit_enable");
-        // TODO: handle boolean vars
-        mapIfPresent(javaConfig, ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, superstreamConfig,
-                "consumer_offset_auto_commit_interval");
-        mapIfPresent(javaConfig, ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, superstreamConfig,
-                "consumer_group_session_timeout");
-        mapIfPresent(javaConfig, ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, superstreamConfig,
-                "consumer_group_heart_beat_interval");
-        mapIfPresent(javaConfig, ConsumerConfig.RETRY_BACKOFF_MS_CONFIG, superstreamConfig,
-                "consumer_group_rebalance_retry_back_off");
-        // mapIfPresent(javaConfig, ConsumerConfig.AUTO_OFFSET_RESET_CONFIG ,
-        // superstreamConfig, "consumer_group_rebalance_reset_invalid_offsets"); //
-        // TODO: handle boolean vars
-        mapIfPresent(javaConfig, ConsumerConfig.GROUP_ID_CONFIG, superstreamConfig, "consumer_group_id");
-        // Common configurations
-        mapIfPresent(javaConfig, ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, superstreamConfig, "servers");
-        // Note: No access to `producer_topics_partitions` and
-        // `consumer_group_topics_partitions`
-        return superstreamConfig;
-    }
-
-    private static void mapIfPresent(Map<String, ?> javaConfig, String javaKey, Map<String, Object> superstreamConfig,
-            String superstreamKey) {
-        if (javaConfig.containsKey(javaKey)) {
-            if (javaKey == ProducerConfig.BOOTSTRAP_SERVERS_CONFIG) {
-                Object value = javaConfig.get(javaKey);
-                if (value instanceof String[]) {
-                    superstreamConfig.put(superstreamKey, Arrays.toString((String[]) value));
-                } else if (value instanceof ArrayList) {
-                    @SuppressWarnings("unchecked")
-                    ArrayList<String> arrayList = (ArrayList<String>) value;
-                    superstreamConfig.put(superstreamKey, String.join(", ", arrayList));
-                } else {
-                    superstreamConfig.put(superstreamKey, value);
-                }
-            } else {
-                superstreamConfig.put(superstreamKey, javaConfig.get(javaKey));
             }
         }
     }

@@ -1,26 +1,17 @@
 package org.apache.kafka.common.superstream;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.Properties;
-import java.util.Set;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.Descriptors.FileDescriptor;
+import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.util.JsonFormat;
+import io.nats.client.*;
+import io.nats.client.api.ServerInfo;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -29,27 +20,12 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.DescriptorProtos.FileDescriptorSet;
-import com.google.protobuf.Descriptors;
-import com.google.protobuf.Descriptors.FileDescriptor;
-import com.google.protobuf.DynamicMessage;
-import com.google.protobuf.util.JsonFormat;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import com.google.protobuf.DescriptorProtos;
-
-import io.nats.client.Connection;
-import io.nats.client.Nats;
-import io.nats.client.Options;
-import io.nats.client.Subscription;
-import io.nats.client.api.ServerInfo;
-import io.nats.client.ConnectionListener;
-import io.nats.client.Dispatcher;
-import io.nats.client.JetStream;
-import io.nats.client.Message;
-import io.nats.client.MessageHandler;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class Superstream {
     public Connection brokerConnection;
@@ -86,7 +62,7 @@ public class Superstream {
     public Boolean compressionTurnedOffBySuperstream = false;
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
-            Boolean enableReduction, String type, String tags, Boolean enableCompression) {
+                       Boolean enableReduction, String type, String tags, Boolean enableCompression) {
         this.learningFactor = learningFactor;
         this.token = token;
         this.host = host;
@@ -98,7 +74,7 @@ public class Superstream {
     }
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
-            Boolean enableReduction, String type) {
+                       Boolean enableReduction, String type) {
         this(token, host, learningFactor, configs, enableReduction, type, "", false);
     }
 
@@ -216,7 +192,8 @@ public class Superstream {
             reqData.put("language", "java");
             reqData.put("learning_factor", learningFactor);
             reqData.put("version", Consts.sdkVersion);
-            reqData.put("config", normalizeClientConfig(configs));
+            Map<String, Object> configToSend = populateConfigToSend(configs);
+            reqData.put("config", configToSend);
             reqData.put("reduction_enabled", reductionEnabled);
             reqData.put("connection_id", kafkaConnectionID);
             reqData.put("tags", tags);
@@ -261,6 +238,20 @@ public class Superstream {
         }
     }
 
+    private Map<String, Object> populateConfigToSend(Map<String, ?> configs) {
+        Map<String, Object> configToSend = new HashMap<>();
+        if (configs != null && !configs.isEmpty()) {
+            for (Map.Entry<String, ?> entry : configs.entrySet()) {
+                if (!Consts.superstreamConnectionKey.equalsIgnoreCase(entry.getKey())) {
+                    configToSend.put(entry.getKey(), entry.getValue());
+                }
+            }
+
+        }
+
+        return configToSend;
+    }
+
     private void waitForStart() {
         CountDownLatch latch = new CountDownLatch(1);
         Dispatcher dispatcher = brokerConnection.createDispatcher((msg) -> {
@@ -284,7 +275,7 @@ public class Superstream {
         });
 
         dispatcher.subscribe(String.format(Consts.clientStartSubject, clientHash)); // replace with your specific
-                                                                                    // subject
+        // subject
 
         try {
             if (!latch.await(10, TimeUnit.MINUTES)) {
@@ -705,7 +696,7 @@ public class Superstream {
     }
 
     private Descriptors.Descriptor compileMsgDescriptor(String descriptorBytesString, String masterMsgName,
-            String fileName) {
+                                                        String fileName) {
         try {
             byte[] descriptorAsBytes = Base64.getDecoder().decode(descriptorBytesString);
             if (descriptorAsBytes == null) {
@@ -715,7 +706,7 @@ public class Superstream {
             FileDescriptor fileDescriptor = null;
             for (DescriptorProtos.FileDescriptorProto fdp : descriptorSet.getFileList()) {
                 if (fdp.getName().equals(fileName)) {
-                    fileDescriptor = FileDescriptor.buildFrom(fdp, new FileDescriptor[] {});
+                    fileDescriptor = FileDescriptor.buildFrom(fdp, new FileDescriptor[]{});
                     break;
                 }
             }
@@ -750,74 +741,6 @@ public class Superstream {
                 String message = String.format("[clientHash: %s][sdk: java][version: %s][tags: %s] %s",
                         clientHash, Consts.sdkVersion, tags, msg);
                 brokerConnection.publish(Consts.superstreamErrorSubject, message.getBytes(StandardCharsets.UTF_8));
-            }
-        }
-    }
-
-    public static Map<String, Object> normalizeClientConfig(Map<String, ?> javaConfig) {
-        Map<String, Object> superstreamConfig = new HashMap<>();
-
-        // Producer configurations
-        // Note: Handling of `producer_return_errors` and `producer_return_successes` is
-        // typically done programmatically in the Java client,
-        // `producer_flush_max_messages` does not exist in java
-        mapIfPresent(javaConfig, ProducerConfig.MAX_REQUEST_SIZE_CONFIG, superstreamConfig,
-                "producer_max_messages_bytes");
-        mapIfPresent(javaConfig, ProducerConfig.ACKS_CONFIG, superstreamConfig, "producer_required_acks");
-        mapIfPresent(javaConfig, ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, superstreamConfig, "producer_timeout");
-        mapIfPresent(javaConfig, ProducerConfig.RETRIES_CONFIG, superstreamConfig, "producer_retry_max");
-        mapIfPresent(javaConfig, ProducerConfig.RETRY_BACKOFF_MS_CONFIG, superstreamConfig, "producer_retry_backoff");
-        mapIfPresent(javaConfig, ProducerConfig.COMPRESSION_TYPE_CONFIG, superstreamConfig,
-                "producer_compression_level");
-        // Consumer configurations
-        // Note: `consumer_return_errors`, `consumer_offsets_initial`,
-        // `consumer_offsets_retry_max`, `consumer_group_rebalance_timeout`,
-        // `consumer_group_rebalance_retry_max` does not exist in java
-        mapIfPresent(javaConfig, ConsumerConfig.FETCH_MIN_BYTES_CONFIG, superstreamConfig, "consumer_fetch_min");
-        mapIfPresent(javaConfig, ConsumerConfig.FETCH_MAX_BYTES_CONFIG, superstreamConfig, "consumer_fetch_default");
-        mapIfPresent(javaConfig, ConsumerConfig.RETRY_BACKOFF_MS_CONFIG, superstreamConfig, "consumer_retry_backoff");
-        mapIfPresent(javaConfig, ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, superstreamConfig,
-                "consumer_max_wait_time");
-        mapIfPresent(javaConfig, ConsumerConfig.MAX_POLL_RECORDS_CONFIG, superstreamConfig,
-                "consumer_max_processing_time");
-        // mapIfPresent(javaConfig, ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG,
-        // superstreamConfig, "consumer_offset_auto_commit_enable");
-        // TODO: handle boolean vars
-        mapIfPresent(javaConfig, ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, superstreamConfig,
-                "consumer_offset_auto_commit_interval");
-        mapIfPresent(javaConfig, ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, superstreamConfig,
-                "consumer_group_session_timeout");
-        mapIfPresent(javaConfig, ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, superstreamConfig,
-                "consumer_group_heart_beat_interval");
-        mapIfPresent(javaConfig, ConsumerConfig.RETRY_BACKOFF_MS_CONFIG, superstreamConfig,
-                "consumer_group_rebalance_retry_back_off");
-        // mapIfPresent(javaConfig, ConsumerConfig.AUTO_OFFSET_RESET_CONFIG ,
-        // superstreamConfig, "consumer_group_rebalance_reset_invalid_offsets"); //
-        // TODO: handle boolean vars
-        mapIfPresent(javaConfig, ConsumerConfig.GROUP_ID_CONFIG, superstreamConfig, "consumer_group_id");
-        // Common configurations
-        mapIfPresent(javaConfig, ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, superstreamConfig, "servers");
-        // Note: No access to `producer_topics_partitions` and
-        // `consumer_group_topics_partitions`
-        return superstreamConfig;
-    }
-
-    private static void mapIfPresent(Map<String, ?> javaConfig, String javaKey, Map<String, Object> superstreamConfig,
-            String superstreamKey) {
-        if (javaConfig.containsKey(javaKey)) {
-            if (javaKey == ProducerConfig.BOOTSTRAP_SERVERS_CONFIG) {
-                Object value = javaConfig.get(javaKey);
-                if (value instanceof String[]) {
-                    superstreamConfig.put(superstreamKey, Arrays.toString((String[]) value));
-                } else if (value instanceof ArrayList) {
-                    @SuppressWarnings("unchecked")
-                    ArrayList<String> arrayList = (ArrayList<String>) value;
-                    superstreamConfig.put(superstreamKey, String.join(", ", arrayList));
-                } else {
-                    superstreamConfig.put(superstreamKey, value);
-                }
-            } else {
-                superstreamConfig.put(superstreamKey, javaConfig.get(javaKey));
             }
         }
     }

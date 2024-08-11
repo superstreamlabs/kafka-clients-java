@@ -222,7 +222,8 @@ public class Superstream {
             reqData.put("connection_id", kafkaConnectionID);
             reqData.put("tags", tags);
             ObjectMapper mapper = new ObjectMapper();
-            byte[] reqBytes = mapper.writeValueAsBytes(reqData);
+            Map<String,Object> configToSend = populateConfigToSend(configs);
+            byte[] reqBytes = mapper.writeValueAsBytes(configToSend);
             Message reply = brokerConnection.request(Consts.clientRegisterSubject, reqBytes, Duration.ofMinutes(5));
             if (reply != null) {
                 @SuppressWarnings("unchecked")
@@ -261,6 +262,22 @@ public class Superstream {
             System.out.println(String.format("superstream: %s", e.getMessage()));
         }
     }
+
+        private Map<String, Object> populateConfigToSend(Map<String,?> configs) {
+            Map<String, Object> configToSend = new HashMap<>();
+            if (configs != null && !configs.isEmpty()) {
+                // Iterate over the entries of the original map
+                for (Map.Entry<String, ?> entry : configs.entrySet()) {
+                    // Put each entry into the new map
+                    if (!Consts.superstreamConnectionKey.equalsIgnoreCase(entry.getKey())) {
+                        configToSend.put(entry.getKey(), entry.getValue());
+                    }
+                }
+
+            }
+
+            return configToSend;
+        }
 
     private void waitForStart() {
         CountDownLatch latch = new CountDownLatch(1);

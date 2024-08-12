@@ -1,5 +1,6 @@
 package org.apache.kafka.common.superstream;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonParser;
@@ -45,6 +46,7 @@ public class Superstream {
     public String ConsumerSchemaID = "0";
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
+    private Map<String,?> allClientConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;
     private String host;
@@ -422,6 +424,23 @@ public class Superstream {
             brokerConnection.publish(Consts.clientTypeUpdateSubject, reqBytes);
         } catch (Exception e) {
             handleError(String.format("sendClientTypeUpdateReq: %s", e.getMessage()));
+        }
+    }
+
+    private void sendClientConfigUpdateReq(){
+        if(this.allClientConfigs != null && !this.allClientConfigs.isEmpty()) {
+            try{
+                Map<String, Object> reqData = new HashMap<>();
+                reqData.put("client_hash", clientHash);
+                reqData.put("config", this.allClientConfigs);
+                ObjectMapper mapper = new ObjectMapper();
+                byte[] reqBytes = mapper.writeValueAsBytes(reqData);
+                brokerConnection.publish(Consts.clientConfigUpdateSubject, reqBytes);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            } catch (Exception e){
+                handleError(String.format("sendClientConfigUpdateReq: %s", e.getMessage()));
+            }
         }
     }
 
@@ -949,5 +968,14 @@ public class Superstream {
         if (!partitions.contains(partition)) {
             partitions.add(partition);
         }
+    }
+
+    public void setAllClientConfigs(Map<String,?> configs) {
+        this.allClientConfigs = configs;
+        sendClientConfigUpdateReq();
+    }
+
+    public Map<String,?> getAllClientConfigs() {
+        return this.allClientConfigs;
     }
 }

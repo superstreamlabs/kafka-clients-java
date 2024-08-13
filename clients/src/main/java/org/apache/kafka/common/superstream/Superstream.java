@@ -1,5 +1,6 @@
 package org.apache.kafka.common.superstream;
 
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,6 +14,8 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.util.JsonFormat;
 import io.nats.client.*;
 import io.nats.client.api.ServerInfo;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -22,12 +25,14 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-
+@Getter
+@Setter
 public class Superstream {
     public Connection brokerConnection;
     public JetStream jetstream;
@@ -62,6 +67,8 @@ public class Superstream {
     public Boolean compressionEnabled;
     public String compressionType = "zstd";
     public Boolean compressionTurnedOffBySuperstream = false;
+    private String clientIp;
+    private String clientHost;
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
                        Boolean enableReduction, String type, String tags, Boolean enableCompression) {
@@ -189,6 +196,9 @@ public class Superstream {
                     kafkaConnectionID = 0;
                 }
             }
+            InetAddress localHost = InetAddress.getLocalHost();
+            this.clientIp = localHost.getHostAddress();
+            this.clientHost = localHost.getHostName();
             Map<String, Object> reqData = new HashMap<>();
             reqData.put("nats_connection_id", natsConnectionID);
             reqData.put("language", "java");
@@ -199,6 +209,8 @@ public class Superstream {
             reqData.put("reduction_enabled", reductionEnabled);
             reqData.put("connection_id", kafkaConnectionID);
             reqData.put("tags", tags);
+            reqData.put("client_ip", clientIp);
+            reqData.put("client_host", clientHost);
             ObjectMapper mapper = new ObjectMapper();
             byte[] reqBytes = mapper.writeValueAsBytes(reqData);
             Message reply = brokerConnection.request(Consts.clientRegisterSubject, reqBytes, Duration.ofMinutes(5));

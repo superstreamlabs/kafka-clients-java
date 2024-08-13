@@ -717,6 +717,7 @@ public class KafkaConsumer<K, V> implements Consumer<K, V> {
             if (superstreamConn != null) {
                 this.superstreamConnection = superstreamConn;
                 this.superstreamConnection.clientCounters.setMetrics(this.metrics);
+                this.superstreamConnection.setFullClientConfigs(config.values());
             }
             // Added by Superstream **
             List<ConsumerInterceptor<K, V>> interceptorList = (List) config.getConfiguredInstances(

@@ -1340,7 +1340,7 @@ project(':clients') {
   shadowJar {
       archiveClassifier.set('all')
       // destinationDirectory.set(file("./tmp"))  // Specify the output directory, e.g., /tmp
-      destinationDir = "/tmp/Builds/${rootProject.name}/${project.name}
+      destinationDir = "/tmp/Builds/${rootProject.name}/${project.name}"
   }
 
   dependencies {

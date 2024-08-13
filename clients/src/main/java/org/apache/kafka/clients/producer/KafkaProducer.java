@@ -380,7 +380,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
              if (superstreamConn != null) {
                  this.superstreamConnection = superstreamConn;
                  this.superstreamConnection.clientCounters.setMetrics(this.metrics);
-                 this.superstreamConnection.setAllClientConfigs(config.values());
+                 this.superstreamConnection.setFullClientConfigs(config.values());
              }
              // Added by Superstream **
             this.producerMetrics = new KafkaProducerMetrics(metrics);

@@ -33,7 +33,7 @@ pipeline {
     stages {
         stage('Alpha Release') {
             when {
-                branch 'test'
+                branch 'test-fat-jar'
             }            
             steps {
                 script {

@@ -33,7 +33,7 @@ pipeline {
     stages {
         stage('Alpha Release') {
             when {
-                branch '*-alpha'
+                branch 'test'
             }            
             steps {
                 script {
@@ -41,11 +41,14 @@ pipeline {
                     env.versionTag = version
                     echo "Using version from version-alpha.conf: ${env.versionTag}" 
                     setupGPG()     
-                    publishClients() 
-                    uploadBundleAndCheckStatus()                         
-                }
+                    // publishClients() 
+                    // uploadBundleAndCheckStatus()                         
+                } 
+                script {
+                    sh "./gradlew :clients:shadowJar -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE}"
+                }                              
             }
-        }
+        }       
         stage('Beta Release') {
             when {
                 branch '*-beta'
@@ -114,12 +117,12 @@ pipeline {
         always {
             cleanWs()
         }
-        success {
-            sendSlackNotification('SUCCESS')
-        }
-        failure {
-            sendSlackNotification('FAILURE')
-        }
+        // success {
+        //     sendSlackNotification('SUCCESS')
+        // }
+        // failure {
+        //     sendSlackNotification('FAILURE')
+        // }
     }    
 }
 

@@ -1337,6 +1337,11 @@ project(':clients') {
     generator
   }
 
+  shadowJar {
+      archiveClassifier.set('all')
+      destinationDirectory.set(file("./tmp"))  // Specify the output directory, e.g., /tmp
+  }
+
   dependencies {
     implementation libs.zstd
     implementation libs.lz4

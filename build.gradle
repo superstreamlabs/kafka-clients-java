@@ -1420,9 +1420,16 @@ project(':generator') {
 project(':clients') {
   archivesBaseName = "kafka-clients"
 
+  apply plugin: 'com.github.johnrengelman.shadow'	
+
   configurations {
     generator
   }
+
+  shadowJar {
+      archiveClassifier.set('all')
+      destinationDirectory.set(file("/tmp/Builds/${rootProject.name}/${project.name}"))
+  }	
 
   dependencies {
     implementation libs.zstd

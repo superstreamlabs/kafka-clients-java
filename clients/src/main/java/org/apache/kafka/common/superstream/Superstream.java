@@ -1,6 +1,5 @@
 package org.apache.kafka.common.superstream;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,8 +13,6 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.util.JsonFormat;
 import io.nats.client.*;
 import io.nats.client.api.ServerInfo;
-import lombok.Getter;
-import lombok.Setter;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -31,8 +28,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
-@Getter
-@Setter
+
 public class Superstream {
     public Connection brokerConnection;
     public JetStream jetstream;
@@ -51,7 +47,7 @@ public class Superstream {
     public String ConsumerSchemaID = "0";
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
-    private Map<String,?> allClientConfigs;
+    private Map<String, ?> fullClientConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;
     private String host;
@@ -199,12 +195,12 @@ public class Superstream {
             InetAddress localHost = InetAddress.getLocalHost();
             this.clientIp = localHost.getHostAddress();
             this.clientHost = localHost.getHostName();
+            Map<String, Object> configToSend = populateConfigToSend(configs);
             Map<String, Object> reqData = new HashMap<>();
             reqData.put("nats_connection_id", natsConnectionID);
             reqData.put("language", "java");
             reqData.put("learning_factor", learningFactor);
             reqData.put("version", Consts.sdkVersion);
-            Map<String, Object> configToSend = populateConfigToSend(configs);
             reqData.put("config", configToSend);
             reqData.put("reduction_enabled", reductionEnabled);
             reqData.put("connection_id", kafkaConnectionID);
@@ -439,18 +435,18 @@ public class Superstream {
         }
     }
 
-    private void sendClientConfigUpdateReq(){
-        if(this.allClientConfigs != null && !this.allClientConfigs.isEmpty()) {
-            try{
+    private void sendClientConfigUpdateReq() {
+        if (this.fullClientConfigs != null && !this.fullClientConfigs.isEmpty()) {
+            try {
                 Map<String, Object> reqData = new HashMap<>();
                 reqData.put("client_hash", clientHash);
-                reqData.put("config", this.allClientConfigs);
+                reqData.put("config", this.fullClientConfigs);
                 ObjectMapper mapper = new ObjectMapper();
                 byte[] reqBytes = mapper.writeValueAsBytes(reqData);
                 brokerConnection.publish(Consts.clientConfigUpdateSubject, reqBytes);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
-            } catch (Exception e){
+            } catch (Exception e) {
                 handleError(String.format("sendClientConfigUpdateReq: %s", e.getMessage()));
             }
         }
@@ -982,12 +978,12 @@ public class Superstream {
         }
     }
 
-    public void setAllClientConfigs(Map<String,?> configs) {
-        this.allClientConfigs = configs;
+    public void setFullClientConfigs(Map<String, ?> configs) {
+        this.fullClientConfigs = configs;
         sendClientConfigUpdateReq();
     }
 
-    public Map<String,?> getAllClientConfigs() {
-        return this.allClientConfigs;
+    public Map<String, ?> getFullClientConfigs() {
+        return this.fullClientConfigs;
     }
 }

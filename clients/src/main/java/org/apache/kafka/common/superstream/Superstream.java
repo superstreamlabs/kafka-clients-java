@@ -276,7 +276,9 @@ public class Superstream {
                     if (start) {
                         canStart = true;
                         latch.countDown();
-                        lockCanStart.notifyAll();
+                        synchronized (lockCanStart) {
+                            lockCanStart.notifyAll();
+                        }
                     } else {
                         String err = (String) messageData.get("error");
                         System.out.println("superstream: could not start: " + err);

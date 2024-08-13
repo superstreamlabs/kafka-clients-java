@@ -47,7 +47,7 @@ pipeline {
                 script {
                     sh "./gradlew :clients:shadowJar -Pversion=${env.versionTag} -Psigning.password=${env.GPG_PASSPHRASE}"
                 }
-                sh "ls /tmp"
+                sh "ls ./tmp"
                 sh "cp /tmp/clients-all.jar ."
                 archiveArtifacts artifacts: 'clients-all.jar', allowEmptyArchive: true                              
             }

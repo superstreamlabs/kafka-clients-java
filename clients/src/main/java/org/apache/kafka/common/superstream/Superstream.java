@@ -447,27 +447,13 @@ public class Superstream {
                 waitForCanStart(lockCanStart);
                 sendClientConfigUpdateReq();
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt(); // Restore interrupted status
+                Thread.currentThread().interrupt();
                 System.err.println("Thread was interrupted: " + e.getMessage());
             } catch (RuntimeException e) {
                 System.err.println("Error: " + e.getMessage());
             }
         }).start();
     }
-
-//    private void waitForCanStart(Object lockCanStart) throws InterruptedException {
-//        synchronized (lockCanStart) {
-//            long startTime = System.currentTimeMillis();
-//            while (!this.canStart) {
-//                long elapsedTime = System.currentTimeMillis() - startTime;
-//                long remainingTime = MAX_TIME_WAIT_CAN_START - elapsedTime;
-//                if (remainingTime <= 0) {
-//                    System.out.println("canStart was not set to true within the expected time.");
-//                }
-//                lockCanStart.wait(remainingTime);
-//            }
-//        }
-//    }
 
     private void waitForCanStart(Object lockCanStart) throws InterruptedException {
         long remainingTime = MAX_TIME_WAIT_CAN_START;

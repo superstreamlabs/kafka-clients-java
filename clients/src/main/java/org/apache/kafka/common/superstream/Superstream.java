@@ -30,6 +30,9 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class Superstream {
+    private static final int MAX_TIME_WAIT_CAN_START = 10 * 60 * 1000;
+    private static final int WAIT_INTERVAL_CAN_START = 3000;
+    final Object lockCanStart = new Object();
     public Connection brokerConnection;
     public JetStream jetstream;
     public String superstreamJwt;
@@ -272,7 +275,10 @@ public class Superstream {
                     boolean start = (Boolean) messageData.get("start");
                     if (start) {
                         canStart = true;
-                        latch.countDown(); // continue and stop the wait
+                        latch.countDown();
+                        synchronized (lockCanStart) {
+                            lockCanStart.notifyAll();
+                        }
                     } else {
                         String err = (String) messageData.get("error");
                         System.out.println("superstream: could not start: " + err);
@@ -432,6 +438,34 @@ public class Superstream {
             brokerConnection.publish(Consts.clientTypeUpdateSubject, reqBytes);
         } catch (Exception e) {
             handleError(String.format("sendClientTypeUpdateReq: %s", e.getMessage()));
+        }
+    }
+
+    private void executeSendClientConfigUpdateReqWithWait() {
+        new Thread(() -> {
+            try {
+                waitForCanStart(lockCanStart);
+                sendClientConfigUpdateReq();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Thread was interrupted: " + e.getMessage());
+            } catch (RuntimeException e) {
+                System.err.println("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    private void waitForCanStart(Object lockCanStart) throws InterruptedException {
+        long remainingTime = MAX_TIME_WAIT_CAN_START;
+        synchronized (lockCanStart) {
+            while (!this.canStart) {
+                if (remainingTime <= 0) {
+                    System.out.println("canStart was not set to true within the expected time.");
+                    break;
+                }
+                remainingTime -= WAIT_INTERVAL_CAN_START;
+                lockCanStart.wait(WAIT_INTERVAL_CAN_START);
+            }
         }
     }
 
@@ -980,7 +1014,7 @@ public class Superstream {
 
     public void setFullClientConfigs(Map<String, ?> configs) {
         this.fullClientConfigs = configs;
-        sendClientConfigUpdateReq();
+        executeSendClientConfigUpdateReqWithWait();
     }
 
     public Map<String, ?> getFullClientConfigs() {

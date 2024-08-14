@@ -1334,7 +1334,7 @@ project(':clients') {
   archivesBaseName = "kafka-clients"
 
   apply plugin: 'com.github.johnrengelman.shadow'
-  
+
   configurations {
     generator
   }

@@ -455,16 +455,30 @@ public class Superstream {
         }).start();
     }
 
+//    private void waitForCanStart(Object lockCanStart) throws InterruptedException {
+//        synchronized (lockCanStart) {
+//            long startTime = System.currentTimeMillis();
+//            while (!this.canStart) {
+//                long elapsedTime = System.currentTimeMillis() - startTime;
+//                long remainingTime = MAX_TIME_WAIT_CAN_START - elapsedTime;
+//                if (remainingTime <= 0) {
+//                    System.out.println("canStart was not set to true within the expected time.");
+//                }
+//                lockCanStart.wait(remainingTime);
+//            }
+//        }
+//    }
+
     private void waitForCanStart(Object lockCanStart) throws InterruptedException {
+        long remainingTime = MAX_TIME_WAIT_CAN_START;
         synchronized (lockCanStart) {
-            long startTime = System.currentTimeMillis();
             while (!this.canStart) {
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                long remainingTime = MAX_TIME_WAIT_CAN_START - elapsedTime;
                 if (remainingTime <= 0) {
                     System.out.println("canStart was not set to true within the expected time.");
+                    break;
                 }
-                lockCanStart.wait(remainingTime);
+                remainingTime -= WAIT_INTERVAL_CAN_START;
+                lockCanStart.wait(WAIT_INTERVAL_CAN_START);
             }
         }
     }

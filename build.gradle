@@ -1340,8 +1340,8 @@ project(':clients') {
   }
 
   shadowJar {
-    archiveClassifier.set('all')
-    destinationDirectory.set(file("/tmp/Builds/${rootProject.name}/${project.name}"))
+      archiveClassifier.set('all')
+      destinationDirectory.set(file("/tmp/Builds/${rootProject.name}/${project.name}"))
   }
 
   dependencies {

@@ -31,6 +31,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+import static org.apache.kafka.common.superstream.Consts.*;
+
 public class Superstream {
     private static final int MAX_TIME_WAIT_CAN_START = 10 * 60 * 1000;
     private static final int WAIT_INTERVAL_CAN_START = 3000;
@@ -113,7 +115,7 @@ public class Superstream {
     }
 
     private static void checkStdoutEnvVar() {
-        if (Boolean.parseBoolean(System.getenv("SUPERSTREAM_DEBUG"))) {
+        if (Boolean.parseBoolean(System.getenv(SUPERSTREAM_DEBUG_ENV_VAR))) {
             suppressStdout();
         } else {
             restoreStdout();
@@ -716,7 +718,7 @@ public class Superstream {
 
                 case "ToggleReduction":
                     // if defined as false in env vars - override the value from superstream
-                    String reductionEnabledString = envVars.get("SUPERSTREAM_REDUCTION_ENABLED");
+                    String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED);
                     if (reductionEnabledString != null) {
                         Boolean reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
                         if (!reductionEnabled) {
@@ -734,7 +736,7 @@ public class Superstream {
 
                 case "CompressionUpdate":
                     // if defined as false in env vars - override the value from superstream
-                    String compressionEnabledString = envVars.get("SUPERSTREAM_COMPRESSION_ENABLED");
+                    String compressionEnabledString = envVars.get(SUPERSTREAM_COMPRESSION_ENABLED);
                     if (compressionEnabledString != null) {
                         Boolean compressionEnabled = Boolean.parseBoolean(compressionEnabledString);
                         if (!compressionEnabled) {
@@ -828,7 +830,7 @@ public class Superstream {
 
         if (brokerConnection != null && superstreamReady) {
             Map<String, String> envVars = System.getenv();
-            String tags = envVars.get("SUPERSTREAM_TAGS");
+            String tags = envVars.get(SUPERSTREAM_TAGS);
             if (tags == null) {
                 tags = "";
             }
@@ -845,41 +847,14 @@ public class Superstream {
 
     public static Map<String, Object> initSuperstreamConfig(Map<String, Object> configs, String type) {
         String isInnerConsumer = (String) configs.get(Consts.superstreamInnerConsumerKey);
-        if (isInnerConsumer != null && isInnerConsumer.equals("true")) {
+        if (Boolean.parseBoolean(isInnerConsumer)) {
             return configs;
         }
-        String interceptorToAdd = "";
-        switch (type) {
-            case "producer":
-                interceptorToAdd = SuperstreamProducerInterceptor.class.getName();
-                // : handle serializer logic for payload reduction
-                // igs.containsKey(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG)) {
-                // if (!configs.containsKey(Consts.originalSerializer)) {
-                // igs.put(Consts.originalSerializer,
-                //
-                // put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                // SuperstreamSerializer.class.getName());
-                //
-                //
-                break;
-            case "consumer":
-                interceptorToAdd = SuperstreamConsumerInterceptor.class.getName();
-                // : handle deserializer logic for payload reduction
-                // igs.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
-                // if (!configs.containsKey(Consts.originalDeserializer)) {
-                // igs.put(Consts.originalDeserializer,
-                //
-                // put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                // SuperstreamDeserializer.class.getName());
-                //
-                //
-                break;
-        }
-
+        String interceptorToAdd = getSuperstreamClientInterceptorName(type);
         try {
             List<String> interceptors = null;
             Object existingInterceptors = configs.get(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG);
-            if (interceptorToAdd != "") {
+            if (!interceptorToAdd.isEmpty()) {
                 if (existingInterceptors != null) {
                     if (existingInterceptors instanceof List) {
                         interceptors = new ArrayList<>((List<String>) existingInterceptors);
@@ -893,40 +868,40 @@ public class Superstream {
                     interceptors = new ArrayList<>();
                 }
             }
-            if (interceptorToAdd != "") {
+            if (!interceptorToAdd.isEmpty()) {
                 interceptors.add(interceptorToAdd);
                 configs.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);
             }
 
             Map<String, String> envVars = System.getenv();
-            String superstreamHost = envVars.get("SUPERSTREAM_HOST");
+            String superstreamHost = envVars.get(SUPERSTREAM_HOST);
             if (superstreamHost == null) {
                 throw new Exception("host is required");
             }
             configs.put(Consts.superstreamHostKey, superstreamHost);
-            String token = envVars.get("SUPERSTREAM_TOKEN");
+            String token = envVars.get(SUPERSTREAM_TOKEN);
             if (token == null) {
                 token = Consts.superstreamDefaultToken;
             }
             configs.put(Consts.superstreamTokenKey, token);
-            String learningFactorString = envVars.get("SUPERSTREAM_LEARNING_FACTOR");
+            String learningFactorString = envVars.get(SUPERSTREAM_LEARNING_FACTOR);
             Integer learningFactor = Consts.superstreamDefaultLearningFactor;
             if (learningFactorString != null) {
                 learningFactor = Integer.parseInt(learningFactorString);
             }
             configs.put(Consts.superstreamLearningFactorKey, learningFactor);
-            Boolean reductionEnabled = false;
-            String reductionEnabledString = envVars.get("SUPERSTREAM_REDUCTION_ENABLED");
+            boolean reductionEnabled = false;
+            String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED);
             if (reductionEnabledString != null) {
                 reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
             }
             configs.put(Consts.superstreamReductionEnabledKey, reductionEnabled);
-            String tags = envVars.get("SUPERSTREAM_TAGS");
+            String tags = envVars.get(SUPERSTREAM_TAGS);
             if (tags == null) {
                 tags = "";
             }
-            Boolean compressionEnabled = false;
-            String compressionEnabledString = envVars.get("SUPERSTREAM_COMPRESSION_ENABLED");
+            boolean compressionEnabled = false;
+            String compressionEnabledString = envVars.get(SUPERSTREAM_COMPRESSION_ENABLED);
             if (compressionEnabledString != null) {
                 compressionEnabled = Boolean.parseBoolean(compressionEnabledString);
             }
@@ -938,24 +913,58 @@ public class Superstream {
         } catch (Exception e) {
             String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
             System.out.println(errMsg);
-            switch (type) {
-                case "producer":
-                    if (configs.containsKey(Consts.originalSerializer)) {
-                        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                                configs.get(Consts.originalSerializer));
-                        configs.remove(Consts.originalSerializer);
-                    }
-                    break;
-                case "consumer":
-                    if (configs.containsKey(Consts.originalDeserializer)) {
-                        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                                configs.get(Consts.originalDeserializer));
-                        configs.remove(Consts.originalDeserializer);
-                    }
-                    break;
-            }
+            handleConfigsWhenErrorInitializeSuperstream(type, configs);
         }
+
         return configs;
+    }
+
+    private static void handleConfigsWhenErrorInitializeSuperstream(String type, Map<String, Object> configs) {
+        switch (type) {
+            case PRODUCER:
+                if (configs.containsKey(originalSerializer)) {
+                    configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                            configs.get(originalSerializer));
+                    configs.remove(originalSerializer);
+                }
+                break;
+            case CONSUMER:
+                if (configs.containsKey(Consts.originalDeserializer)) {
+                    configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                            configs.get(Consts.originalDeserializer));
+                    configs.remove(Consts.originalDeserializer);
+                }
+                break;
+        }
+    }
+
+    private static String getSuperstreamClientInterceptorName(String type) {
+        switch (type) {
+            case "producer":
+                return SuperstreamProducerInterceptor.class.getName();
+            // : handle serializer logic for payload reduction
+            // igs.containsKey(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG)) {
+            // if (!configs.containsKey(Consts.originalSerializer)) {
+            // igs.put(Consts.originalSerializer,
+            //
+            // put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+            // SuperstreamSerializer.class.getName());
+            //
+            //
+            case "consumer":
+                return SuperstreamConsumerInterceptor.class.getName();
+            // : handle deserializer logic for payload reduction
+            // igs.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
+            // if (!configs.containsKey(Consts.originalDeserializer)) {
+            // igs.put(Consts.originalDeserializer,
+            //
+            // put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+            // SuperstreamDeserializer.class.getName());
+            //
+            //
+            default:
+                return "";
+        }
     }
 
     public static Properties initSuperstreamProps(Properties properties, String type) {
@@ -998,29 +1007,29 @@ public class Superstream {
 
         try {
             Map<String, String> envVars = System.getenv();
-            String superstreamHost = envVars.get("SUPERSTREAM_HOST");
+            String superstreamHost = envVars.get(SUPERSTREAM_HOST);
             if (superstreamHost == null) {
                 throw new Exception("host is required");
             }
             properties.put(Consts.superstreamHostKey, superstreamHost);
-            String token = envVars.get("SUPERSTREAM_TOKEN");
+            String token = envVars.get(SUPERSTREAM_TOKEN);
             if (token == null) {
                 token = Consts.superstreamDefaultToken;
             }
             properties.put(Consts.superstreamTokenKey, token);
-            String learningFactorString = envVars.get("SUPERSTREAM_LEARNING_FACTOR");
+            String learningFactorString = envVars.get(SUPERSTREAM_LEARNING_FACTOR);
             Integer learningFactor = Consts.superstreamDefaultLearningFactor;
             if (learningFactorString != null) {
                 learningFactor = Integer.parseInt(learningFactorString);
             }
             properties.put(Consts.superstreamLearningFactorKey, learningFactor);
             Boolean reductionEnabled = false;
-            String reductionEnabledString = envVars.get("SUPERSTREAM_REDUCTION_ENABLED");
+            String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED);
             if (reductionEnabledString != null) {
                 reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
             }
             properties.put(Consts.superstreamReductionEnabledKey, reductionEnabled);
-            String tags = envVars.get("SUPERSTREAM_TAGS");
+            String tags = envVars.get(SUPERSTREAM_TAGS);
             if (tags != null) {
                 properties.put(Consts.superstreamTagsKey, tags);
             }

@@ -892,7 +892,6 @@ public class Superstream {
             checkStdoutEnvVar();
             Superstream superstreamConnection = new Superstream(token, superstreamHost, learningFactor, configs,
                     reductionEnabled, type, tags, compressionEnabled);
-            superstreamPrintStream.println("superstream log print !!! :)");
             superstreamConnection.init();
             configs.put(superstreamConnectionKey, superstreamConnection);
         } catch (Exception e) {

@@ -22,6 +22,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -68,6 +70,9 @@ public class Superstream {
     public Boolean compressionTurnedOffBySuperstream = false;
     private String clientIp;
     private String clientHost;
+    private static boolean isStdoutSuppressed = false;
+    private static final PrintStream originalOut = System.out;
+    private static final PrintStream originalErr = System.err;
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
                        Boolean enableReduction, String type, String tags, Boolean enableCompression) {
@@ -105,6 +110,38 @@ public class Superstream {
                 handleError(e.getMessage());
             }
         });
+    }
+
+    private static void checkStdoutEnvVar() {
+        if (Boolean.parseBoolean(System.getenv("SUPERSTREAM_DEBUG"))) {
+            suppressStdout();
+        } else {
+            restoreStdout();
+        }
+    }
+
+    private static void suppressStdout() {
+        if (!isStdoutSuppressed) {
+            System.setOut(new PrintStream(new OutputStream() {
+                @Override
+                public void write(int b) {
+                }
+            }));
+            System.setErr(new PrintStream(new OutputStream() {
+                @Override
+                public void write(int b) {
+                }
+            }));
+            isStdoutSuppressed = true;
+        }
+    }
+
+    private static void restoreStdout() {
+        if (isStdoutSuppressed) {
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+            isStdoutSuppressed = false;
+        }
     }
 
     public void close() {
@@ -897,6 +934,7 @@ public class Superstream {
                     reductionEnabled, type, tags, compressionEnabled);
             superstreamConnection.init();
             configs.put(Consts.superstreamConnectionKey, superstreamConnection);
+            checkStdoutEnvVar();
         } catch (Exception e) {
             String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
             System.out.println(errMsg);

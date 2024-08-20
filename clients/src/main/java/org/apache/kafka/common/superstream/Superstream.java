@@ -925,30 +925,37 @@ public class Superstream {
     private static String getSuperstreamClientInterceptorName(String type) {
         switch (type) {
             case "producer":
+                handleSerializerLogicForPayloadReduction();
                 return SuperstreamProducerInterceptor.class.getName();
-            // : handle serializer logic for payload reduction
-            // igs.containsKey(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG)) {
-            // if (!configs.containsKey(Consts.originalSerializer)) {
-            // igs.put(Consts.originalSerializer,
-            //
-            // put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-            // SuperstreamSerializer.class.getName());
-            //
-            //
             case "consumer":
+                handleDeserializerLogicForPayloadReduction();
                 return SuperstreamConsumerInterceptor.class.getName();
-            // : handle deserializer logic for payload reduction
-            // igs.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
-            // if (!configs.containsKey(Consts.originalDeserializer)) {
-            // igs.put(Consts.originalDeserializer,
-            //
-            // put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-            // SuperstreamDeserializer.class.getName());
-            //
-            //
             default:
                 return "";
         }
+    }
+
+    private static void handleDeserializerLogicForPayloadReduction() {
+        // : handle deserializer logic for payload reduction
+        // igs.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
+        // if (!configs.containsKey(Consts.originalDeserializer)) {
+        // igs.put(Consts.originalDeserializer,
+        //
+        // put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+        // SuperstreamDeserializer.class.getName());
+        //
+        //
+    }
+
+    private static void handleSerializerLogicForPayloadReduction() {
+//             : handle serializer logic for payload reduction
+//             igs.containsKey(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG)) {
+//             if (!configs.containsKey(Consts.originalSerializer)) {
+//             igs.put(Consts.originalSerializer,
+//
+//             put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+//             SuperstreamSerializer.class.getName());
+//
     }
 
     public static Properties initSuperstreamProps(Properties properties, String type) {

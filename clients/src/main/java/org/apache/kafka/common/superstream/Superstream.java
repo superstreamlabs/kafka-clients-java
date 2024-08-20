@@ -1053,6 +1053,10 @@ public class Superstream {
         executeSendClientConfigUpdateReqWithWait();
     }
 
+    public PrintStream getSuperstreamPrintStream() {
+        return superstreamPrintStream;
+    }
+
     private static class ClassOutputStream extends OutputStream {
         @Override
         public void write(int b) {

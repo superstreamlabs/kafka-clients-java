@@ -1038,7 +1038,8 @@ public class Superstream {
 
     public void updateTopicPartitions(String topic, Integer partition) {
         Set<Integer> partitions = topicPartitions.computeIfAbsent(topic, k -> new HashSet<>());
-        partitions.add(partition);
+        if(!partitions.contains(partition))
+            partitions.add(partition);
     }
 
     public void setFullClientConfigs(Map<String, ?> configs) {

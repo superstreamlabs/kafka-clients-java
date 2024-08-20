@@ -30,13 +30,13 @@ public class Consts {
 
     public static final String PRODUCER = "producer";
     public static final String CONSUMER = "consumer";
-//env vars
-    public static final String SUPERSTREAM_DEBUG_ENV_VAR = "SUPERSTREAM_DEBUG";
-    public static final String SUPERSTREAM_COMPRESSION_ENABLED = "SUPERSTREAM_COMPRESSION_ENABLED";
-    public static final String SUPERSTREAM_REDUCTION_ENABLED = "SUPERSTREAM_REDUCTION_ENABLED";
-    public static final String SUPERSTREAM_TAGS = "SUPERSTREAM_TAGS";
-    public static final String SUPERSTREAM_LEARNING_FACTOR = "SUPERSTREAM_LEARNING_FACTOR";
-    public static final String SUPERSTREAM_TOKEN = "SUPERSTREAM_TOKEN";
-    public static final String SUPERSTREAM_HOST = "SUPERSTREAM_HOST";
+
+    public static final String SUPERSTREAM_DEBUG_ENV_VAR_ENV_VAR = "SUPERSTREAM_DEBUG";
+    public static final String SUPERSTREAM_COMPRESSION_ENABLED_ENV_VAR = "SUPERSTREAM_COMPRESSION_ENABLED";
+    public static final String SUPERSTREAM_REDUCTION_ENABLED_ENV_VAR = "SUPERSTREAM_REDUCTION_ENABLED";
+    public static final String SUPERSTREAM_TAGS_ENV_VAR = "SUPERSTREAM_TAGS";
+    public static final String SUPERSTREAM_LEARNING_FACTOR_ENV_VAR = "SUPERSTREAM_LEARNING_FACTOR";
+    public static final String SUPERSTREAM_TOKEN_ENV_VAR = "SUPERSTREAM_TOKEN";
+    public static final String SUPERSTREAM_HOST_ENV_VAR = "SUPERSTREAM_HOST";
 
 }

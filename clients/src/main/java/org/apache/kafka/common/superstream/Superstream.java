@@ -121,7 +121,7 @@ public class Superstream {
     }
 
     private static void checkStdoutEnvVar() {
-        if (Boolean.parseBoolean(System.getenv(SUPERSTREAM_DEBUG_ENV_VAR))) {
+        if (Boolean.parseBoolean(System.getenv(SUPERSTREAM_DEBUG_ENV_VAR_ENV_VAR))) {
             isStdoutSuppressed = true;
             isStderrSuppressed = true;
         } else {
@@ -702,7 +702,7 @@ public class Superstream {
 
                 case "ToggleReduction":
                     // if defined as false in env vars - override the value from superstream
-                    String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED);
+                    String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED_ENV_VAR);
                     if (reductionEnabledString != null) {
                         Boolean reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
                         if (!reductionEnabled) {
@@ -720,7 +720,7 @@ public class Superstream {
 
                 case "CompressionUpdate":
                     // if defined as false in env vars - override the value from superstream
-                    String compressionEnabledString = envVars.get(SUPERSTREAM_COMPRESSION_ENABLED);
+                    String compressionEnabledString = envVars.get(SUPERSTREAM_COMPRESSION_ENABLED_ENV_VAR);
                     if (compressionEnabledString != null) {
                         Boolean compressionEnabled = Boolean.parseBoolean(compressionEnabledString);
                         if (!compressionEnabled) {
@@ -814,7 +814,7 @@ public class Superstream {
 
         if (brokerConnection != null && superstreamReady) {
             Map<String, String> envVars = System.getenv();
-            String tags = envVars.get(SUPERSTREAM_TAGS);
+            String tags = envVars.get(SUPERSTREAM_TAGS_ENV_VAR);
             if (tags == null) {
                 tags = "";
             }
@@ -858,34 +858,34 @@ public class Superstream {
             }
 
             Map<String, String> envVars = System.getenv();
-            String superstreamHost = envVars.get(SUPERSTREAM_HOST);
+            String superstreamHost = envVars.get(SUPERSTREAM_HOST_ENV_VAR);
             if (superstreamHost == null) {
                 throw new Exception("host is required");
             }
             configs.put(superstreamHostKey, superstreamHost);
-            String token = envVars.get(SUPERSTREAM_TOKEN);
+            String token = envVars.get(SUPERSTREAM_TOKEN_ENV_VAR);
             if (token == null) {
                 token = superstreamDefaultToken;
             }
             configs.put(superstreamTokenKey, token);
-            String learningFactorString = envVars.get(SUPERSTREAM_LEARNING_FACTOR);
+            String learningFactorString = envVars.get(SUPERSTREAM_LEARNING_FACTOR_ENV_VAR);
             Integer learningFactor = superstreamDefaultLearningFactor;
             if (learningFactorString != null) {
                 learningFactor = Integer.parseInt(learningFactorString);
             }
             configs.put(superstreamLearningFactorKey, learningFactor);
             boolean reductionEnabled = false;
-            String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED);
+            String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED_ENV_VAR);
             if (reductionEnabledString != null) {
                 reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
             }
             configs.put(superstreamReductionEnabledKey, reductionEnabled);
-            String tags = envVars.get(SUPERSTREAM_TAGS);
+            String tags = envVars.get(SUPERSTREAM_TAGS_ENV_VAR);
             if (tags == null) {
                 tags = "";
             }
             boolean compressionEnabled = false;
-            String compressionEnabledString = envVars.get(SUPERSTREAM_COMPRESSION_ENABLED);
+            String compressionEnabledString = envVars.get(SUPERSTREAM_COMPRESSION_ENABLED_ENV_VAR);
             if (compressionEnabledString != null) {
                 compressionEnabled = Boolean.parseBoolean(compressionEnabledString);
             }
@@ -991,29 +991,29 @@ public class Superstream {
 
         try {
             Map<String, String> envVars = System.getenv();
-            String superstreamHost = envVars.get(SUPERSTREAM_HOST);
+            String superstreamHost = envVars.get(SUPERSTREAM_HOST_ENV_VAR);
             if (superstreamHost == null) {
                 throw new Exception("host is required");
             }
             properties.put(superstreamHostKey, superstreamHost);
-            String token = envVars.get(SUPERSTREAM_TOKEN);
+            String token = envVars.get(SUPERSTREAM_TOKEN_ENV_VAR);
             if (token == null) {
                 token = superstreamDefaultToken;
             }
             properties.put(superstreamTokenKey, token);
-            String learningFactorString = envVars.get(SUPERSTREAM_LEARNING_FACTOR);
+            String learningFactorString = envVars.get(SUPERSTREAM_LEARNING_FACTOR_ENV_VAR);
             Integer learningFactor = superstreamDefaultLearningFactor;
             if (learningFactorString != null) {
                 learningFactor = Integer.parseInt(learningFactorString);
             }
             properties.put(superstreamLearningFactorKey, learningFactor);
             Boolean reductionEnabled = false;
-            String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED);
+            String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED_ENV_VAR);
             if (reductionEnabledString != null) {
                 reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
             }
             properties.put(superstreamReductionEnabledKey, reductionEnabled);
-            String tags = envVars.get(SUPERSTREAM_TAGS);
+            String tags = envVars.get(SUPERSTREAM_TAGS_ENV_VAR);
             if (tags != null) {
                 properties.put(superstreamTagsKey, tags);
             }

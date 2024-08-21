@@ -394,9 +394,7 @@ public class KafkaAdminClient extends AdminClient {
     public Superstream superstreamConnection;
     public void configureSuperstream(Map<String, ?> configs, Map<String,?> fullClientConfig) {
         Superstream superstreamConn = (Superstream) configs.get(Consts.superstreamConnectionKey);
-        if (superstreamConn == null) {
-            System.out.println("Failed to connect to Superstream");
-        } else {
+        if (superstreamConn != null) {
             this.superstreamConnection = superstreamConn;
             this.superstreamConnection.setFullClientConfigs(fullClientConfig);
         }

@@ -27,4 +27,16 @@ public class Consts {
     public static final String superstreamInnerConsumerKey = "superstream.inner.consumer";
     public static final String superstreamMetadataTopic = "superstream.metadata";
     public static final String clientStartSubject = "internal.startClient.%s";
+
+    public static final String PRODUCER = "producer";
+    public static final String CONSUMER = "consumer";
+
+    public static final String SUPERSTREAM_DEBUG_ENV_VAR_ENV_VAR = "SUPERSTREAM_DEBUG";
+    public static final String SUPERSTREAM_COMPRESSION_ENABLED_ENV_VAR = "SUPERSTREAM_COMPRESSION_ENABLED";
+    public static final String SUPERSTREAM_REDUCTION_ENABLED_ENV_VAR = "SUPERSTREAM_REDUCTION_ENABLED";
+    public static final String SUPERSTREAM_TAGS_ENV_VAR = "SUPERSTREAM_TAGS";
+    public static final String SUPERSTREAM_LEARNING_FACTOR_ENV_VAR = "SUPERSTREAM_LEARNING_FACTOR";
+    public static final String SUPERSTREAM_TOKEN_ENV_VAR = "SUPERSTREAM_TOKEN";
+    public static final String SUPERSTREAM_HOST_ENV_VAR = "SUPERSTREAM_HOST";
+
 }

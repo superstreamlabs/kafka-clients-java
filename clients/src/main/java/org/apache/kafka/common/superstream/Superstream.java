@@ -106,10 +106,10 @@ public class Superstream {
                 if (this.brokerConnection != null) {
                     registerClient(configs);
                     waitForStart();
-                    superstreamPrintStream.println("Successfully connected to superstream");
                     if (!canStart) {
                         throw new Exception("Could not start superstream");
                     }
+                    superstreamPrintStream.println("Successfully connected to superstream");
                     subscribeToUpdates();
                     superstreamReady = true;
                     reportClientsUpdate();

@@ -55,6 +55,7 @@ public class Superstream {
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
     private Map<String, ?> fullClientConfigs;
+    private Map<String,?> superstreamConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;
     private String host;
@@ -299,6 +300,9 @@ public class Superstream {
                     boolean start = (Boolean) messageData.get("start");
                     if (start) {
                         canStart = true;
+                        if(messageData.containsKey("optimized_configuration")){
+                            this.superstreamConfigs = (Map<String, ?>) messageData.get("optimized_configuration");
+                        }
                         latch.countDown();
                         synchronized (lockCanStart) {
                             lockCanStart.notifyAll();
@@ -314,8 +318,7 @@ public class Superstream {
             }
         });
 
-        dispatcher.subscribe(String.format(clientStartSubject, clientHash)); // replace with your specific
-        // subject
+        dispatcher.subscribe(String.format(clientStartSubject, clientHash));
 
         try {
             if (!latch.await(10, TimeUnit.MINUTES)) {
@@ -1056,6 +1059,10 @@ public class Superstream {
 
     public PrintStream getSuperstreamPrintStream() {
         return superstreamPrintStream;
+    }
+
+    public Map<String, ?> getSuperstreamConfigs() {
+        return superstreamConfigs;
     }
 
     private static class ClassOutputStream extends OutputStream {

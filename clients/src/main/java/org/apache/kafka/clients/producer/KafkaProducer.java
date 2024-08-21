@@ -381,6 +381,16 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                  this.superstreamConnection = superstreamConn;
                  this.superstreamConnection.clientCounters.setMetrics(this.metrics);
                  this.superstreamConnection.setFullClientConfigs(config.values());
+                 String timeoutEnv = System.getenv("SUPERSTREAM_RESPONSE_TIMEOUT");
+                 int timeout = timeoutEnv != null ? Integer.parseInt(timeoutEnv) : 0;
+                 long startTime = System.currentTimeMillis();
+                 while (System.currentTimeMillis() - startTime < timeout) {
+                     if (this.superstreamConnection.getSuperstreamConfigs() != null) {
+                         //use the superstream config
+                         config.values().remove("bootstrap.servers");
+                         break;
+                     }
+                 }
              }
              // Added by Superstream **
             this.producerMetrics = new KafkaProducerMetrics(metrics);

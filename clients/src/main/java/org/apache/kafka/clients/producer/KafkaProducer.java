@@ -384,10 +384,10 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                  String timeoutEnv = System.getenv("SUPERSTREAM_RESPONSE_TIMEOUT");
                  int timeout = timeoutEnv != null ? Integer.parseInt(timeoutEnv) : 0;
                  long startTime = System.currentTimeMillis();
-                 config.getValues().remove("bootstrap.servers");
                  while (System.currentTimeMillis() - startTime < timeout) {
                      if (this.superstreamConnection.getSuperstreamConfigs() != null) {
                          //use the superstream config
+                         config.getValues().putAll(this.superstreamConnection.getSuperstreamConfigs());
                          break;
                      }
                  }

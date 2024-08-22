@@ -19,6 +19,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.io.IOException;
@@ -34,9 +35,11 @@ import java.util.stream.Collectors;
 import static org.apache.kafka.common.superstream.Consts.*;
 
 public class Superstream {
-    private static final int MAX_TIME_WAIT_CAN_START = 10 * 60 * 1000;
-    private static final int WAIT_INTERVAL_CAN_START = 3000;
+    private static final long MAX_TIME_WAIT_CAN_START = 10 * 60 * 1000;
+    private static final long WAIT_INTERVAL_CAN_START = 3000;
+    private static final long WAIT_INTERVAL_SUPERSTREAM_CONFIG = 70;
     final Object lockCanStart = new Object();
+    final Object lockSuperstreamConfigs = new Object();
     public Connection brokerConnection;
     public JetStream jetstream;
     public String superstreamJwt;
@@ -471,7 +474,7 @@ public class Superstream {
     private void executeSendClientConfigUpdateReqWithWait() {
         new Thread(() -> {
             try {
-                waitForCanStart(lockCanStart);
+                waitForCanStart();
                 sendClientConfigUpdateReq();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -482,7 +485,7 @@ public class Superstream {
         }).start();
     }
 
-    private void waitForCanStart(Object lockCanStart) throws InterruptedException {
+    private void waitForCanStart() throws InterruptedException {
         long remainingTime = MAX_TIME_WAIT_CAN_START;
         synchronized (lockCanStart) {
             while (!this.canStart) {
@@ -492,6 +495,21 @@ public class Superstream {
                 }
                 remainingTime -= WAIT_INTERVAL_CAN_START;
                 lockCanStart.wait(WAIT_INTERVAL_CAN_START);
+            }
+        }
+    }
+
+    public void waitForSuperstreamConfigs(AbstractConfig config) throws InterruptedException {
+        String timeoutEnv = System.getenv(SUPERSTREAM_RESPONSE_TIMEOUT_ENV_VAR);
+        long remainingTime = timeoutEnv != null ? Long.parseLong(timeoutEnv) : 0;
+        synchronized (lockSuperstreamConfigs) {
+            while (remainingTime > 0) {
+                if (this.superstreamConfigs != null) {
+                    config.getValues().putAll(this.getSuperstreamConfigs());
+                    break;
+                }
+                remainingTime -= WAIT_INTERVAL_SUPERSTREAM_CONFIG;
+                lockSuperstreamConfigs.wait(WAIT_INTERVAL_SUPERSTREAM_CONFIG);
             }
         }
     }

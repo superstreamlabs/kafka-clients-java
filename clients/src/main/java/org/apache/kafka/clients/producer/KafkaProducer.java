@@ -89,6 +89,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.apache.kafka.common.superstream.Consts.SUPERSTREAM_RESPONSE_TIMEOUT_ENV_VAR;
+
 
 /**
  * A Kafka client that publishes records to the Kafka cluster.
@@ -381,15 +383,10 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                  this.superstreamConnection = superstreamConn;
                  this.superstreamConnection.clientCounters.setMetrics(this.metrics);
                  this.superstreamConnection.setFullClientConfigs(config.values());
-                 String timeoutEnv = System.getenv("SUPERSTREAM_RESPONSE_TIMEOUT");
-                 int timeout = timeoutEnv != null ? Integer.parseInt(timeoutEnv) : 0;
-                 long startTime = System.currentTimeMillis();
-                 while (System.currentTimeMillis() - startTime < timeout) {
-                     if (this.superstreamConnection.getSuperstreamConfigs() != null) {
-                         //use the superstream config
-                         config.getValues().putAll(this.superstreamConnection.getSuperstreamConfigs());
-                         break;
-                     }
+                 try {
+                     this.superstreamConnection.waitForSuperstreamConfigs(config);
+                 }catch (InterruptedException e){
+                    this.superstreamConnection.getSuperstreamPrintStream().println("Error while waiting for producer superstream configs");
                  }
              }
              // Added by Superstream **

@@ -30,6 +30,11 @@ public class Consts {
 
     public static final String PRODUCER = "producer";
     public static final String CONSUMER = "consumer";
+    public static final String OPTIMIZED_CONFIGURATION_KEY = "optimized_configuration";
+    public static final String START_KEY = "start";
+    public static final String ERROR_KEY = "error";
+
+
 
     public static final String SUPERSTREAM_RESPONSE_TIMEOUT_ENV_VAR = "SUPERSTREAM_RESPONSE_TIMEOUT";
     public static final String SUPERSTREAM_DEBUG_ENV_VAR_ENV_VAR = "SUPERSTREAM_DEBUG";

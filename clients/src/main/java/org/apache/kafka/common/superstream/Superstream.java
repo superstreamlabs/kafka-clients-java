@@ -37,9 +37,7 @@ import static org.apache.kafka.common.superstream.Consts.*;
 public class Superstream {
     private static final long MAX_TIME_WAIT_CAN_START = 10 * 60 * 1000;
     private static final long WAIT_INTERVAL_CAN_START = 3000;
-    private static final long WAIT_INTERVAL_SUPERSTREAM_CONFIG = 70;
-    final Object lockCanStart = new Object();
-    final Object lockSuperstreamConfigs = new Object();
+    private static final long WAIT_INTERVAL_SUPERSTREAM_CONFIG = 30;
     public Connection brokerConnection;
     public JetStream jetstream;
     public String superstreamJwt;
@@ -299,19 +297,16 @@ public class Superstream {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 Map<String, Object> messageData = mapper.readValue(msg.getData(), Map.class);
-                if (messageData.containsKey("start")) {
-                    boolean start = (Boolean) messageData.get("start");
+                if (messageData.containsKey(START_KEY)) {
+                    boolean start = (Boolean) messageData.get(START_KEY);
                     if (start) {
                         canStart = true;
-                        if(messageData.containsKey("optimized_configuration")){
-                            this.superstreamConfigs = (Map<String, ?>) messageData.get("optimized_configuration");
+                        if(messageData.containsKey(OPTIMIZED_CONFIGURATION_KEY)){
+                            this.superstreamConfigs = (Map<String, ?>) messageData.get(OPTIMIZED_CONFIGURATION_KEY);
                         }
                         latch.countDown();
-                        synchronized (lockCanStart) {
-                            lockCanStart.notifyAll();
-                        }
                     } else {
-                        String err = (String) messageData.get("error");
+                        String err = (String) messageData.get(ERROR_KEY);
                         superstreamPrintStream.println("superstream: could not start: " + err);
                         Thread.currentThread().interrupt();
                     }
@@ -487,14 +482,16 @@ public class Superstream {
 
     private void waitForCanStart() throws InterruptedException {
         long remainingTime = MAX_TIME_WAIT_CAN_START;
-        synchronized (lockCanStart) {
-            while (!this.canStart) {
-                if (remainingTime <= 0) {
-                    superstreamPrintStream.println("canStart was not set to true within the expected time.");
-                    break;
-                }
+        while (remainingTime > 0) {
+            if (!this.canStart) {
+                Thread.sleep(WAIT_INTERVAL_CAN_START);
                 remainingTime -= WAIT_INTERVAL_CAN_START;
-                lockCanStart.wait(WAIT_INTERVAL_CAN_START);
+            } else {
+                break;
+            }
+
+            if (remainingTime <= 0) {
+                superstreamPrintStream.println("superstream could not start within the expected timeout period");
             }
         }
     }
@@ -502,14 +499,18 @@ public class Superstream {
     public void waitForSuperstreamConfigs(AbstractConfig config) throws InterruptedException {
         String timeoutEnv = System.getenv(SUPERSTREAM_RESPONSE_TIMEOUT_ENV_VAR);
         long remainingTime = timeoutEnv != null ? Long.parseLong(timeoutEnv) : 0;
-        synchronized (lockSuperstreamConfigs) {
-            while (remainingTime > 0) {
-                if (this.superstreamConfigs != null) {
-                    config.getValues().putAll(this.getSuperstreamConfigs());
-                    break;
-                }
-                remainingTime -= WAIT_INTERVAL_SUPERSTREAM_CONFIG;
-                lockSuperstreamConfigs.wait(WAIT_INTERVAL_SUPERSTREAM_CONFIG);
+        while (remainingTime > 0) {
+            if (this.superstreamConfigs != null) {
+                config.getValues().putAll(this.getSuperstreamConfigs());
+                break;
+            }
+
+            remainingTime -= WAIT_INTERVAL_SUPERSTREAM_CONFIG;
+            if(remainingTime > 0) {
+                Thread.sleep(WAIT_INTERVAL_SUPERSTREAM_CONFIG);
+            }
+            else{
+                superstreamPrintStream.println("superstream client configuration was not set within the expected timeout period");
             }
         }
     }

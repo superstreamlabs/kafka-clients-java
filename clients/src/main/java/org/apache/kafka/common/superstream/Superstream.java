@@ -235,7 +235,7 @@ public class Superstream {
             reqData.put("client_host", clientHost);
             ObjectMapper mapper = new ObjectMapper();
             byte[] reqBytes = mapper.writeValueAsBytes(reqData);
-            if (this.type != null && Arrays.asList(CLIENT_TYPES_LIST).contains(this.type)) {
+            if (this.type != null && Arrays.asList(CLIENT_TYPES_LIST).contains(this.type.toLowerCase())) {
                 reqData.put("type", this.type);
                 Message reply = brokerConnection.request(clientRegisterSubject, reqBytes, Duration.ofMinutes(5));
                 if (reply != null) {

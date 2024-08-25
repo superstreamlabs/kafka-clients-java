@@ -235,43 +235,42 @@ public class Superstream {
             reqData.put("client_host", clientHost);
             ObjectMapper mapper = new ObjectMapper();
             byte[] reqBytes = mapper.writeValueAsBytes(reqData);
-            if (this.type != null && Arrays.asList(CLIENT_TYPES_LIST).contains(this.type.toLowerCase())) {
-                reqData.put("type", this.type);
-                Message reply = brokerConnection.request(clientRegisterSubject, reqBytes, Duration.ofMinutes(5));
-                if (reply != null) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> replyData = mapper.readValue(reply.getData(), Map.class);
-                    Object clientHashObject = replyData.get("client_hash");
-                    if (clientHashObject != null) {
-                        clientHash = clientHashObject.toString();
-                    } else {
-                        superstreamPrintStream.println("superstream: client_hash is not a valid string: " + clientHashObject);
-                    }
-                    Object accountNameObject = replyData.get("account_name");
-                    if (accountNameObject != null) {
-                        accountName = accountNameObject.toString();
-                    } else {
-                        superstreamPrintStream.println("superstream: account_name is not a valid string: " + accountNameObject);
-                    }
-                    Object learningFactorObject = replyData.get("learning_factor");
-                    if (learningFactorObject instanceof Integer) {
-                        learningFactor = (Integer) learningFactorObject;
-                    } else if (learningFactorObject instanceof String) {
-                        try {
-                            learningFactor = Integer.parseInt((String) learningFactorObject);
-                        } catch (NumberFormatException e) {
-                            superstreamPrintStream.println(
-                                    "superstream: learning_factor is not a valid integer: " + learningFactorObject);
-                        }
-                    } else {
-                        superstreamPrintStream.println("superstream: learning_factor is not a valid integer: " + learningFactorObject);
+            reqData.put("type", this.type);
+            Message reply = brokerConnection.request(clientRegisterSubject, reqBytes, Duration.ofMinutes(5));
+            if (reply != null) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> replyData = mapper.readValue(reply.getData(), Map.class);
+                Object clientHashObject = replyData.get("client_hash");
+                if (clientHashObject != null) {
+                    clientHash = clientHashObject.toString();
+                } else {
+                    superstreamPrintStream.println("superstream: client_hash is not a valid string: " + clientHashObject);
+                }
+                Object accountNameObject = replyData.get("account_name");
+                if (accountNameObject != null) {
+                    accountName = accountNameObject.toString();
+                } else {
+                    superstreamPrintStream.println("superstream: account_name is not a valid string: " + accountNameObject);
+                }
+                Object learningFactorObject = replyData.get("learning_factor");
+                if (learningFactorObject instanceof Integer) {
+                    learningFactor = (Integer) learningFactorObject;
+                } else if (learningFactorObject instanceof String) {
+                    try {
+                        learningFactor = Integer.parseInt((String) learningFactorObject);
+                    } catch (NumberFormatException e) {
+                        superstreamPrintStream.println(
+                                "superstream: learning_factor is not a valid integer: " + learningFactorObject);
                     }
                 } else {
+                    superstreamPrintStream.println("superstream: learning_factor is not a valid integer: " + learningFactorObject);
+                }
+            }else {
                     String errMsg = "superstream: registering client: No reply received within the timeout period.";
                     superstreamPrintStream.println(errMsg);
                     handleError(errMsg);
                 }
-            }
+
         }catch (Exception e) {
             superstreamPrintStream.println(String.format("superstream: %s", e.getMessage()));
         }

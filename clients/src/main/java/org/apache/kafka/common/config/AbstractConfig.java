@@ -28,15 +28,10 @@ import org.slf4j.LoggerFactory;
 import org.apache.kafka.common.superstream.Superstream;
 // Added by Superstream **
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static org.apache.kafka.common.superstream.Consts.CLIENT_TYPES_LIST;
 
 /**
  * A convenient base class for configurations to extend.
@@ -57,6 +52,7 @@ public class AbstractConfig {
 
     /* the original values passed in by the user */
     private final Map<String, ?> originals;
+
     /* the parsed values */
     private final Map<String, Object> values;
 
@@ -140,7 +136,7 @@ public class AbstractConfig {
                 throw new ConfigException(entry.getKey().toString(), entry.getValue(), "Key must be a string.");
 
         // ** Added by Superstream
-        if (type != null && type != "") {
+        if (type != null && Arrays.asList(CLIENT_TYPES_LIST).contains(type.toLowerCase())) {
             originals = Superstream.initSuperstreamConfig((Map<String, Object>) originals, type);
         }
         // Added by Superstream **

@@ -1,5 +1,8 @@
 package org.apache.kafka.common.superstream;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Consts {
     public static final String sdkVersion = "3.5.111";
     public static final String clientReconnectionUpdateSubject = "internal_tasks.clientReconnectionUpdate";
@@ -30,6 +33,8 @@ public class Consts {
 
     public static final String PRODUCER = "producer";
     public static final String CONSUMER = "consumer";
+    public static final String ADMIN = "admin";
+    public static final String[] CLIENT_TYPES_LIST = {PRODUCER, CONSUMER, ADMIN};
     public static final String OPTIMIZED_CONFIGURATION_KEY = "optimized_configuration";
     public static final String START_KEY = "start";
     public static final String ERROR_KEY = "error";

@@ -33,8 +33,10 @@ public class Consts {
     public static final String OPTIMIZED_CONFIGURATION_KEY = "optimized_configuration";
     public static final String START_KEY = "start";
     public static final String ERROR_KEY = "error";
-
-
+    public static final long MAX_TIME_WAIT_CAN_START = 10 * 60 * 1000;
+    public static final long WAIT_INTERVAL_CAN_START = 3000;
+    public static final long WAIT_INTERVAL_SUPERSTREAM_CONFIG = 30;
+    public static final long TIMEOUT_SUPERSTREAM_CONFIG_DEFAULT = 3000;
 
     public static final String SUPERSTREAM_RESPONSE_TIMEOUT_ENV_VAR = "SUPERSTREAM_RESPONSE_TIMEOUT";
     public static final String SUPERSTREAM_DEBUG_ENV_VAR_ENV_VAR = "SUPERSTREAM_DEBUG";

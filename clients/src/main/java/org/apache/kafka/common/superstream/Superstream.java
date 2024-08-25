@@ -35,9 +35,6 @@ import java.util.stream.Collectors;
 import static org.apache.kafka.common.superstream.Consts.*;
 
 public class Superstream {
-    private static final long MAX_TIME_WAIT_CAN_START = 10 * 60 * 1000;
-    private static final long WAIT_INTERVAL_CAN_START = 3000;
-    private static final long WAIT_INTERVAL_SUPERSTREAM_CONFIG = 30;
     public Connection brokerConnection;
     public JetStream jetstream;
     public String superstreamJwt;
@@ -498,7 +495,7 @@ public class Superstream {
 
     public void waitForSuperstreamConfigs(AbstractConfig config) throws InterruptedException {
         String timeoutEnv = System.getenv(SUPERSTREAM_RESPONSE_TIMEOUT_ENV_VAR);
-        long remainingTime = timeoutEnv != null ? Long.parseLong(timeoutEnv) : 0;
+        long remainingTime = timeoutEnv != null ? Long.parseLong(timeoutEnv) : TIMEOUT_SUPERSTREAM_CONFIG_DEFAULT;
         while (remainingTime > 0) {
             if (this.superstreamConfigs != null) {
                 config.getValues().putAll(this.getSuperstreamConfigs());

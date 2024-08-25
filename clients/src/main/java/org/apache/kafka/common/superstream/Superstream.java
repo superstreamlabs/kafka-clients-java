@@ -19,6 +19,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.io.IOException;
@@ -34,9 +35,6 @@ import java.util.stream.Collectors;
 import static org.apache.kafka.common.superstream.Consts.*;
 
 public class Superstream {
-    private static final int MAX_TIME_WAIT_CAN_START = 10 * 60 * 1000;
-    private static final int WAIT_INTERVAL_CAN_START = 3000;
-    final Object lockCanStart = new Object();
     public Connection brokerConnection;
     public JetStream jetstream;
     public String superstreamJwt;
@@ -55,6 +53,7 @@ public class Superstream {
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
     private Map<String, ?> fullClientConfigs;
+    private Map<String,?> superstreamConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;
     private String host;
@@ -236,6 +235,7 @@ public class Superstream {
             reqData.put("client_host", clientHost);
             ObjectMapper mapper = new ObjectMapper();
             byte[] reqBytes = mapper.writeValueAsBytes(reqData);
+            reqData.put("type", this.type);
             Message reply = brokerConnection.request(clientRegisterSubject, reqBytes, Duration.ofMinutes(5));
             if (reply != null) {
                 @SuppressWarnings("unchecked")
@@ -265,12 +265,13 @@ public class Superstream {
                 } else {
                     superstreamPrintStream.println("superstream: learning_factor is not a valid integer: " + learningFactorObject);
                 }
-            } else {
-                String errMsg = "superstream: registering client: No reply received within the timeout period.";
-                superstreamPrintStream.println(errMsg);
-                handleError(errMsg);
-            }
-        } catch (Exception e) {
+            }else {
+                    String errMsg = "superstream: registering client: No reply received within the timeout period.";
+                    superstreamPrintStream.println(errMsg);
+                    handleError(errMsg);
+                }
+
+        }catch (Exception e) {
             superstreamPrintStream.println(String.format("superstream: %s", e.getMessage()));
         }
     }
@@ -295,16 +296,16 @@ public class Superstream {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 Map<String, Object> messageData = mapper.readValue(msg.getData(), Map.class);
-                if (messageData.containsKey("start")) {
-                    boolean start = (Boolean) messageData.get("start");
+                if (messageData.containsKey(START_KEY)) {
+                    boolean start = (Boolean) messageData.get(START_KEY);
                     if (start) {
                         canStart = true;
-                        latch.countDown();
-                        synchronized (lockCanStart) {
-                            lockCanStart.notifyAll();
+                        if(messageData.containsKey(OPTIMIZED_CONFIGURATION_KEY)){
+                            this.superstreamConfigs = (Map<String, ?>) messageData.get(OPTIMIZED_CONFIGURATION_KEY);
                         }
+                        latch.countDown();
                     } else {
-                        String err = (String) messageData.get("error");
+                        String err = (String) messageData.get(ERROR_KEY);
                         superstreamPrintStream.println("superstream: could not start: " + err);
                         Thread.currentThread().interrupt();
                     }
@@ -314,8 +315,7 @@ public class Superstream {
             }
         });
 
-        dispatcher.subscribe(String.format(clientStartSubject, clientHash)); // replace with your specific
-        // subject
+        dispatcher.subscribe(String.format(clientStartSubject, clientHash));
 
         try {
             if (!latch.await(10, TimeUnit.MINUTES)) {
@@ -468,7 +468,7 @@ public class Superstream {
     private void executeSendClientConfigUpdateReqWithWait() {
         new Thread(() -> {
             try {
-                waitForCanStart(lockCanStart);
+                waitForCanStart();
                 sendClientConfigUpdateReq();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -479,16 +479,37 @@ public class Superstream {
         }).start();
     }
 
-    private void waitForCanStart(Object lockCanStart) throws InterruptedException {
+    private void waitForCanStart() throws InterruptedException {
         long remainingTime = MAX_TIME_WAIT_CAN_START;
-        synchronized (lockCanStart) {
-            while (!this.canStart) {
-                if (remainingTime <= 0) {
-                    superstreamPrintStream.println("canStart was not set to true within the expected time.");
-                    break;
-                }
+        while (remainingTime > 0) {
+            if (!this.canStart) {
+                Thread.sleep(WAIT_INTERVAL_CAN_START);
                 remainingTime -= WAIT_INTERVAL_CAN_START;
-                lockCanStart.wait(WAIT_INTERVAL_CAN_START);
+            } else {
+                break;
+            }
+
+            if (remainingTime <= 0) {
+                superstreamPrintStream.println("superstream could not start within the expected timeout period");
+            }
+        }
+    }
+
+    public void waitForSuperstreamConfigs(AbstractConfig config) throws InterruptedException {
+        String timeoutEnv = System.getenv(SUPERSTREAM_RESPONSE_TIMEOUT_ENV_VAR);
+        long remainingTime = timeoutEnv != null ? Long.parseLong(timeoutEnv) : TIMEOUT_SUPERSTREAM_CONFIG_DEFAULT;
+        while (remainingTime > 0) {
+            if (this.superstreamConfigs != null) {
+                config.getValues().putAll(this.getSuperstreamConfigs());
+                break;
+            }
+
+            remainingTime -= WAIT_INTERVAL_SUPERSTREAM_CONFIG;
+            if(remainingTime > 0) {
+                Thread.sleep(WAIT_INTERVAL_SUPERSTREAM_CONFIG);
+            }
+            else{
+                superstreamPrintStream.println("superstream client configuration was not set within the expected timeout period");
             }
         }
     }
@@ -893,6 +914,7 @@ public class Superstream {
             checkStdoutEnvVar();
             Superstream superstreamConnection = new Superstream(token, superstreamHost, learningFactor, configs,
                     reductionEnabled, type, tags, compressionEnabled);
+
             superstreamConnection.init();
             configs.put(superstreamConnectionKey, superstreamConnection);
         } catch (Exception e) {
@@ -1056,6 +1078,10 @@ public class Superstream {
 
     public PrintStream getSuperstreamPrintStream() {
         return superstreamPrintStream;
+    }
+
+    public Map<String, ?> getSuperstreamConfigs() {
+        return superstreamConfigs;
     }
 
     private static class ClassOutputStream extends OutputStream {

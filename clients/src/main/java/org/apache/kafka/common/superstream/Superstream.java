@@ -919,7 +919,7 @@ public class Superstream {
             configs.put(superstreamConnectionKey, superstreamConnection);
         } catch (Exception e) {
             String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
-            superstreamPrintStream.println(errMsg);
+            System.out.println(errMsg);
             handleConfigsWhenErrorInitializeSuperstream(type, configs);
         }
 

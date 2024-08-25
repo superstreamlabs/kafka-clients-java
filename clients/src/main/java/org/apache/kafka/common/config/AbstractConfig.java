@@ -26,13 +26,11 @@ import org.slf4j.LoggerFactory;
 
 // ** Added by Superstream
 import org.apache.kafka.common.superstream.Superstream;
+import static org.apache.kafka.common.superstream.Consts.CLIENT_TYPES_LIST;
+import java.util.*;
 // Added by Superstream **
 
-import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static org.apache.kafka.common.superstream.Consts.CLIENT_TYPES_LIST;
-
 /**
  * A convenient base class for configurations to extend.
  * <p>

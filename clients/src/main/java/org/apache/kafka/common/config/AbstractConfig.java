@@ -57,11 +57,6 @@ public class AbstractConfig {
 
     /* the original values passed in by the user */
     private final Map<String, ?> originals;
-
-    public Map<String, Object> getValues() {
-        return values;
-    }
-
     /* the parsed values */
     private final Map<String, Object> values;
 
@@ -793,5 +788,9 @@ public class AbstractConfig {
             // But always use the resolved entry
             return super.get(key);
         }
+    }
+
+    public Map<String, Object> getValues() {
+        return values;
     }
 }

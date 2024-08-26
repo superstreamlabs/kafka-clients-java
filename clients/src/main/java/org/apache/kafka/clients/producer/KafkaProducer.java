@@ -89,6 +89,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.apache.kafka.common.superstream.Consts.SUPERSTREAM_RESPONSE_TIMEOUT_ENV_VAR;
+
 
 /**
  * A Kafka client that publishes records to the Kafka cluster.
@@ -380,6 +382,12 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
              if (superstreamConn != null) {
                  this.superstreamConnection = superstreamConn;
                  this.superstreamConnection.clientCounters.setMetrics(this.metrics);
+                 this.superstreamConnection.setFullClientConfigs(config.values());
+                 try {
+                     this.superstreamConnection.waitForSuperstreamConfigs(config);
+                 }catch (InterruptedException e){
+                    this.superstreamConnection.getSuperstreamPrintStream().println("Error while waiting for producer superstream configs");
+                 }
              }
              // Added by Superstream **
             this.producerMetrics = new KafkaProducerMetrics(metrics);
@@ -1059,7 +1067,7 @@ public class KafkaProducer<K, V> implements Producer<K, V> {
                                 this.compressionType = CompressionType.ZSTD;
                                 break;
                             default:
-                                System.out.println("Superstream: unknown compression type: " + superstreamConnection.compressionType + ", defaulting to ZSTD");
+                                this.superstreamConnection.getSuperstreamPrintStream().println("Superstream: unknown compression type: " + superstreamConnection.compressionType + ", defaulting to ZSTD");
                                 accumulator.updateCompressionType(CompressionType.ZSTD);
                                 this.compressionType = CompressionType.ZSTD;
                                 break;

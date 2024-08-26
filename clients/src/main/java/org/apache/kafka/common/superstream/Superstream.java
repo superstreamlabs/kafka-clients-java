@@ -1,5 +1,6 @@
 package org.apache.kafka.common.superstream;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonParser;
@@ -18,6 +19,13 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.config.AbstractConfig;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.net.InetAddress;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
 import java.io.IOException;
@@ -26,6 +34,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+
+import static org.apache.kafka.common.superstream.Consts.*;
 
 public class Superstream {
     public Connection brokerConnection;
@@ -45,6 +55,8 @@ public class Superstream {
     public String ConsumerSchemaID = "0";
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
+    private Map<String, ?> fullClientConfigs;
+    private Map<String,?> superstreamConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;
     private String host;
@@ -60,6 +72,15 @@ public class Superstream {
     public Boolean compressionEnabled;
     public String compressionType = "zstd";
     public Boolean compressionTurnedOffBySuperstream = false;
+    private String clientIp;
+    private String clientHost;
+    private static boolean isStdoutSuppressed = false;
+    private static boolean isStderrSuppressed = false;
+    private static PrintStream superstreamPrintStream;
+    private static PrintStream superstreamErrStream;
+    private static final PrintStream originalOut = System.out;
+    private static final PrintStream originalErr = System.err;
+
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
                        Boolean enableReduction, String type, String tags, Boolean enableCompression) {
@@ -71,6 +92,8 @@ public class Superstream {
         this.type = type;
         this.tags = tags;
         this.compressionEnabled = enableCompression;
+        superstreamPrintStream = new PrintStream(new ClassOutputStream());
+        superstreamErrStream = new PrintStream(new ClassErrorStream());
     }
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
@@ -88,6 +111,7 @@ public class Superstream {
                     if (!canStart) {
                         throw new Exception("Could not start superstream");
                     }
+                    superstreamPrintStream.println("Successfully connected to superstream");
                     subscribeToUpdates();
                     superstreamReady = true;
                     reportClientsUpdate();
@@ -97,6 +121,16 @@ public class Superstream {
                 handleError(e.getMessage());
             }
         });
+    }
+
+    private static void checkStdoutEnvVar() {
+        if (Boolean.parseBoolean(System.getenv(SUPERSTREAM_DEBUG_ENV_VAR_ENV_VAR))) {
+            isStdoutSuppressed = true;
+            isStderrSuppressed = true;
+        } else {
+            isStdoutSuppressed = false;
+            isStderrSuppressed = false;
+        }
     }
 
     public void close() {
@@ -118,7 +152,7 @@ public class Superstream {
         try {
             Options options = new Options.Builder()
                     .server(host)
-                    .userInfo(Consts.superstreamInternalUsername, token)
+                    .userInfo(superstreamInternalUsername, token)
                     .maxReconnects(-1)
                     .connectionTimeout(Duration.ofSeconds(10))
                     .reconnectWait(Duration.ofSeconds(1))
@@ -128,7 +162,7 @@ public class Superstream {
                             if (type == Events.DISCONNECTED) {
                                 brokerConnection = null;
                                 superstreamReady = false;
-                                System.out.println("superstream: disconnected from superstream");
+                                superstreamPrintStream.println("superstream: disconnected from superstream");
                             } else if (type == Events.RECONNECTED) {
                                 try {
                                     brokerConnection = conn;
@@ -139,16 +173,16 @@ public class Superstream {
                                         reqData.put("client_hash", clientHash);
                                         ObjectMapper mapper = new ObjectMapper();
                                         byte[] reqBytes = mapper.writeValueAsBytes(reqData);
-                                        brokerConnection.publish(Consts.clientReconnectionUpdateSubject, reqBytes);
+                                        brokerConnection.publish(clientReconnectionUpdateSubject, reqBytes);
                                         subscribeToUpdates();
                                         superstreamReady = true;
                                         reportClientsUpdate();
                                     }
                                 } catch (Exception e) {
-                                    System.out.println(
+                                    superstreamPrintStream.println(
                                             "superstream: failed to reconnect: " + e.getMessage());
                                 }
-                                System.out.println("superstream: reconnected to superstream");
+                                superstreamPrintStream.println("superstream: reconnected to superstream");
                             }
                         }
                     })
@@ -166,7 +200,7 @@ public class Superstream {
             jetstream = js;
             natsConnectionID = generateNatsConnectionID();
         } catch (Exception e) {
-            System.out.println(String.format("superstream: %s", e.getMessage()));
+            superstreamPrintStream.println(String.format("superstream: %s", e.getMessage()));
         }
     }
 
@@ -187,19 +221,25 @@ public class Superstream {
                     kafkaConnectionID = 0;
                 }
             }
+            InetAddress localHost = InetAddress.getLocalHost();
+            this.clientIp = localHost.getHostAddress();
+            this.clientHost = localHost.getHostName();
+            Map<String, Object> configToSend = populateConfigToSend(configs);
             Map<String, Object> reqData = new HashMap<>();
             reqData.put("nats_connection_id", natsConnectionID);
             reqData.put("language", "java");
             reqData.put("learning_factor", learningFactor);
-            reqData.put("version", Consts.sdkVersion);
-            Map<String, Object> configToSend = populateConfigToSend(configs);
+            reqData.put("version", sdkVersion);
             reqData.put("config", configToSend);
             reqData.put("reduction_enabled", reductionEnabled);
             reqData.put("connection_id", kafkaConnectionID);
             reqData.put("tags", tags);
+            reqData.put("client_ip", clientIp);
+            reqData.put("client_host", clientHost);
             ObjectMapper mapper = new ObjectMapper();
             byte[] reqBytes = mapper.writeValueAsBytes(reqData);
-            Message reply = brokerConnection.request(Consts.clientRegisterSubject, reqBytes, Duration.ofMinutes(5));
+            reqData.put("type", this.type);
+            Message reply = brokerConnection.request(clientRegisterSubject, reqBytes, Duration.ofMinutes(5));
             if (reply != null) {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> replyData = mapper.readValue(reply.getData(), Map.class);
@@ -207,13 +247,13 @@ public class Superstream {
                 if (clientHashObject != null) {
                     clientHash = clientHashObject.toString();
                 } else {
-                    System.out.println("superstream: client_hash is not a valid string: " + clientHashObject);
+                    superstreamPrintStream.println("superstream: client_hash is not a valid string: " + clientHashObject);
                 }
                 Object accountNameObject = replyData.get("account_name");
                 if (accountNameObject != null) {
                     accountName = accountNameObject.toString();
                 } else {
-                    System.out.println("superstream: account_name is not a valid string: " + accountNameObject);
+                    superstreamPrintStream.println("superstream: account_name is not a valid string: " + accountNameObject);
                 }
                 Object learningFactorObject = replyData.get("learning_factor");
                 if (learningFactorObject instanceof Integer) {
@@ -222,20 +262,35 @@ public class Superstream {
                     try {
                         learningFactor = Integer.parseInt((String) learningFactorObject);
                     } catch (NumberFormatException e) {
-                        System.out.println(
+                        superstreamPrintStream.println(
                                 "superstream: learning_factor is not a valid integer: " + learningFactorObject);
                     }
                 } else {
-                    System.out.println("superstream: learning_factor is not a valid integer: " + learningFactorObject);
+                    superstreamPrintStream.println("superstream: learning_factor is not a valid integer: " + learningFactorObject);
                 }
-            } else {
-                String errMsg = "superstream: registering client: No reply received within the timeout period.";
-                System.out.println(errMsg);
-                handleError(errMsg);
-            }
-        } catch (Exception e) {
-            System.out.println(String.format("superstream: %s", e.getMessage()));
+            }else {
+                    String errMsg = "superstream: registering client: No reply received within the timeout period.";
+                    superstreamPrintStream.println(errMsg);
+                    handleError(errMsg);
+                }
+
+        }catch (Exception e) {
+            superstreamPrintStream.println(String.format("superstream: %s", e.getMessage()));
         }
+    }
+
+    private Map<String, Object> populateConfigToSend(Map<String, ?> configs) {
+        Map<String, Object> configToSend = new HashMap<>();
+        if (configs != null && !configs.isEmpty()) {
+            for (Map.Entry<String, ?> entry : configs.entrySet()) {
+                if (!superstreamConnectionKey.equalsIgnoreCase(entry.getKey())) {
+                    configToSend.put(entry.getKey(), entry.getValue());
+                }
+            }
+
+        }
+
+        return configToSend;
     }
 
     private Map<String, Object> populateConfigToSend(Map<String, ?> configs) {
@@ -258,14 +313,17 @@ public class Superstream {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 Map<String, Object> messageData = mapper.readValue(msg.getData(), Map.class);
-                if (messageData.containsKey("start")) {
-                    boolean start = (Boolean) messageData.get("start");
+                if (messageData.containsKey(START_KEY)) {
+                    boolean start = (Boolean) messageData.get(START_KEY);
                     if (start) {
                         canStart = true;
-                        latch.countDown(); // continue and stop the wait
+                        if(messageData.containsKey(OPTIMIZED_CONFIGURATION_KEY)){
+                            this.superstreamConfigs = (Map<String, ?>) messageData.get(OPTIMIZED_CONFIGURATION_KEY);
+                        }
+                        latch.countDown();
                     } else {
-                        String err = (String) messageData.get("error");
-                        System.out.println("superstream: could not start: " + err);
+                        String err = (String) messageData.get(ERROR_KEY);
+                        superstreamPrintStream.println("superstream: could not start: " + err);
                         Thread.currentThread().interrupt();
                     }
                 }
@@ -274,18 +332,17 @@ public class Superstream {
             }
         });
 
-        dispatcher.subscribe(String.format(Consts.clientStartSubject, clientHash)); // replace with your specific
-        // subject
+        dispatcher.subscribe(String.format(clientStartSubject, clientHash));
 
         try {
             if (!latch.await(10, TimeUnit.MINUTES)) {
-                System.out.println("superstream: unable not connect with superstream for 10 minutes");
+                superstreamPrintStream.println("superstream: unable not connect with superstream for 10 minutes");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            System.out.println("superstream: Could not start superstream: " + e.getMessage());
+            superstreamPrintStream.println("superstream: Could not start superstream: " + e.getMessage());
         } finally {
-            dispatcher.unsubscribe(String.format(Consts.clientStartSubject, clientHash));
+            dispatcher.unsubscribe(String.format(clientStartSubject, clientHash));
         }
     }
 
@@ -294,13 +351,13 @@ public class Superstream {
         consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         consumerProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         consumerProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
-        consumerProps.put(Consts.superstreamInnerConsumerKey, "true");
+        consumerProps.put(superstreamInnerConsumerKey, "true");
         consumerProps.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 1);
         String connectionId = null;
         KafkaConsumer<String, String> consumer = null;
         try {
             consumer = new KafkaConsumer<>(consumerProps);
-            List<PartitionInfo> partitions = consumer.partitionsFor(Consts.superstreamMetadataTopic,
+            List<PartitionInfo> partitions = consumer.partitionsFor(superstreamMetadataTopic,
                     Duration.ofMillis(10000));
             if (partitions == null || partitions.isEmpty()) {
                 if (consumer != null) {
@@ -308,7 +365,7 @@ public class Superstream {
                 }
                 return "0";
             }
-            TopicPartition topicPartition = new TopicPartition(Consts.superstreamMetadataTopic, 0);
+            TopicPartition topicPartition = new TopicPartition(superstreamMetadataTopic, 0);
             consumer.assign(Collections.singletonList(topicPartition));
             consumer.seekToEnd(Collections.singletonList(topicPartition));
             long endOffset = consumer.position(topicPartition);
@@ -326,7 +383,7 @@ public class Superstream {
                     if (consumer == null) {
                         consumer = new KafkaConsumer<>(consumerProps);
                     }
-                    List<PartitionInfo> partitions = consumer.partitionsFor(Consts.superstreamMetadataTopic,
+                    List<PartitionInfo> partitions = consumer.partitionsFor(superstreamMetadataTopic,
                             Duration.ofMillis(10000));
                     if (partitions == null || partitions.isEmpty()) {
                         if (consumer != null) {
@@ -334,7 +391,7 @@ public class Superstream {
                         }
                         return "0";
                     }
-                    TopicPartition topicPartition = new TopicPartition(Consts.superstreamMetadataTopic, 0);
+                    TopicPartition topicPartition = new TopicPartition(superstreamMetadataTopic, 0);
                     consumer.assign(Collections.singletonList(topicPartition));
                     consumer.seekToEnd(Collections.singletonList(topicPartition));
                     long endOffset = consumer.position(topicPartition);
@@ -419,15 +476,81 @@ public class Superstream {
             reqData.put("type", type);
             ObjectMapper mapper = new ObjectMapper();
             byte[] reqBytes = mapper.writeValueAsBytes(reqData);
-            brokerConnection.publish(Consts.clientTypeUpdateSubject, reqBytes);
+            brokerConnection.publish(clientTypeUpdateSubject, reqBytes);
         } catch (Exception e) {
             handleError(String.format("sendClientTypeUpdateReq: %s", e.getMessage()));
         }
     }
 
+    private void executeSendClientConfigUpdateReqWithWait() {
+        new Thread(() -> {
+            try {
+                waitForCanStart();
+                sendClientConfigUpdateReq();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Thread was interrupted: " + e.getMessage());
+            } catch (RuntimeException e) {
+                System.err.println("Error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    private void waitForCanStart() throws InterruptedException {
+        long remainingTime = MAX_TIME_WAIT_CAN_START;
+        while (remainingTime > 0) {
+            if (!this.canStart) {
+                Thread.sleep(WAIT_INTERVAL_CAN_START);
+                remainingTime -= WAIT_INTERVAL_CAN_START;
+            } else {
+                break;
+            }
+
+            if (remainingTime <= 0) {
+                superstreamPrintStream.println("superstream could not start within the expected timeout period");
+            }
+        }
+    }
+
+    public void waitForSuperstreamConfigs(AbstractConfig config) throws InterruptedException {
+        String timeoutEnv = System.getenv(SUPERSTREAM_RESPONSE_TIMEOUT_ENV_VAR);
+        long remainingTime = timeoutEnv != null ? Long.parseLong(timeoutEnv) : TIMEOUT_SUPERSTREAM_CONFIG_DEFAULT;
+        while (remainingTime > 0) {
+            if (this.superstreamConfigs != null) {
+                config.getValues().putAll(this.getSuperstreamConfigs());
+                break;
+            }
+
+            remainingTime -= WAIT_INTERVAL_SUPERSTREAM_CONFIG;
+            if(remainingTime > 0) {
+                Thread.sleep(WAIT_INTERVAL_SUPERSTREAM_CONFIG);
+            }
+            else{
+                superstreamPrintStream.println("superstream client configuration was not set within the expected timeout period");
+            }
+        }
+    }
+
+    private void sendClientConfigUpdateReq() {
+        if (this.fullClientConfigs != null && !this.fullClientConfigs.isEmpty()) {
+            try {
+                Map<String, Object> reqData = new HashMap<>();
+                reqData.put("client_hash", clientHash);
+                reqData.put("config", this.fullClientConfigs);
+                ObjectMapper mapper = new ObjectMapper();
+                byte[] reqBytes = mapper.writeValueAsBytes(reqData);
+                brokerConnection.publish(clientConfigUpdateSubject, reqBytes);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            } catch (Exception e) {
+                handleError(String.format("sendClientConfigUpdateReq: %s", e.getMessage()));
+            }
+        }
+    }
+
     public void subscribeToUpdates() {
         try {
-            String subject = String.format(Consts.superstreamUpdatesSubject, clientHash);
+            String subject = String.format(superstreamUpdatesSubject, clientHash);
             Dispatcher dispatcher = brokerConnection.createDispatcher(this.updatesHandler());
             updatesSubscription = dispatcher.subscribe(subject, this.updatesHandler());
         } catch (Exception e) {
@@ -453,7 +576,7 @@ public class Superstream {
                     countersMap.put("connection_id", kafkaConnectionID);
                     byte[] byteCounters = objectMapper.writeValueAsBytes(countersMap);
                     brokerConnection.publish(
-                            String.format(Consts.superstreamClientsUpdateSubject, "counters", clientHash),
+                            String.format(superstreamClientsUpdateSubject, "counters", clientHash),
                             byteCounters);
                 } catch (Exception e) {
                     clientCounters.incrementTotalReadBytesReduced(backupReadBytes);
@@ -481,7 +604,7 @@ public class Superstream {
                     byte[] byteConfig = objectMapper.writeValueAsBytes(topicPartitionConfig);
 
                     brokerConnection.publish(
-                            String.format(Consts.superstreamClientsUpdateSubject, "config", clientHash),
+                            String.format(superstreamClientsUpdateSubject, "config", clientHash),
                             byteConfig);
 
                 } catch (Exception e) {
@@ -502,7 +625,7 @@ public class Superstream {
 
     public void sendLearningMessage(byte[] msg) {
         try {
-            brokerConnection.publish(String.format(Consts.superstreamLearningSubject, clientHash), msg);
+            brokerConnection.publish(String.format(superstreamLearningSubject, clientHash), msg);
         } catch (Exception e) {
             handleError("sendLearningMessage: " + e.getMessage());
         }
@@ -510,7 +633,7 @@ public class Superstream {
 
     public void sendRegisterSchemaReq() {
         try {
-            brokerConnection.publish(String.format(Consts.superstreamRegisterSchemaSubject, clientHash), new byte[0]);
+            brokerConnection.publish(String.format(superstreamRegisterSchemaSubject, clientHash), new byte[0]);
             learningRequestSent = true;
         } catch (Exception e) {
             handleError("sendLearningMessage: " + e.getMessage());
@@ -618,7 +741,7 @@ public class Superstream {
 
                 case "ToggleReduction":
                     // if defined as false in env vars - override the value from superstream
-                    String reductionEnabledString = envVars.get("SUPERSTREAM_REDUCTION_ENABLED");
+                    String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED_ENV_VAR);
                     if (reductionEnabledString != null) {
                         Boolean reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
                         if (!reductionEnabled) {
@@ -636,7 +759,7 @@ public class Superstream {
 
                 case "CompressionUpdate":
                     // if defined as false in env vars - override the value from superstream
-                    String compressionEnabledString = envVars.get("SUPERSTREAM_COMPRESSION_ENABLED");
+                    String compressionEnabledString = envVars.get(SUPERSTREAM_COMPRESSION_ENABLED_ENV_VAR);
                     if (compressionEnabledString != null) {
                         Boolean compressionEnabled = Boolean.parseBoolean(compressionEnabledString);
                         if (!compressionEnabled) {
@@ -668,7 +791,7 @@ public class Superstream {
             reqData.put("schema_id", schemaID);
             ObjectMapper mapper = new ObjectMapper();
             byte[] reqBytes = mapper.writeValueAsBytes(reqData);
-            Message msg = brokerConnection.request(String.format(Consts.superstreamGetSchemaSubject, clientHash),
+            Message msg = brokerConnection.request(String.format(superstreamGetSchemaSubject, clientHash),
                     reqBytes, Duration.ofSeconds(5));
             if (msg == null) {
                 throw new Exception("Could not get descriptor");
@@ -730,58 +853,31 @@ public class Superstream {
 
         if (brokerConnection != null && superstreamReady) {
             Map<String, String> envVars = System.getenv();
-            String tags = envVars.get("SUPERSTREAM_TAGS");
+            String tags = envVars.get(SUPERSTREAM_TAGS_ENV_VAR);
             if (tags == null) {
                 tags = "";
             }
             if (clientHash == "") {
-                String message = String.format("[sdk: java][version: %s][tags: %s] %s", Consts.sdkVersion, tags, msg);
-                brokerConnection.publish(Consts.superstreamErrorSubject, message.getBytes(StandardCharsets.UTF_8));
+                String message = String.format("[sdk: java][version: %s][tags: %s] %s", sdkVersion, tags, msg);
+                brokerConnection.publish(superstreamErrorSubject, message.getBytes(StandardCharsets.UTF_8));
             } else {
                 String message = String.format("[clientHash: %s][sdk: java][version: %s][tags: %s] %s",
-                        clientHash, Consts.sdkVersion, tags, msg);
-                brokerConnection.publish(Consts.superstreamErrorSubject, message.getBytes(StandardCharsets.UTF_8));
+                        clientHash, sdkVersion, tags, msg);
+                brokerConnection.publish(superstreamErrorSubject, message.getBytes(StandardCharsets.UTF_8));
             }
         }
     }
 
     public static Map<String, Object> initSuperstreamConfig(Map<String, Object> configs, String type) {
-        String isInnerConsumer = (String) configs.get(Consts.superstreamInnerConsumerKey);
-        if (isInnerConsumer != null && isInnerConsumer.equals("true")) {
+        String isInnerConsumer = (String) configs.get(superstreamInnerConsumerKey);
+        if (Boolean.parseBoolean(isInnerConsumer)) {
             return configs;
         }
-        String interceptorToAdd = "";
-        switch (type) {
-            case "producer":
-                interceptorToAdd = SuperstreamProducerInterceptor.class.getName();
-                // : handle serializer logic for payload reduction
-                // igs.containsKey(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG)) {
-                // if (!configs.containsKey(Consts.originalSerializer)) {
-                // igs.put(Consts.originalSerializer,
-                //
-                // put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                // SuperstreamSerializer.class.getName());
-                //
-                //
-                break;
-            case "consumer":
-                interceptorToAdd = SuperstreamConsumerInterceptor.class.getName();
-                // : handle deserializer logic for payload reduction
-                // igs.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
-                // if (!configs.containsKey(Consts.originalDeserializer)) {
-                // igs.put(Consts.originalDeserializer,
-                //
-                // put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                // SuperstreamDeserializer.class.getName());
-                //
-                //
-                break;
-        }
-
+        String interceptorToAdd = getSuperstreamClientInterceptorName(type);
         try {
             List<String> interceptors = null;
             Object existingInterceptors = configs.get(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG);
-            if (interceptorToAdd != "") {
+            if (!interceptorToAdd.isEmpty()) {
                 if (existingInterceptors != null) {
                     if (existingInterceptors instanceof List) {
                         interceptors = new ArrayList<>((List<String>) existingInterceptors);
@@ -795,68 +891,111 @@ public class Superstream {
                     interceptors = new ArrayList<>();
                 }
             }
-            if (interceptorToAdd != "") {
+            if (!interceptorToAdd.isEmpty()) {
                 interceptors.add(interceptorToAdd);
                 configs.put(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG, interceptors);
             }
 
             Map<String, String> envVars = System.getenv();
-            String superstreamHost = envVars.get("SUPERSTREAM_HOST");
+            String superstreamHost = envVars.get(SUPERSTREAM_HOST_ENV_VAR);
             if (superstreamHost == null) {
                 throw new Exception("host is required");
             }
-            configs.put(Consts.superstreamHostKey, superstreamHost);
-            String token = envVars.get("SUPERSTREAM_TOKEN");
+            configs.put(superstreamHostKey, superstreamHost);
+            String token = envVars.get(SUPERSTREAM_TOKEN_ENV_VAR);
             if (token == null) {
-                token = Consts.superstreamDefaultToken;
+                token = superstreamDefaultToken;
             }
-            configs.put(Consts.superstreamTokenKey, token);
-            String learningFactorString = envVars.get("SUPERSTREAM_LEARNING_FACTOR");
-            Integer learningFactor = Consts.superstreamDefaultLearningFactor;
+            configs.put(superstreamTokenKey, token);
+            String learningFactorString = envVars.get(SUPERSTREAM_LEARNING_FACTOR_ENV_VAR);
+            Integer learningFactor = superstreamDefaultLearningFactor;
             if (learningFactorString != null) {
                 learningFactor = Integer.parseInt(learningFactorString);
             }
-            configs.put(Consts.superstreamLearningFactorKey, learningFactor);
-            Boolean reductionEnabled = false;
-            String reductionEnabledString = envVars.get("SUPERSTREAM_REDUCTION_ENABLED");
+            configs.put(superstreamLearningFactorKey, learningFactor);
+            boolean reductionEnabled = false;
+            String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED_ENV_VAR);
             if (reductionEnabledString != null) {
                 reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
             }
-            configs.put(Consts.superstreamReductionEnabledKey, reductionEnabled);
-            String tags = envVars.get("SUPERSTREAM_TAGS");
+            configs.put(superstreamReductionEnabledKey, reductionEnabled);
+            String tags = envVars.get(SUPERSTREAM_TAGS_ENV_VAR);
             if (tags == null) {
                 tags = "";
             }
-            Boolean compressionEnabled = false;
-            String compressionEnabledString = envVars.get("SUPERSTREAM_COMPRESSION_ENABLED");
+            boolean compressionEnabled = false;
+            String compressionEnabledString = envVars.get(SUPERSTREAM_COMPRESSION_ENABLED_ENV_VAR);
             if (compressionEnabledString != null) {
                 compressionEnabled = Boolean.parseBoolean(compressionEnabledString);
             }
+            checkStdoutEnvVar();
             Superstream superstreamConnection = new Superstream(token, superstreamHost, learningFactor, configs,
                     reductionEnabled, type, tags, compressionEnabled);
+
             superstreamConnection.init();
-            configs.put(Consts.superstreamConnectionKey, superstreamConnection);
+            configs.put(superstreamConnectionKey, superstreamConnection);
         } catch (Exception e) {
             String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
             System.out.println(errMsg);
-            switch (type) {
-                case "producer":
-                    if (configs.containsKey(Consts.originalSerializer)) {
-                        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                                configs.get(Consts.originalSerializer));
-                        configs.remove(Consts.originalSerializer);
-                    }
-                    break;
-                case "consumer":
-                    if (configs.containsKey(Consts.originalDeserializer)) {
-                        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                                configs.get(Consts.originalDeserializer));
-                        configs.remove(Consts.originalDeserializer);
-                    }
-                    break;
-            }
+            handleConfigsWhenErrorInitializeSuperstream(type, configs);
         }
+
         return configs;
+    }
+
+    private static void handleConfigsWhenErrorInitializeSuperstream(String type, Map<String, Object> configs) {
+        switch (type) {
+            case PRODUCER:
+                if (configs.containsKey(originalSerializer)) {
+                    configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                            configs.get(originalSerializer));
+                    configs.remove(originalSerializer);
+                }
+                break;
+            case CONSUMER:
+                if (configs.containsKey(originalDeserializer)) {
+                    configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                            configs.get(originalDeserializer));
+                    configs.remove(originalDeserializer);
+                }
+                break;
+        }
+    }
+
+    private static String getSuperstreamClientInterceptorName(String type) {
+        switch (type) {
+            case "producer":
+                handleSerializerLogicForPayloadReduction();
+                return SuperstreamProducerInterceptor.class.getName();
+            case "consumer":
+                handleDeserializerLogicForPayloadReduction();
+                return SuperstreamConsumerInterceptor.class.getName();
+            default:
+                return "";
+        }
+    }
+
+    private static void handleDeserializerLogicForPayloadReduction() {
+        // : handle deserializer logic for payload reduction
+        // igs.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
+        // if (!configs.containsKey(Consts.originalDeserializer)) {
+        // igs.put(Consts.originalDeserializer,
+        //
+        // put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+        // SuperstreamDeserializer.class.getName());
+        //
+        //
+    }
+
+    private static void handleSerializerLogicForPayloadReduction() {
+//             : handle serializer logic for payload reduction
+//             igs.containsKey(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG)) {
+//             if (!configs.containsKey(Consts.originalSerializer)) {
+//             igs.put(Consts.originalSerializer,
+//
+//             put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+//             SuperstreamSerializer.class.getName());
+//
     }
 
     public static Properties initSuperstreamProps(Properties properties, String type) {
@@ -869,8 +1008,8 @@ public class Superstream {
                     interceptors = SuperstreamProducerInterceptor.class.getName();
                 }
                 if (properties.containsKey(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG)) {
-                    if (!properties.containsKey(Consts.originalSerializer)) {
-                        properties.put(Consts.originalSerializer,
+                    if (!properties.containsKey(originalSerializer)) {
+                        properties.put(originalSerializer,
                                 properties.get(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG));
                         properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                                 SuperstreamSerializer.class.getName());
@@ -884,8 +1023,8 @@ public class Superstream {
                     interceptors = SuperstreamConsumerInterceptor.class.getName();
                 }
                 if (properties.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG)) {
-                    if (!properties.containsKey(Consts.originalDeserializer)) {
-                        properties.put(Consts.originalDeserializer,
+                    if (!properties.containsKey(originalDeserializer)) {
+                        properties.put(originalDeserializer,
                                 properties.get(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG));
                         properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
                                 SuperstreamDeserializer.class.getName());
@@ -899,40 +1038,40 @@ public class Superstream {
 
         try {
             Map<String, String> envVars = System.getenv();
-            String superstreamHost = envVars.get("SUPERSTREAM_HOST");
+            String superstreamHost = envVars.get(SUPERSTREAM_HOST_ENV_VAR);
             if (superstreamHost == null) {
                 throw new Exception("host is required");
             }
-            properties.put(Consts.superstreamHostKey, superstreamHost);
-            String token = envVars.get("SUPERSTREAM_TOKEN");
+            properties.put(superstreamHostKey, superstreamHost);
+            String token = envVars.get(SUPERSTREAM_TOKEN_ENV_VAR);
             if (token == null) {
-                token = Consts.superstreamDefaultToken;
+                token = superstreamDefaultToken;
             }
-            properties.put(Consts.superstreamTokenKey, token);
-            String learningFactorString = envVars.get("SUPERSTREAM_LEARNING_FACTOR");
-            Integer learningFactor = Consts.superstreamDefaultLearningFactor;
+            properties.put(superstreamTokenKey, token);
+            String learningFactorString = envVars.get(SUPERSTREAM_LEARNING_FACTOR_ENV_VAR);
+            Integer learningFactor = superstreamDefaultLearningFactor;
             if (learningFactorString != null) {
                 learningFactor = Integer.parseInt(learningFactorString);
             }
-            properties.put(Consts.superstreamLearningFactorKey, learningFactor);
+            properties.put(superstreamLearningFactorKey, learningFactor);
             Boolean reductionEnabled = false;
-            String reductionEnabledString = envVars.get("SUPERSTREAM_REDUCTION_ENABLED");
+            String reductionEnabledString = envVars.get(SUPERSTREAM_REDUCTION_ENABLED_ENV_VAR);
             if (reductionEnabledString != null) {
                 reductionEnabled = Boolean.parseBoolean(reductionEnabledString);
             }
-            properties.put(Consts.superstreamReductionEnabledKey, reductionEnabled);
-            String tags = envVars.get("SUPERSTREAM_TAGS");
+            properties.put(superstreamReductionEnabledKey, reductionEnabled);
+            String tags = envVars.get(SUPERSTREAM_TAGS_ENV_VAR);
             if (tags != null) {
-                properties.put(Consts.superstreamTagsKey, tags);
+                properties.put(superstreamTagsKey, tags);
             }
             Map<String, Object> configs = propertiesToMap(properties);
             Superstream superstreamConnection = new Superstream(token, superstreamHost, learningFactor, configs,
                     reductionEnabled, type);
             superstreamConnection.init();
-            properties.put(Consts.superstreamConnectionKey, superstreamConnection);
+            properties.put(superstreamConnectionKey, superstreamConnection);
         } catch (Exception e) {
             String errMsg = String.format("superstream: error initializing superstream: %s", e.getMessage());
-            System.out.println(errMsg);
+            superstreamPrintStream.println(errMsg);
         }
         return properties;
     }
@@ -946,8 +1085,51 @@ public class Superstream {
 
     public void updateTopicPartitions(String topic, Integer partition) {
         Set<Integer> partitions = topicPartitions.computeIfAbsent(topic, k -> new HashSet<>());
-        if (!partitions.contains(partition)) {
-            partitions.add(partition);
+        partitions.add(partition);
+    }
+
+    public void setFullClientConfigs(Map<String, ?> configs) {
+        this.fullClientConfigs = configs;
+        executeSendClientConfigUpdateReqWithWait();
+    }
+
+    public PrintStream getSuperstreamPrintStream() {
+        return superstreamPrintStream;
+    }
+
+    public Map<String, ?> getSuperstreamConfigs() {
+        return superstreamConfigs;
+    }
+
+    private static class ClassOutputStream extends OutputStream {
+        @Override
+        public void write(int b) {
+            if (!isStdoutSuppressed) {
+                originalOut.write(b);
+            }
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) {
+            if (!isStdoutSuppressed) {
+                originalOut.write(b, off, len);
+            }
+        }
+    }
+
+    private static class ClassErrorStream extends OutputStream {
+        @Override
+        public void write(int b) {
+            if (!isStderrSuppressed) {
+                originalErr.write(b);
+            }
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) {
+            if (!isStderrSuppressed) {
+                originalErr.write(b, off, len);
+            }
         }
     }
 }

@@ -293,20 +293,6 @@ public class Superstream {
         return configToSend;
     }
 
-    private Map<String, Object> populateConfigToSend(Map<String, ?> configs) {
-        Map<String, Object> configToSend = new HashMap<>();
-        if (configs != null && !configs.isEmpty()) {
-            for (Map.Entry<String, ?> entry : configs.entrySet()) {
-                if (!Consts.superstreamConnectionKey.equalsIgnoreCase(entry.getKey())) {
-                    configToSend.put(entry.getKey(), entry.getValue());
-                }
-            }
-
-        }
-
-        return configToSend;
-    }
-
     private void waitForStart() {
         CountDownLatch latch = new CountDownLatch(1);
         Dispatcher dispatcher = brokerConnection.createDispatcher((msg) -> {

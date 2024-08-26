@@ -26,6 +26,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
@@ -281,6 +284,20 @@ public class Superstream {
         if (configs != null && !configs.isEmpty()) {
             for (Map.Entry<String, ?> entry : configs.entrySet()) {
                 if (!superstreamConnectionKey.equalsIgnoreCase(entry.getKey())) {
+                    configToSend.put(entry.getKey(), entry.getValue());
+                }
+            }
+
+        }
+
+        return configToSend;
+    }
+
+    private Map<String, Object> populateConfigToSend(Map<String, ?> configs) {
+        Map<String, Object> configToSend = new HashMap<>();
+        if (configs != null && !configs.isEmpty()) {
+            for (Map.Entry<String, ?> entry : configs.entrySet()) {
+                if (!Consts.superstreamConnectionKey.equalsIgnoreCase(entry.getKey())) {
                     configToSend.put(entry.getKey(), entry.getValue());
                 }
             }

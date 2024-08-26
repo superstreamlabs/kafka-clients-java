@@ -1333,8 +1333,15 @@ project(':generator') {
 project(':clients') {
   archivesBaseName = "kafka-clients"
 
+  apply plugin: 'com.github.johnrengelman.shadow'
+
   configurations {
     generator
+  }
+
+  shadowJar {
+      archiveClassifier.set('all')
+      destinationDirectory.set(file("/tmp/Builds/${rootProject.name}/${project.name}"))
   }
 
   dependencies {
@@ -1350,6 +1357,10 @@ project(':clients') {
     implementation 'com.google.code.gson:gson:2.8.8'
 
     implementation 'io.nats:jnats:2.13.1'
+
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.16.1'
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation 'org.slf4j:slf4j-simple:1.7.32'
 
     // Added by Superstream **
 

@@ -392,12 +392,16 @@ public class KafkaAdminClient extends AdminClient {
 
     // ** Added by Superstream
     public Superstream superstreamConnection;
-    public void configureSuperstream(Map<String, ?> configs) {
+    public void configureSuperstream(Map<String, ?> configs, AdminClientConfig fullClientConfig) {
         Superstream superstreamConn = (Superstream) configs.get(Consts.superstreamConnectionKey);
-        if (superstreamConn == null) {
-            System.out.println("Failed to connect to Superstream");
-        } else {
+        if (superstreamConn != null) {
             this.superstreamConnection = superstreamConn;
+            this.superstreamConnection.setFullClientConfigs(fullClientConfig.getValues());
+            try{
+                this.superstreamConnection.waitForSuperstreamConfigs(fullClientConfig);
+            } catch (InterruptedException e) {
+                this.superstreamConnection.getSuperstreamPrintStream().println("Error waiting for admin client Superstream configs: " + e.getMessage());
+            }
         }
     }
     // Added by Superstream **
@@ -600,7 +604,7 @@ public class KafkaAdminClient extends AdminClient {
                              TimeoutProcessorFactory timeoutProcessorFactory,
                              LogContext logContext) {
         // ** Added by Superstream
-        configureSuperstream(config.originals());
+        configureSuperstream(config.originals(), config);
         // Added by Superstream **
         this.clientId = clientId;
         this.log = logContext.logger(KafkaAdminClient.class);

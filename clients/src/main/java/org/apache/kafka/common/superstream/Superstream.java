@@ -535,25 +535,15 @@ public class Superstream {
     }
 
     private void convertEntryValueWhenNoSerializer(Map<String,Object> config, ObjectMapper mapper) {
-        DeserializationContext context = mapper.getDeserializationContext();
         if (config != null && !config.isEmpty()) {
             for (Map.Entry<String, Object> entry : config.entrySet()) {
                 Object value = entry.getValue();
-                Class<?> valueClass = value.getClass();
-                if (!hasDefaultDeserializer(mapper, valueClass, context)) {
+                try{
+                    mapper.writeValueAsBytes(value);
+                } catch (JsonProcessingException e) {
                     entry.setValue(value.toString());
                 }
             }
-        }
-    }
-
-    public static boolean hasDefaultDeserializer(ObjectMapper mapper, Class<?> clazz,DeserializationContext context) {
-        try {
-            JsonDeserializer<?> deserializer = context.findRootValueDeserializer(mapper.constructType(clazz));
-
-            return deserializer != null;
-        } catch (IOException e) {
-            return false;
         }
     }
 

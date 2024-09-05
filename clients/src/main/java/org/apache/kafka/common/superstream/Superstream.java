@@ -525,11 +525,7 @@ public class Superstream {
                 reqData.put("client_hash", clientHash);
                 reqData.put("config", this.fullClientConfigs);
                 ObjectMapper mapper = new ObjectMapper();
-
-                SimpleModule module = new SimpleModule();
-                module.addSerializer(Object.class, new CustomObjectSerializer());
-                mapper.registerModule(module);
-
+                this.fullClientConfigs.remove("sasl.jaas.config");
                 byte[] reqBytes = mapper.writeValueAsBytes(reqData);
                 brokerConnection.publish(clientConfigUpdateSubject, reqBytes);
             } catch (JsonProcessingException e) {
@@ -1121,17 +1117,6 @@ public class Superstream {
         public void write(byte[] b, int off, int len) {
             if (!isStderrSuppressed) {
                 originalErr.write(b, off, len);
-            }
-        }
-    }
-
-    public static class CustomObjectSerializer extends JsonSerializer<Object> {
-        @Override
-        public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            if (value == null) {
-                gen.writeNull();
-            } else {
-                gen.writeString(value.toString()); // Convert the object to a string representation
             }
         }
     }

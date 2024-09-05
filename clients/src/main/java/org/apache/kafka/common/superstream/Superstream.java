@@ -1,11 +1,8 @@
 package org.apache.kafka.common.superstream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.DescriptorProtos;
@@ -522,7 +519,7 @@ public class Superstream {
                 ObjectMapper mapper = new ObjectMapper();
                 Map<String, Object> reqData = new HashMap<>();
                 reqData.put("client_hash", clientHash);
-                convertEntryValueWhenNoSerializer(this.fullClientConfigs,mapper);
+                convertEntryValueWhenNoSerializer(this.fullClientConfigs, mapper);
                 reqData.put("config", this.fullClientConfigs);
                 byte[] reqBytes = mapper.writeValueAsBytes(reqData);
                 brokerConnection.publish(clientConfigUpdateSubject, reqBytes);
@@ -534,11 +531,11 @@ public class Superstream {
         }
     }
 
-    private void convertEntryValueWhenNoSerializer(Map<String,Object> config, ObjectMapper mapper) {
+    private void convertEntryValueWhenNoSerializer(Map<String, Object> config, ObjectMapper mapper) {
         if (config != null && !config.isEmpty()) {
             for (Map.Entry<String, Object> entry : config.entrySet()) {
                 Object value = entry.getValue();
-                try{
+                try {
                     mapper.writeValueAsBytes(value);
                 } catch (JsonProcessingException e) {
                     entry.setValue(value.toString());
@@ -1088,7 +1085,7 @@ public class Superstream {
     }
 
     public void setFullClientConfigs(Map<String, ?> configs) {
-        this.fullClientConfigs = (Map<String, Object>)configs;
+        this.fullClientConfigs = (Map<String, Object>) configs;
         executeSendClientConfigUpdateReqWithWait();
     }
 

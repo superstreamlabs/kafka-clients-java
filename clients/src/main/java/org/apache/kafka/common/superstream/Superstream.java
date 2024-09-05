@@ -524,7 +524,12 @@ public class Superstream {
                 Map<String, Object> reqData = new HashMap<>();
                 reqData.put("client_hash", clientHash);
                 reqData.put("config", this.fullClientConfigs);
-                ObjectMapper mapper = SuperstreamObjectMapper.createObjectMapper();
+                ObjectMapper mapper = new ObjectMapper();
+
+                SimpleModule module = new SimpleModule();
+                module.addSerializer(Object.class, new CustomObjectSerializer());
+                mapper.registerModule(module);
+
                 byte[] reqBytes = mapper.writeValueAsBytes(reqData);
                 brokerConnection.publish(clientConfigUpdateSubject, reqBytes);
             } catch (JsonProcessingException e) {
@@ -1120,36 +1125,15 @@ public class Superstream {
         }
     }
 
-    public static class GenericFallbackSerializer extends JsonSerializer<Object> {
+    public static class CustomObjectSerializer extends JsonSerializer<Object> {
         @Override
         public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             if (value == null) {
                 gen.writeNull();
-                return;
+            } else {
+                gen.writeString(value.toString()); // Convert the object to a string representation
             }
-
-            try {
-                JsonSerializer<Object> defaultSerializer = ((DefaultSerializerProvider) serializers).findValueSerializer(value.getClass(), null);
-                if (!(defaultSerializer instanceof GenericFallbackSerializer)) { // Avoid using the same serializer
-                    defaultSerializer.serialize(value, gen, serializers);
-                    return;  // Successfully serialized using the default serializer, so we can return
-                }
-            } catch (Exception e) {
-                // Fall through to the fallback logic
-            }
-
-            gen.writeString(value.toString());
         }
     }
 
-    public static class SuperstreamObjectMapper {
-        public static ObjectMapper createObjectMapper() {
-            ObjectMapper mapper = new ObjectMapper();
-            SimpleModule module = new SimpleModule();
-            module.addSerializer(Object.class, new GenericFallbackSerializer());
-            mapper.registerModule(module);
-
-            return mapper;
-        }
-    }
 }

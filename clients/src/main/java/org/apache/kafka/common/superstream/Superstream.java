@@ -1,13 +1,11 @@
 package org.apache.kafka.common.superstream;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
+import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.DescriptorProtos;
@@ -57,7 +55,7 @@ public class Superstream {
     public String ConsumerSchemaID = "0";
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
-    private Map<String, ?> fullClientConfigs;
+    private Map<String, Object> fullClientConfigs;
     private Map<String, ?> superstreamConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;
@@ -521,11 +519,11 @@ public class Superstream {
     private void sendClientConfigUpdateReq() {
         if (this.fullClientConfigs != null && !this.fullClientConfigs.isEmpty()) {
             try {
+                ObjectMapper mapper = new ObjectMapper();
                 Map<String, Object> reqData = new HashMap<>();
                 reqData.put("client_hash", clientHash);
+                convertEntryValueWhenNoSerializer(this.fullClientConfigs,mapper);
                 reqData.put("config", this.fullClientConfigs);
-                ObjectMapper mapper = new ObjectMapper();
-                this.fullClientConfigs.remove("sasl.jaas.config");
                 byte[] reqBytes = mapper.writeValueAsBytes(reqData);
                 brokerConnection.publish(clientConfigUpdateSubject, reqBytes);
             } catch (JsonProcessingException e) {
@@ -533,6 +531,29 @@ public class Superstream {
             } catch (Exception e) {
                 handleError(String.format("sendClientConfigUpdateReq: %s", e.getMessage()));
             }
+        }
+    }
+
+    private void convertEntryValueWhenNoSerializer(Map<String,Object> config, ObjectMapper mapper) {
+        DeserializationContext context = mapper.getDeserializationContext();
+        if (config != null && !config.isEmpty()) {
+            for (Map.Entry<String, Object> entry : config.entrySet()) {
+                Object value = entry.getValue();
+                Class<?> valueClass = value.getClass();
+                if (!hasDefaultDeserializer(mapper, valueClass, context)) {
+                    entry.setValue(value.toString());
+                }
+            }
+        }
+    }
+
+    public static boolean hasDefaultDeserializer(ObjectMapper mapper, Class<?> clazz,DeserializationContext context) {
+        try {
+            JsonDeserializer<?> deserializer = context.findRootValueDeserializer(mapper.constructType(clazz));
+
+            return deserializer != null;
+        } catch (IOException e) {
+            return false;
         }
     }
 
@@ -1077,7 +1098,7 @@ public class Superstream {
     }
 
     public void setFullClientConfigs(Map<String, ?> configs) {
-        this.fullClientConfigs = configs;
+        this.fullClientConfigs = (Map<String, Object>)configs;
         executeSendClientConfigUpdateReqWithWait();
     }
 

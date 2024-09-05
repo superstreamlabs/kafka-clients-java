@@ -1,8 +1,12 @@
 package org.apache.kafka.common.superstream;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.DescriptorProtos;
@@ -26,9 +30,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
-import org.apache.kafka.common.serialization.StringDeserializer;
-
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
@@ -56,7 +57,7 @@ public class Superstream {
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
     private Map<String, ?> fullClientConfigs;
-    private Map<String,?> superstreamConfigs;
+    private Map<String, ?> superstreamConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;
     private String host;
@@ -268,13 +269,13 @@ public class Superstream {
                 } else {
                     superstreamPrintStream.println("superstream: learning_factor is not a valid integer: " + learningFactorObject);
                 }
-            }else {
-                    String errMsg = "superstream: registering client: No reply received within the timeout period.";
-                    superstreamPrintStream.println(errMsg);
-                    handleError(errMsg);
-                }
+            } else {
+                String errMsg = "superstream: registering client: No reply received within the timeout period.";
+                superstreamPrintStream.println(errMsg);
+                handleError(errMsg);
+            }
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             superstreamPrintStream.println(String.format("superstream: %s", e.getMessage()));
         }
     }
@@ -303,7 +304,7 @@ public class Superstream {
                     boolean start = (Boolean) messageData.get(START_KEY);
                     if (start) {
                         canStart = true;
-                        if(messageData.containsKey(OPTIMIZED_CONFIGURATION_KEY)){
+                        if (messageData.containsKey(OPTIMIZED_CONFIGURATION_KEY)) {
                             this.superstreamConfigs = (Map<String, ?>) messageData.get(OPTIMIZED_CONFIGURATION_KEY);
                         }
                         latch.countDown();
@@ -508,10 +509,9 @@ public class Superstream {
             }
 
             remainingTime -= WAIT_INTERVAL_SUPERSTREAM_CONFIG;
-            if(remainingTime > 0) {
+            if (remainingTime > 0) {
                 Thread.sleep(WAIT_INTERVAL_SUPERSTREAM_CONFIG);
-            }
-            else{
+            } else {
                 superstreamPrintStream.println("superstream client configuration was not set within the expected timeout period");
             }
         }
@@ -523,7 +523,7 @@ public class Superstream {
                 Map<String, Object> reqData = new HashMap<>();
                 reqData.put("client_hash", clientHash);
                 reqData.put("config", this.fullClientConfigs);
-                ObjectMapper mapper = new ObjectMapper();
+                ObjectMapper mapper = SuperstreamObjectMapper.createObjectMapper();
                 byte[] reqBytes = mapper.writeValueAsBytes(reqData);
                 brokerConnection.publish(clientConfigUpdateSubject, reqBytes);
             } catch (JsonProcessingException e) {
@@ -1116,6 +1116,34 @@ public class Superstream {
             if (!isStderrSuppressed) {
                 originalErr.write(b, off, len);
             }
+        }
+    }
+
+    public static class GenericFallbackSerializer extends JsonSerializer<Object> {
+        @Override
+        public void serialize(Object value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            if (value == null) {
+                gen.writeNull();
+                return;
+            }
+
+            try {
+                JsonSerializer<Object> defaultSerializer = serializers.findValueSerializer(value.getClass());
+                defaultSerializer.serialize(value, gen, serializers);
+            } catch (Exception e) {
+                gen.writeString(value.toString());
+            }
+        }
+    }
+
+    public static class SuperstreamObjectMapper {
+        public static ObjectMapper createObjectMapper() {
+            ObjectMapper mapper = new ObjectMapper();
+            SimpleModule module = new SimpleModule();
+            module.addSerializer(Object.class, new GenericFallbackSerializer());
+            mapper.registerModule(module);
+
+            return mapper;
         }
     }
 }

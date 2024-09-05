@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.google.protobuf.DescriptorProtos;
@@ -1128,11 +1129,16 @@ public class Superstream {
             }
 
             try {
-                JsonSerializer<Object> defaultSerializer = serializers.findValueSerializer(value.getClass());
-                defaultSerializer.serialize(value, gen, serializers);
+                JsonSerializer<Object> defaultSerializer = ((DefaultSerializerProvider) serializers).findValueSerializer(value.getClass(), null);
+                if (!(defaultSerializer instanceof GenericFallbackSerializer)) { // Avoid using the same serializer
+                    defaultSerializer.serialize(value, gen, serializers);
+                    return;  // Successfully serialized using the default serializer, so we can return
+                }
             } catch (Exception e) {
-                gen.writeString(value.toString());
+                // Fall through to the fallback logic
             }
+
+            gen.writeString(value.toString());
         }
     }
 

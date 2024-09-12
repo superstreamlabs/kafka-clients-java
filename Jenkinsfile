@@ -112,13 +112,28 @@ pipeline {
     }
     post {
         always {
-            cleanWs()
+                cleanWs()
         }
         success {
-            sendSlackNotification('SUCCESS')
+          script {  
+            if (env.BRANCH_NAME == '3.5.1') {
+                sendSlackNotification('SUCCESS')
+            }
+          }
         }
         failure {
-            sendSlackNotification('FAILURE')
+          script {
+            if (env.BRANCH_NAME == '3.5.1') {  
+                sendSlackNotification('FAILURE')
+            }
+          }
+        }        
+        aborted {
+          script {
+            if (env.BRANCH_NAME == '3.5.1') {
+                sendSlackNotification('ABORTED')
+            }
+          }
         }
     }    
 }
@@ -178,18 +193,21 @@ def uploadBundleAndCheckStatus() {
 // SlackSend Function
 def sendSlackNotification(String jobResult) {
     def jobUrl = env.BUILD_URL
-    def messageDetail = env.COMMIT_MESSAGE ? "Commit/PR by ${env.GIT_AUTHOR}:\n${env.COMMIT_MESSAGE}" : "No commit message available."
+    def messageDetail = env.COMMIT_MESSAGE ? "Commit/PR by @${env.GIT_AUTHOR}:\n${env.COMMIT_MESSAGE}" : "No commit message available."
     def projectName = env.JOB_NAME
+
+    // Define the color based on the job result
+    def color = jobResult == 'SUCCESS' ? 'good' : (jobResult == 'ABORTED' ? '#808080' : 'danger')
 
     slackSend (
         channel: "${env.SLACK_CHANNEL}",
-        color: jobResult == 'SUCCESS' ? 'good' : 'danger',
+        color: color,
         message: """\
 *:rocket: Jenkins Build Notification :rocket:*
 
 *Project:* `${projectName}`
 *Build Number:* `#${env.BUILD_NUMBER}`
-*Status:* ${jobResult == 'SUCCESS' ? ':white_check_mark: *Success*' : ':x: *Failure*'}
+*Status:* ${jobResult == 'SUCCESS' ? ':white_check_mark: *Success*' : (jobResult == 'ABORTED' ? ':warning: *Aborted*' : ':x: *Failure*')}
 
 :information_source: ${messageDetail}
 Triggered by: ${env.TRIGGERED_BY}

@@ -15,6 +15,9 @@ Set this variable to explicitly tell SSM to not switch compression dynamically.
 ### SUPERSTREAM_TAGS - Default is empty string
 Set this variable to tag the client, this is a string - comma-separated list of tags.
 
+### SUPERSTREAM_DEBUG - Default is false
+Set this variable to true to enable Superstream logs - by default there will not be any Superstream related logs.
+
 #### Ensure that these environment variables are properly configured in your system to fully utilize the enhanced features offered by Superstream SDK.
 
 Apache Kafka

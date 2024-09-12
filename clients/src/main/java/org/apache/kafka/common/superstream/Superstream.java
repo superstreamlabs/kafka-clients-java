@@ -122,11 +122,11 @@ public class Superstream {
 
     private static void checkStdoutEnvVar() {
         if (Boolean.parseBoolean(System.getenv(SUPERSTREAM_DEBUG_ENV_VAR_ENV_VAR))) {
-            isStdoutSuppressed = true;
-            isStderrSuppressed = true;
-        } else {
             isStdoutSuppressed = false;
             isStderrSuppressed = false;
+        } else {
+            isStdoutSuppressed = true;
+            isStderrSuppressed = true;
         }
     }
 

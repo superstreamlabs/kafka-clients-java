@@ -22,7 +22,11 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
@@ -52,7 +56,7 @@ public class Superstream {
     public String ConsumerSchemaID = "0";
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
-    private Map<String, Object> fullClientConfigs;
+    private Map<String, Object> fullClientConfigs = new HashMap<>();
     private Map<String, ?> superstreamConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;
@@ -84,7 +88,7 @@ public class Superstream {
         this.learningFactor = learningFactor;
         this.token = token;
         this.host = host;
-        this.configs = configs;
+        this.configs = deepCopyMap(configs);
         this.reductionEnabled = enableReduction;
         this.type = type;
         this.tags = tags;
@@ -275,6 +279,32 @@ public class Superstream {
             superstreamPrintStream.println(String.format("superstream: %s", e.getMessage()));
         }
     }
+    public Map<String, Object> deepCopyMap(Map<String, ?> originalMap) {
+        Map<String, Object> copiedMap = new HashMap<>();
+    
+        for (Map.Entry<String, ?> entry : originalMap.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            Object copiedValue;
+            copiedValue = deepCopyObject(value);
+            copiedMap.put(key, copiedValue);
+        }
+        return copiedMap;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T deepCopyObject(Object object) {
+    try {
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(byteOut);
+        out.writeObject(object);
+        ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+        ObjectInputStream in = new ObjectInputStream(byteIn);
+        return (T) in.readObject();
+    } catch (IOException | ClassNotFoundException e) {
+        throw new RuntimeException("Error during deep copy", e);
+    }
+}
 
     private Map<String, Object> populateConfigToSend(Map<String, ?> configs) {
         Map<String, Object> configToSend = new HashMap<>();
@@ -284,7 +314,6 @@ public class Superstream {
                     configToSend.put(entry.getKey(), entry.getValue());
                 }
             }
-
         }
 
         return configToSend;
@@ -535,6 +564,11 @@ public class Superstream {
         if (config != null && !config.isEmpty()) {
             for (Map.Entry<String, Object> entry : config.entrySet()) {
                 Object value = entry.getValue();
+                String key = entry.getKey();
+                if (key == "sasl.jaas.config"){
+                    entry.setValue("[hidden]");
+                    continue;
+                }
                 try {
                     mapper.writeValueAsBytes(value);
                 } catch (JsonProcessingException e) {
@@ -1084,8 +1118,18 @@ public class Superstream {
         partitions.add(partition);
     }
 
-    public void setFullClientConfigs(Map<String, ?> configs) {
-        this.fullClientConfigs = (Map<String, Object>) configs;
+    public void setFullClientConfigs(Map<String, ?> configsUpdate) {
+        for (Map.Entry<String, ?> entry : configsUpdate.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            Object copiedValue;
+            if (this.configs.containsKey(key)) {
+                copiedValue = deepCopyObject(this.configs.get(key));
+            } else {
+                copiedValue = deepCopyObject(value);
+            }
+            this.fullClientConfigs.put(key, copiedValue);
+        }
         executeSendClientConfigUpdateReqWithWait();
     }
 

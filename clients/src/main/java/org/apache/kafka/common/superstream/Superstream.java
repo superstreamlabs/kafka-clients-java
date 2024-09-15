@@ -56,7 +56,7 @@ public class Superstream {
     public String ConsumerSchemaID = "0";
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
-    private Map<String, Object> fullClientConfigs;
+    private Map<String, Object> fullClientConfigs = new HashMap<>();
     private Map<String, ?> superstreamConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;

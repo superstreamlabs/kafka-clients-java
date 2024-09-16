@@ -130,8 +130,26 @@ pipeline {
         }        
         aborted {
           script {
-            if (env.BRANCH_NAME == '3.5.1') {
+            if (env.BRANCH_NAME == 'master') {
                 sendSlackNotification('ABORTED')
+            }
+            // Get the build log to check for the specific exception
+            def buildLog = currentBuild.rawBuild.getLog(50)
+            // Log the build log for debugging purposes (you can remove this once confirmed)
+            echo "Build Log:\n${buildLog.join('\n')}"
+            // Check if the log contains the specific exception using a regular expression
+            if (buildLog.find { it =~ /org\.jenkinsci\.plugins\.workflow\.support\.steps\.AgentOfflineException/ }) {
+                echo 'AgentOfflineException found, retrying the build...'
+                // Check if the build has parameters and rerun the job accordingly
+                def paramsList = currentBuild.rawBuild.getAction(hudson.model.ParametersAction)?.parameters
+                if (paramsList) {
+                    build(job: env.JOB_NAME, parameters: paramsList)
+                } else {
+                    echo 'No parameters found, rerunning without parameters'
+                    build(job: env.JOB_NAME)
+                }
+            } else {
+                echo 'Abort not related to AgentOfflineException, not retrying.'
             }
           }
         }

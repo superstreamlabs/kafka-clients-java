@@ -130,7 +130,7 @@ pipeline {
         }        
         aborted {
           script {
-            if (env.BRANCH_NAME == 'master') {
+            if (env.BRANCH_NAME == '3.5.1') {
                 sendSlackNotification('ABORTED')
             }
             // Get the build log to check for the specific exception

@@ -22,11 +22,14 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
-
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
@@ -53,8 +56,8 @@ public class Superstream {
     public String ConsumerSchemaID = "0";
     public Map<String, Descriptors.Descriptor> SchemaIDMap = new HashMap<>();
     public Map<String, Object> configs;
-    private Map<String, ?> fullClientConfigs;
-    private Map<String,?> superstreamConfigs;
+    private Map<String, Object> fullClientConfigs = new HashMap<>();
+    private Map<String, ?> superstreamConfigs;
     public SuperstreamCounters clientCounters = new SuperstreamCounters();
     private Subscription updatesSubscription;
     private String host;
@@ -85,7 +88,7 @@ public class Superstream {
         this.learningFactor = learningFactor;
         this.token = token;
         this.host = host;
-        this.configs = configs;
+        this.configs = deepCopyMap(configs);
         this.reductionEnabled = enableReduction;
         this.type = type;
         this.tags = tags;
@@ -124,11 +127,11 @@ public class Superstream {
 
     private static void checkStdoutEnvVar() {
         if (Boolean.parseBoolean(System.getenv(SUPERSTREAM_DEBUG_ENV_VAR_ENV_VAR))) {
-            isStdoutSuppressed = true;
-            isStderrSuppressed = true;
-        } else {
             isStdoutSuppressed = false;
             isStderrSuppressed = false;
+        } else {
+            isStdoutSuppressed = true;
+            isStderrSuppressed = true;
         }
     }
 
@@ -267,16 +270,42 @@ public class Superstream {
                 } else {
                     superstreamPrintStream.println("superstream: learning_factor is not a valid integer: " + learningFactorObject);
                 }
-            }else {
-                    String errMsg = "superstream: registering client: No reply received within the timeout period.";
-                    superstreamPrintStream.println(errMsg);
-                    handleError(errMsg);
-                }
+            } else {
+                String errMsg = "superstream: registering client: No reply received within the timeout period.";
+                superstreamPrintStream.println(errMsg);
+                handleError(errMsg);
+            }
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             superstreamPrintStream.println(String.format("superstream: %s", e.getMessage()));
         }
     }
+    public Map<String, Object> deepCopyMap(Map<String, ?> originalMap) {
+        Map<String, Object> copiedMap = new HashMap<>();
+    
+        for (Map.Entry<String, ?> entry : originalMap.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            Object copiedValue;
+            copiedValue = deepCopyObject(value);
+            copiedMap.put(key, copiedValue);
+        }
+        return copiedMap;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T deepCopyObject(Object object) {
+    try {
+        ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+        ObjectOutputStream out = new ObjectOutputStream(byteOut);
+        out.writeObject(object);
+        ByteArrayInputStream byteIn = new ByteArrayInputStream(byteOut.toByteArray());
+        ObjectInputStream in = new ObjectInputStream(byteIn);
+        return (T) in.readObject();
+    } catch (IOException | ClassNotFoundException e) {
+        throw new RuntimeException("Error during deep copy", e);
+    }
+}
 
     private Map<String, Object> populateConfigToSend(Map<String, ?> configs) {
         Map<String, Object> configToSend = new HashMap<>();
@@ -286,7 +315,6 @@ public class Superstream {
                     configToSend.put(entry.getKey(), entry.getValue());
                 }
             }
-
         }
 
         return configToSend;
@@ -508,10 +536,9 @@ public class Superstream {
             }
 
             remainingTime -= WAIT_INTERVAL_SUPERSTREAM_CONFIG;
-            if(remainingTime > 0) {
+            if (remainingTime > 0) {
                 Thread.sleep(WAIT_INTERVAL_SUPERSTREAM_CONFIG);
-            }
-            else{
+            } else {
                 superstreamPrintStream.println("superstream client configuration was not set within the expected timeout period");
             }
         }
@@ -520,16 +547,35 @@ public class Superstream {
     private void sendClientConfigUpdateReq() {
         if (this.fullClientConfigs != null && !this.fullClientConfigs.isEmpty()) {
             try {
+                ObjectMapper mapper = new ObjectMapper();
                 Map<String, Object> reqData = new HashMap<>();
                 reqData.put("client_hash", clientHash);
+                convertEntryValueWhenNoSerializer(this.fullClientConfigs, mapper);
                 reqData.put("config", this.fullClientConfigs);
-                ObjectMapper mapper = new ObjectMapper();
                 byte[] reqBytes = mapper.writeValueAsBytes(reqData);
                 brokerConnection.publish(clientConfigUpdateSubject, reqBytes);
             } catch (JsonProcessingException e) {
                 throw new RuntimeException(e);
             } catch (Exception e) {
                 handleError(String.format("sendClientConfigUpdateReq: %s", e.getMessage()));
+            }
+        }
+    }
+
+    private void convertEntryValueWhenNoSerializer(Map<String, Object> config, ObjectMapper mapper) {
+        if (config != null && !config.isEmpty()) {
+            for (Map.Entry<String, Object> entry : config.entrySet()) {
+                Object value = entry.getValue();
+                String key = entry.getKey();
+                if (key == "sasl.jaas.config"){
+                    entry.setValue("[hidden]");
+                    continue;
+                }
+                try {
+                    mapper.writeValueAsBytes(value);
+                } catch (JsonProcessingException e) {
+                    entry.setValue(value.toString());
+                }
             }
         }
     }
@@ -1074,8 +1120,18 @@ public class Superstream {
         partitions.add(partition);
     }
 
-    public void setFullClientConfigs(Map<String, ?> configs) {
-        this.fullClientConfigs = configs;
+    public void setFullClientConfigs(Map<String, ?> configsUpdate) {
+        for (Map.Entry<String, ?> entry : configsUpdate.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            Object copiedValue;
+            if (this.configs.containsKey(key)) {
+                copiedValue = deepCopyObject(this.configs.get(key));
+            } else {
+                copiedValue = deepCopyObject(value);
+            }
+            this.fullClientConfigs.put(key, copiedValue);
+        }
         executeSendClientConfigUpdateReqWithWait();
     }
 
@@ -1118,4 +1174,5 @@ public class Superstream {
             }
         }
     }
+
 }

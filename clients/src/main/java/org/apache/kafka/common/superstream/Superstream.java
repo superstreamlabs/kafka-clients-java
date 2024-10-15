@@ -30,6 +30,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.InetAddress;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
@@ -81,7 +82,7 @@ public class Superstream {
     private static PrintStream superstreamErrStream;
     private static final PrintStream originalOut = System.out;
     private static final PrintStream originalErr = System.err;
-
+    private SuperstreamConfigParser configParser = null;
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
                        Boolean enableReduction, String type, String tags, Boolean enableCompression) {
@@ -95,6 +96,7 @@ public class Superstream {
         this.compressionEnabled = enableCompression;
         superstreamPrintStream = new PrintStream(new ClassOutputStream());
         superstreamErrStream = new PrintStream(new ClassErrorStream());
+        this.configParser = new SuperstreamConfigParser();
     }
 
     public Superstream(String token, String host, Integer learningFactor, Map<String, Object> configs,
@@ -281,7 +283,7 @@ public class Superstream {
     }
     public Map<String, Object> deepCopyMap(Map<String, ?> originalMap) {
         Map<String, Object> copiedMap = new HashMap<>();
-    
+
         for (Map.Entry<String, ?> entry : originalMap.entrySet()) {
             String key = entry.getKey();
             Object value = entry.getValue();
@@ -329,8 +331,9 @@ public class Superstream {
                     boolean start = (Boolean) messageData.get(START_KEY);
                     if (start) {
                         canStart = true;
-                        if (messageData.containsKey(OPTIMIZED_CONFIGURATION_KEY)) {
-                            this.superstreamConfigs = (Map<String, ?>) messageData.get(OPTIMIZED_CONFIGURATION_KEY);
+                        if(messageData.containsKey(OPTIMIZED_CONFIGURATION_KEY)){
+                            Map<String, Object> receivedConfig = (Map<String, Object>) messageData.get(OPTIMIZED_CONFIGURATION_KEY);
+                            this.superstreamConfigs = this.configParser.parse(receivedConfig);
                         }
                         latch.countDown();
                     } else {
